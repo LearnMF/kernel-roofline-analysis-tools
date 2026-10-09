@@ -20,6 +20,11 @@ def dump(a):
     g = {}
     exec(compile(src, "kda_op_bench_tp", "exec"), g)
     L, D_O, CU, CU_CPU = g["LEAVES"], g["D_O"], g["CU"], g["CU_CPU"]
+    if a.cu:             # varlen: packed sequences with the given boundaries (must end at T)
+        b = [int(x) for x in a.cu.split(",")]
+        assert b[0] == 0 and b[-1] == a.T, "cu boundaries must start at 0 and end at T"
+        CU_CPU = torch.tensor(b, dtype=torch.int32)
+        CU = CU_CPU.cuda()
     if a.gate_extreme:   # every token's decay saturates at lower_bound: widest exp2 argument ranges
         with torch.no_grad():
             L["g"].mul_(0).add_(8.0)
@@ -72,6 +77,7 @@ d.add_argument("--H", type=int, default=12)
 d.add_argument("--out", required=True)
 d.add_argument("--keep-state", action="store_true")
 d.add_argument("--gate-extreme", action="store_true", help="saturate every token's decay at lower_bound")
+d.add_argument("--cu", default=None, help="varlen boundaries, e.g. 0,1000,1063,5000,8192")
 c = sp.add_parser("cmp")
 c.add_argument("base")
 c.add_argument("cand")

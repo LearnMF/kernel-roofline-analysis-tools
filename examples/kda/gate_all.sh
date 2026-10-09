@@ -20,4 +20,21 @@ for s in $SHAPES; do
     echo "$tag: $r"; [[ "$r" == *PASS* ]] || { fail=1; python3 "$G" cmp "$CACHE/base_$tag.pt" "$CACHE/cand_$tag.pt"; }
   done
 done
+# varlen: packed sequences with lengths that are not multiples of 64 (tail chunks, a short
+# sequence, a 1-token sequence) -- exercises the VL template instantiations.
+VARLEN=${VARLEN:-"8192:12:0,1000,1063,1064,5000,8192 8192:48:0,63,4097,8192"}
+for s in $VARLEN; do
+  IFS=: read -r T H CUS <<<"$s"
+  for ks in "" "--keep-state"; do
+    tag="vl_${T}_${H}_$(echo "$CUS" | md5sum | cut -c1-6)${ks:+_${ks#--}}"
+    [ -f "$CACHE/base_$tag.pt" ] || PYTHONPATH=/opt/kda_env:$BASE:/opt/kda_env/takeover \
+      python3 "$G" dump --tree "$BASE" --T "$T" --H "$H" --cu "$CUS" --out "$CACHE/base_$tag.pt" $ks > "$CACHE/base_$tag.log" 2>&1 \
+      || { echo "$tag: BASE run FAILED (see $CACHE/base_$tag.log)"; fail=1; continue; }
+    PYTHONPATH=/opt/kda_env:$CAND:/opt/kda_env/takeover \
+      python3 "$G" dump --tree "$CAND" --T "$T" --H "$H" --cu "$CUS" --out "$CACHE/cand_$tag.pt" $ks > /dev/null 2>&1 \
+      || { echo "$tag: candidate run FAILED"; fail=1; continue; }
+    r=$(python3 "$G" cmp "$CACHE/base_$tag.pt" "$CACHE/cand_$tag.pt" | tail -1)
+    echo "$tag ($CUS): $r"; [[ "$r" == *PASS* ]] || fail=1
+  done
+done
 echo "GATE_ALL $([ $fail = 0 ] && echo PASS || echo FAIL)"; exit $fail
