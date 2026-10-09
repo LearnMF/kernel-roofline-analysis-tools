@@ -38,6 +38,55 @@ def mathlib_guard(body: list[str], window: int = 6) -> dict:
             "guard_insts_est": est, "guard_share_static": est / valu if valu else 0.0}
 
 
+WAIT = re.compile(r"s_waitcnt\b(.*)")
+VMCNT = re.compile(r"vmcnt\((\d+)\)")
+LABEL = re.compile(r"^(\.LBB\w+):")
+BRANCH = re.compile(r"^\s+s_(?:cbranch_\w+|branch)\s+(\.LBB\w+)")
+
+
+def load_use_slack(body: list[str]) -> list[dict]:
+    """Static exposed-latency finder (validation P-3/P-4): simulate the vector-memory counter
+    (gfx9: vmcnt counts loads AND stores, in order) along the text; at every
+    `s_waitcnt vmcnt(N)` the ops older than the newest N must have completed.  The slack of a
+    wait = instructions issued between the youngest load it forces to complete and the wait.
+    A small slack inside a loop means that load's latency is exposed on every iteration --
+    the kind of point whose removal paid off (P-3), unlike loads already prefetched (P-4).
+    Text order approximates control flow; loop membership comes from backward branches."""
+    insns, labels, branches = [], {}, []
+    for ln in body:
+        if (m := LABEL.match(ln)):
+            labels[m.group(1)] = len(insns)
+            continue
+        if (m := INSN.match(ln)):
+            if (b := BRANCH.match(ln)):
+                branches.append((len(insns), b.group(1)))
+            insns.append(ln.strip())
+    loops = [(labels[t], i) for i, t in branches if t in labels and labels[t] <= i]
+    q: list[tuple[int, str]] = []
+    sites = []
+    for i, s in enumerate(insns):
+        op = s.split()[0]
+        if op.startswith(("global_load", "buffer_load", "flat_load", "global_store", "buffer_store",
+                          "flat_store", "global_atomic", "buffer_atomic")):
+            q.append((i, op))
+            continue
+        w = WAIT.match(s)
+        if not w or not (vm := VMCNT.search(w.group(1))):
+            continue
+        n = int(vm.group(1))
+        forced = []
+        while len(q) > n:
+            forced.append(q.pop(0))
+        loads = [f for f in forced if "load" in f[1] or "atomic" in f[1]]
+        if not loads:
+            continue
+        young = max(f[0] for f in loads)
+        depth = sum(1 for a, b in loops if a <= i <= b)
+        sites.append({"insn": i, "wait": s, "slack": i - young - 1, "forced_loads": len(loads),
+                      "youngest_load": insns[young], "loop_depth": depth})
+    return sites
+
+
 def scan(asm_path: str | Path, symbol: str) -> dict:
     body = kernel_body(Path(asm_path).read_text(), symbol)
     r = mathlib_guard(body)

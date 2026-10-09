@@ -22,23 +22,30 @@ from kra.timeline.hipprof_json import load
 from kra.timeline.analyze import split_windows, short_name
 out, tag, rounds = sys.argv[1], sys.argv[2], int(sys.argv[3])
 def per_kernel(label):
+    """kernel -> list (one per process/round) of per-process median times.  Buffer placement
+    is fixed within a process and moves kernel time by several %, so the PROCESS is the
+    independent sample, not the window."""
     d = {}
     for r in range(rounds):
+        cur = {}
         for w in split_windows(load(f"{out}/{label}_{tag}_r{r}.json"), "spin_kernel", None):
             occ = {}
             for o in w:
                 if o.kind != "kernel":
                     continue
                 n = short_name(o.name); occ[n] = occ.get(n, 0) + 1
-                d.setdefault(f"{n}#{occ[n]}", []).append(o.dur_ns / 1e3)
+                cur.setdefault(f"{n}#{occ[n]}", []).append(o.dur_ns / 1e3)
+        for k, v in cur.items():
+            d.setdefault(k, []).append(st.median(v))
     return d
 a, b = per_kernel("A"), per_kernel("B")
-print(f"{'kernel':34s} {'A us':>9s} {'B us':>9s} {'A/B':>7s}  n")
+print(f"{'kernel':34s} {'A us':>9s} {'B us':>9s} {'A/B':>7s}  {'A spread':>8s} {'B spread':>8s}  procs  (median of per-process medians; spread = (max-min)/median)")
 ta = tb = 0.0
 for k in a:
     if k not in b:
         continue
     ma, mb = st.median(a[k]), st.median(b[k]); ta += ma; tb += mb
-    print(f"{k:34s} {ma:9.1f} {mb:9.1f} {ma/mb:7.4f}  {len(a[k])}/{len(b[k])}")
+    sa, sb = (max(a[k]) - min(a[k])) / ma, (max(b[k]) - min(b[k])) / mb
+    print(f"{k:34s} {ma:9.1f} {mb:9.1f} {ma/mb:7.4f}  {sa:8.2%} {sb:8.2%}  {len(a[k])}/{len(b[k])}")
 print(f"{'TOTAL (sum of medians)':34s} {ta:9.1f} {tb:9.1f} {ta/tb:7.4f}")
 EOF
