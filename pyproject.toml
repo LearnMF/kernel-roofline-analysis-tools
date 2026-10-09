@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kra"
+version = "0.1.0"
+description = "Kernel bottleneck classification and performance-ceiling analysis for HCU/GPU operators"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = []
+
+[project.scripts]
+kra = "kra.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["kra*"]
+
+[tool.setuptools.package-data]
+kra = ["*.json", "calibrate/*.hip"]

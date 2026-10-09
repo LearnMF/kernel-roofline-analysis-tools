@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+# raw profiler outputs are large; keep them outside the repo unless curated
+*.db
+*.db-journal
+*.perf
+*.hipkernel.csv
+*.hiptrace.csv

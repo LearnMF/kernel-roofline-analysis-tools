@@ -1,0 +1,356 @@
+{
+  "schema": "kra.timeline/1",
+  "source": "results/kda-gfx936-20261009/raw/g2_32768_12.json.gz",
+  "marker": "spin_kernel",
+  "device": null,
+  "n_windows": 5,
+  "trust": {
+    "reference_ms": 16.8645,
+    "traced_over_reference": 0.9826543923626552,
+    "ok": true,
+    "note": "traced span vs. unprofiled per-iteration time; tracing inflates host API cost, so host_late gaps are upper bounds when this ratio is > 1"
+  },
+  "summary": {
+    "span_us": {
+      "median": 16571.975,
+      "min": 16544.468,
+      "max": 16629.428
+    },
+    "busy_us": {
+      "median": 16571.829,
+      "min": 16544.468,
+      "max": 16629.428
+    },
+    "bubble_us": {
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.146
+    },
+    "bubble_ratio": {
+      "median": 0.0,
+      "min": 0.0,
+      "max": 8.810054323639759e-06
+    },
+    "kernel_sum_us": {
+      "median": 16566.709,
+      "min": 16539.348,
+      "max": 16624.468
+    },
+    "n_kernels": {
+      "median": 15,
+      "min": 15,
+      "max": 15
+    },
+    "gap_us_median": {
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.146
+    },
+    "embedded_dispatch_ratio_upper": {
+      "median": 0.0019688853382465385,
+      "min": 0.0018382842117490525,
+      "max": 0.0019728648875261506
+    }
+  },
+  "representative": {
+    "span_us": 16571.975,
+    "busy_us": 16571.829,
+    "bubble_us": 0.146,
+    "bubble_ratio": 8.810054323639759e-06,
+    "kernel_sum_us": 16566.709,
+    "copy_sum_us": 5.12,
+    "concurrency": 1.0,
+    "n_kernels": 15,
+    "n_copies": 1,
+    "n_small_kernels": 0,
+    "n_queued_back_to_back": 14,
+    "n_gaps": 1,
+    "gap_us_by_cause": {
+      "dispatch": 0.146
+    },
+    "gap_us_median": 0.146,
+    "largest_gaps": [
+      {
+        "gap_us": 0.146,
+        "after": "g2_fwd_prep_a_kernel",
+        "before": "g2_fwd_prep_b_kernel",
+        "cause": "dispatch",
+        "submit_lead_us": 1679.365,
+        "sync_api": null
+      }
+    ],
+    "streams_busy_us": {
+      "q0": 16571.829
+    },
+    "per_kernel": {
+      "g2_fwd_h_v8o4_kernel": {
+        "count": 2,
+        "total_us": 3233.5969999999998,
+        "full_name": "void g2::g2_fwd_h_v8o4_kernel<false>(g2::FwdOParams)",
+        "mean_us": 1616.7984999999999,
+        "share_of_span": 0.1951244193887572
+      },
+      "p3_wy_s4b_kernel": {
+        "count": 1,
+        "total_us": 2706.398,
+        "full_name": "void g2::p3_wy_s4b_kernel<false>(g2::WyS4BParams)",
+        "mean_us": 2706.398,
+        "share_of_span": 0.16331173562595888
+      },
+      "g2_dhu_v8b_kernel": {
+        "count": 1,
+        "total_us": 1871.998,
+        "full_name": "g2_dhu_v8b_kernel",
+        "mean_us": 1871.998,
+        "share_of_span": 0.11296167173797933
+      },
+      "g2_wu_kernel": {
+        "count": 1,
+        "total_us": 1796.639,
+        "full_name": "void g2::g2_wu_kernel<false>(g2::WuParams)",
+        "mean_us": 1796.639,
+        "share_of_span": 0.10841429582171105
+      },
+      "g2_fwd_prep_a_kernel": {
+        "count": 1,
+        "total_us": 1680.319,
+        "full_name": "void g2::r4::g2_fwd_prep_a_kernel<1, false>(g2::r4::PrepAParams)",
+        "mean_us": 1680.319,
+        "share_of_span": 0.10139521692495916
+      },
+      "p3_wy_s4a_kernel": {
+        "count": 1,
+        "total_us": 1488.799,
+        "full_name": "void g2::p3_wy_s4a_kernel<false>(g2::WyS4AParams)",
+        "mean_us": 1488.799,
+        "share_of_span": 0.08983835662315445
+      },
+      "g2_bwd_tail_kernel": {
+        "count": 1,
+        "total_us": 1338.72,
+        "full_name": "void g2::g2_bwd_tail_kernel<false>(g2::TailParams)",
+        "mean_us": 1338.72,
+        "share_of_span": 0.08078216386399328
+      },
+      "g2_dav_kernel": {
+        "count": 1,
+        "total_us": 1062.559,
+        "full_name": "void g2::g2_dav_kernel<false>(g2::DavParams)",
+        "mean_us": 1062.559,
+        "share_of_span": 0.06411782542515301
+      },
+      "g2_fwd_prep_b_kernel": {
+        "count": 1,
+        "total_us": 683.36,
+        "full_name": "void g2::r4::g2_fwd_prep_b_kernel<false>(g2::r4::PrepBParams)",
+        "mean_us": 683.36,
+        "share_of_span": 0.04123588166166073
+      },
+      "g2_gate_kernel": {
+        "count": 1,
+        "total_us": 340.48,
+        "full_name": "void g2::g2_gate_kernel<1, false>(g2::GateParams)",
+        "mean_us": 340.48,
+        "share_of_span": 0.020545529425430583
+      },
+      "g2_l2n_apply_kernel": {
+        "count": 1,
+        "total_us": 310.24,
+        "full_name": "g2::(anonymous namespace)::g2_l2n_apply_kernel(short const*, short const*, float const*, float const*, short*, short*, long)",
+        "mean_us": 310.24,
+        "share_of_span": 0.018720762009356157
+      },
+      "direct_copy_kernel_cuda": {
+        "count": 2,
+        "total_us": 26.880000000000003,
+        "full_name": "void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int, bool)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int, bool)#1})",
+        "mean_us": 13.440000000000001,
+        "share_of_span": 0.0016220154809550463
+      },
+      "g2_bwd_tail_reduce_kernel": {
+        "count": 1,
+        "total_us": 26.72,
+        "full_name": "g2::g2_bwd_tail_reduce_kernel(g2::TailParams)",
+        "mean_us": 26.72,
+        "share_of_span": 0.0016123606269017423
+      }
+    },
+    "launch_floor_us": {
+      "stream": 34.816,
+      "graph": 26.704,
+      "note": "n_ops x back-to-back empty-kernel cost from machine.json (dispatch floor)"
+    },
+    "recoverable_bubble_us_upper": 0.0,
+    "embedded_dispatch_us_upper": 30.464000000000002,
+    "embedded_dispatch_ratio_upper": 0.0018382842117490525,
+    "verdict": {
+      "system_bound": false,
+      "flags": [],
+      "next_step": "bubbles below threshold: time is spent inside kernels -> proceed to per-kernel classification (L2)"
+    }
+  },
+  "windows": [
+    {
+      "span_us": 16547.989,
+      "busy_us": 16547.989,
+      "bubble_us": 0.0,
+      "bubble_ratio": 0.0,
+      "kernel_sum_us": 16542.709,
+      "copy_sum_us": 5.28,
+      "concurrency": 1.0,
+      "n_kernels": 15,
+      "n_copies": 1,
+      "n_small_kernels": 0,
+      "n_queued_back_to_back": 15,
+      "n_gaps": 0,
+      "gap_us_by_cause": {},
+      "gap_us_median": 0.0,
+      "streams_busy_us": {
+        "q0": 16547.989
+      },
+      "launch_floor_us": {
+        "stream": 34.816,
+        "graph": 26.704,
+        "note": "n_ops x back-to-back empty-kernel cost from machine.json (dispatch floor)"
+      },
+      "recoverable_bubble_us_upper": 0,
+      "embedded_dispatch_us_upper": 32.64,
+      "embedded_dispatch_ratio_upper": 0.0019724451110041227,
+      "verdict": {
+        "system_bound": false,
+        "flags": [],
+        "next_step": "bubbles below threshold: time is spent inside kernels -> proceed to per-kernel classification (L2)"
+      }
+    },
+    {
+      "span_us": 16629.428,
+      "busy_us": 16629.428,
+      "bubble_us": 0.0,
+      "bubble_ratio": 0.0,
+      "kernel_sum_us": 16624.468,
+      "copy_sum_us": 4.96,
+      "concurrency": 1.0,
+      "n_kernels": 15,
+      "n_copies": 1,
+      "n_small_kernels": 0,
+      "n_queued_back_to_back": 15,
+      "n_gaps": 0,
+      "gap_us_by_cause": {},
+      "gap_us_median": 0.0,
+      "streams_busy_us": {
+        "q0": 16629.428
+      },
+      "launch_floor_us": {
+        "stream": 34.816,
+        "graph": 26.704,
+        "note": "n_ops x back-to-back empty-kernel cost from machine.json (dispatch floor)"
+      },
+      "recoverable_bubble_us_upper": 0,
+      "embedded_dispatch_us_upper": 32.64,
+      "embedded_dispatch_ratio_upper": 0.0019627854908779783,
+      "verdict": {
+        "system_bound": false,
+        "flags": [],
+        "next_step": "bubbles below threshold: time is spent inside kernels -> proceed to per-kernel classification (L2)"
+      }
+    },
+    {
+      "span_us": 16544.468,
+      "busy_us": 16544.468,
+      "bubble_us": 0.0,
+      "bubble_ratio": 0.0,
+      "kernel_sum_us": 16539.348,
+      "copy_sum_us": 5.12,
+      "concurrency": 1.0,
+      "n_kernels": 15,
+      "n_copies": 1,
+      "n_small_kernels": 0,
+      "n_queued_back_to_back": 15,
+      "n_gaps": 0,
+      "gap_us_by_cause": {},
+      "gap_us_median": 0.0,
+      "streams_busy_us": {
+        "q0": 16544.468
+      },
+      "launch_floor_us": {
+        "stream": 34.816,
+        "graph": 26.704,
+        "note": "n_ops x back-to-back empty-kernel cost from machine.json (dispatch floor)"
+      },
+      "recoverable_bubble_us_upper": 0,
+      "embedded_dispatch_us_upper": 32.64,
+      "embedded_dispatch_ratio_upper": 0.0019728648875261506,
+      "verdict": {
+        "system_bound": false,
+        "flags": [],
+        "next_step": "bubbles below threshold: time is spent inside kernels -> proceed to per-kernel classification (L2)"
+      }
+    },
+    {
+      "span_us": 16571.975,
+      "busy_us": 16571.829,
+      "bubble_us": 0.146,
+      "bubble_ratio": 8.810054323639759e-06,
+      "kernel_sum_us": 16566.709,
+      "copy_sum_us": 5.12,
+      "concurrency": 1.0,
+      "n_kernels": 15,
+      "n_copies": 1,
+      "n_small_kernels": 0,
+      "n_queued_back_to_back": 14,
+      "n_gaps": 1,
+      "gap_us_by_cause": {
+        "dispatch": 0.146
+      },
+      "gap_us_median": 0.146,
+      "streams_busy_us": {
+        "q0": 16571.829
+      },
+      "launch_floor_us": {
+        "stream": 34.816,
+        "graph": 26.704,
+        "note": "n_ops x back-to-back empty-kernel cost from machine.json (dispatch floor)"
+      },
+      "recoverable_bubble_us_upper": 0.0,
+      "embedded_dispatch_us_upper": 30.464000000000002,
+      "embedded_dispatch_ratio_upper": 0.0018382842117490525,
+      "verdict": {
+        "system_bound": false,
+        "flags": [],
+        "next_step": "bubbles below threshold: time is spent inside kernels -> proceed to per-kernel classification (L2)"
+      }
+    },
+    {
+      "span_us": 16577.908,
+      "busy_us": 16577.908,
+      "bubble_us": 0.0,
+      "bubble_ratio": 0.0,
+      "kernel_sum_us": 16572.788,
+      "copy_sum_us": 5.12,
+      "concurrency": 1.0,
+      "n_kernels": 15,
+      "n_copies": 1,
+      "n_small_kernels": 0,
+      "n_queued_back_to_back": 15,
+      "n_gaps": 0,
+      "gap_us_by_cause": {},
+      "gap_us_median": 0.0,
+      "streams_busy_us": {
+        "q0": 16577.908
+      },
+      "launch_floor_us": {
+        "stream": 34.816,
+        "graph": 26.704,
+        "note": "n_ops x back-to-back empty-kernel cost from machine.json (dispatch floor)"
+      },
+      "recoverable_bubble_us_upper": 0,
+      "embedded_dispatch_us_upper": 32.64,
+      "embedded_dispatch_ratio_upper": 0.0019688853382465385,
+      "verdict": {
+        "system_bound": false,
+        "flags": [],
+        "next_step": "bubbles below threshold: time is spent inside kernels -> proceed to per-kernel classification (L2)"
+      }
+    }
+  ]
+}

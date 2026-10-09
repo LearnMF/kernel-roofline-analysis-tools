@@ -1,0 +1,478 @@
+{
+  "schema": "kra.machine/1",
+  "id": "gfx936-bw1000",
+  "provenance": {
+    "host": "bw7",
+    "arch": "gfx936",
+    "visible_devices": "1",
+    "timestamp_utc": "2026-10-09T07:31:10Z",
+    "hipcc_version": "dcc version: 25.10.0-0\nclang version 17.0.0 (http://10.4.0.1/dcutoolkit/driverruntime/llvm-project.git ff5bf917a679c83afe927af051a20b86fef7b07d)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/dtk/llvm/bin",
+    "smi": "================================= System Management Interface ==================================\n================================================================================================\nHCU     Temp     AvgPwr     Perf     PwrCap     VRAM%      HCU%      Dec%      Enc%      Mode     \n0       39.0C    132.0W     manual   800.0W     84%        0.0%      0.0%      0.0%      Normal   \n1       42.0C    140.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n2       37.0C    132.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n3       35.0C    134.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n4       40.0C    132.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n5       40.0C    133.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n6       38.0C    132.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n7       36.0C    132.0W     manual   800.0W     84%        0.0%      0.0%      0.0%      Normal   \n================================================================================================\n======================================== End of SMI Log ========================================",
+    "tool_git_sha": null,
+    "source": "/public/home/tanbo/kra/kra/calibrate/microbench.hip"
+  },
+  "device": {
+    "name": "BW200, UBB BW1000",
+    "gcnArchName": "gfx936:sramecc+:xnack-",
+    "cu_count": 80,
+    "warp_size": 64,
+    "clock_khz": 1500000,
+    "memory_clock_khz": 1800000,
+    "memory_bus_width": 4096,
+    "l2_bytes": 8388608,
+    "lds_per_block": 65536,
+    "lds_per_cu": 65536,
+    "regs_per_block": 196608,
+    "max_threads_per_cu": 2560,
+    "global_mem_bytes": 68702699520,
+    "wall_clock_khz": 25000
+  },
+  "peaks": {
+    "hbm_read": {
+      "value": 1339.2,
+      "median_of_best_config": 1284.9,
+      "config": {
+        "bytes_per_pass": 1073741824,
+        "grid": 320,
+        "block": 512,
+        "unroll": 1
+      },
+      "n_configs": 16,
+      "unit": "GB/s",
+      "theoretical": 1843.2,
+      "pct_of_theoretical": 72.7
+    },
+    "hbm_read_nt": {
+      "value": 1309.4,
+      "median_of_best_config": 1286.1,
+      "config": {
+        "bytes_per_pass": 1073741824,
+        "grid": 320,
+        "block": 512,
+        "unroll": 1
+      },
+      "n_configs": 8,
+      "unit": "GB/s",
+      "theoretical": 1843.2,
+      "pct_of_theoretical": 71.0
+    },
+    "hbm_write": {
+      "value": 1100.5,
+      "median_of_best_config": 1095.8,
+      "config": {
+        "bytes_per_pass": 1073741824,
+        "grid": 320,
+        "block": 256,
+        "unroll": 1
+      },
+      "n_configs": 16,
+      "unit": "GB/s",
+      "theoretical": 1843.2,
+      "pct_of_theoretical": 59.7
+    },
+    "hbm_copy": {
+      "value": 1145.5,
+      "median_of_best_config": 1136.6,
+      "config": {
+        "bytes_per_pass": 2147483648,
+        "grid": 320,
+        "block": 256,
+        "unroll": 1
+      },
+      "n_configs": 16,
+      "unit": "GB/s (read+write bytes)",
+      "theoretical": 1843.2,
+      "pct_of_theoretical": 62.1
+    },
+    "l2_read": {
+      "value": 6100.8,
+      "median_of_best_config": 5929.9,
+      "config": {
+        "working_set": 2097152,
+        "l2_size": 8388608,
+        "resident": true,
+        "grid": 1280,
+        "block": 512,
+        "loads_per_thread": 1024
+      },
+      "n_configs": 12,
+      "unit": "GB/s",
+      "bytes_per_cu_per_clock": 50.8
+    },
+    "lds_read": {
+      "value": 15236.9,
+      "median_of_best_config": 15230.4,
+      "config": {
+        "grid": 1280,
+        "block": 256,
+        "iters": 4096
+      },
+      "n_configs": 3,
+      "unit": "GB/s",
+      "bytes_per_cu_per_clock": 127.0
+    },
+    "mmac_bf16": {
+      "value": 475.955,
+      "median_of_best_config": 475.751,
+      "config": {
+        "grid": 640,
+        "block": 512,
+        "chains": 8,
+        "iters": 16384,
+        "ops_per_inst_wave": 8192
+      },
+      "n_configs": 8,
+      "unit": "TFLOPS",
+      "ops_per_cu_per_clock": 3966.3
+    },
+    "mmac_f16": {
+      "value": 480.294,
+      "median_of_best_config": 480.086,
+      "config": {
+        "grid": 640,
+        "block": 512,
+        "chains": 8,
+        "iters": 16384,
+        "ops_per_inst_wave": 8192
+      },
+      "n_configs": 4,
+      "unit": "TFLOPS",
+      "ops_per_cu_per_clock": 4002.4
+    },
+    "mmac_tf32": {
+      "value": 237.711,
+      "median_of_best_config": 212.068,
+      "config": {
+        "grid": 640,
+        "block": 512,
+        "chains": 8,
+        "iters": 16384,
+        "ops_per_inst_wave": 4096
+      },
+      "n_configs": 4,
+      "unit": "TFLOPS",
+      "ops_per_cu_per_clock": 1980.9
+    },
+    "mmac_f32x8": {
+      "value": 60.96,
+      "median_of_best_config": 54.214,
+      "config": {
+        "grid": 640,
+        "block": 512,
+        "chains": 8,
+        "iters": 4096,
+        "ops_per_inst_wave": 4096
+      },
+      "n_configs": 4,
+      "unit": "TFLOPS",
+      "ops_per_cu_per_clock": 508.0
+    },
+    "mmac_i8": {
+      "value": 950.846,
+      "median_of_best_config": 848.389,
+      "config": {
+        "grid": 640,
+        "block": 512,
+        "chains": 8,
+        "iters": 16384,
+        "ops_per_inst_wave": 16384
+      },
+      "n_configs": 4,
+      "unit": "TOPS",
+      "ops_per_cu_per_clock": 7923.7
+    },
+    "valu_fma_f32": {
+      "value": 29.7,
+      "median_of_best_config": 26.459,
+      "config": {
+        "grid": 640,
+        "block": 512,
+        "chains": 16,
+        "iters": 32768,
+        "ops_per_inst_wave": 128
+      },
+      "n_configs": 8,
+      "unit": "TFLOPS",
+      "ops_per_cu_per_clock": 247.5
+    },
+    "sfu_exp2": {
+      "value": 1916.0,
+      "median_of_best_config": 1915.0,
+      "config": {
+        "grid": 640,
+        "block": 512,
+        "chains": 8,
+        "iters": 16384,
+        "ops_per_inst_wave": 64
+      },
+      "n_configs": 4,
+      "unit": "Gop/s"
+    }
+  },
+  "ridge_points_flop_per_byte": {
+    "mmac_bf16_vs_hbm_read": 355.4,
+    "mmac_f16_vs_hbm_read": 358.6,
+    "mmac_tf32_vs_hbm_read": 177.5,
+    "mmac_i8_vs_hbm_read": 710.0,
+    "valu_fma_f32_vs_hbm_read": 22.2
+  },
+  "latency": {
+    "gmem_small_ws": {
+      "cycles": 152.02,
+      "ns": 101.34,
+      "config": {
+        "working_set": 16384,
+        "steps": 20000
+      }
+    },
+    "gmem_l2_ws": {
+      "cycles": 369.37,
+      "ns": 246.25,
+      "config": {
+        "working_set": 2097152,
+        "steps": 20000
+      }
+    },
+    "gmem_hbm_ws": {
+      "cycles": 577.07,
+      "ns": 384.71,
+      "config": {
+        "working_set": 536870912,
+        "steps": 20000
+      }
+    },
+    "lds": {
+      "cycles": 64.0,
+      "ns": 42.67,
+      "config": {
+        "steps": 100000
+      }
+    },
+    "mmac_bf16_dependent": {
+      "cycles": 44.02,
+      "ns": 29.34,
+      "config": {
+        "iters": 100000
+      }
+    },
+    "barrier": {
+      "syncthreads_256": {
+        "cycles": 52.0,
+        "ns": 34.67
+      },
+      "lds_barrier_256": {
+        "cycles": 52.0,
+        "ns": 34.67
+      },
+      "syncthreads_512": {
+        "cycles": 56.0,
+        "ns": 37.33
+      },
+      "lds_barrier_512": {
+        "cycles": 56.0,
+        "ns": 37.33
+      },
+      "syncthreads_1024": {
+        "cycles": 68.0,
+        "ns": 45.33
+      },
+      "lds_barrier_1024": {
+        "cycles": 76.0,
+        "ns": 50.67
+      }
+    }
+  },
+  "launch": {
+    "launch_stream": {
+      "best_us": 2.176,
+      "median_us": 2.642
+    },
+    "launch_graph": {
+      "best_us": 1.669,
+      "median_us": 1.669
+    },
+    "launch_single": {
+      "best_us": 6.4,
+      "median_us": 8.16
+    }
+  },
+  "pcie_GBps": {
+    "pcie_h2d": 28.6,
+    "pcie_d2h": 38.13
+  },
+  "observed_shader_clock_mhz": {
+    "min": 1500.0,
+    "max": 1500.1
+  },
+  "warnings": [],
+  "isa_check": {
+    "ok": true,
+    "asm": "/tmp/kra_cal2/microbench-hip-amdgcn-amd-amdhsa-gfx936.s",
+    "kernels": {
+      "k_mmac_bf16": {
+        "symbol": "_Z11k_mmac_bf16ILi4EEviPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "v_mmac_f32_16x16x16_bf16": 4,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_mmac_f16": {
+        "symbol": "_Z10k_mmac_f16ILi8EEviPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "v_mmac_f32_16x16x16_f16": 8,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_mmac_f32x8": {
+        "symbol": "_Z12k_mmac_f32x8ILi8EEviPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "v_fma_f32": 1,
+          "v_mmac_16x16x8_f32": 8,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_mmac_tf32": {
+        "symbol": "_Z11k_mmac_tf32ILi8EEviPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "v_fma_f32": 1,
+          "v_mmac_f32_16x16x8_tf32": 8,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_mmac_i8": {
+        "symbol": "_Z9k_mmac_i8ILi8EEviPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "v_mmac_i32_16x16x32_i8": 8,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_fma_f32": {
+        "symbol": "_Z9k_fma_f32ILi8EEviPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "v_fma_f32": 1,
+          "v_pk_fma_f32": 36,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_exp2": {
+        "symbol": "_Z6k_exp2ILi8EEviPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "v_fma_f32": 1,
+          "v_exp_f32": 72,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_readILi1": {
+        "symbol": "_Z6k_readILi1EEvPKDv4_fmPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 2,
+          "s_load_dwordx4": 1,
+          "s_load_dwordx2": 1,
+          "global_load_dwordx4": 2,
+          "global_store_dword": 1
+        }
+      },
+      "k_read_nt": {
+        "symbol": "_Z9k_read_ntPKDv4_fmPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 2,
+          "s_load_dwordx4": 1,
+          "s_load_dwordx2": 1,
+          "global_load_dwordx4": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_copyILi1": {
+        "symbol": "_Z6k_copyILi1EEvPKDv4_fPS0_m",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 2,
+          "s_load_dwordx2": 1,
+          "s_load_dwordx4": 1,
+          "global_load_dwordx4": 2,
+          "global_store_dwordx4": 2
+        }
+      },
+      "k_writeILi1": {
+        "symbol": "_Z7k_writeILi1EEvPDv4_fmf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 3,
+          "s_load_dwordx4": 1,
+          "global_store_dwordx4": 2
+        }
+      },
+      "k_lds_read": {
+        "symbol": "_Z10k_lds_readiPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "s_barrier": 1,
+          "ds_read_b128": 12,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_chase": {
+        "symbol": "_Z7k_chasePKjijPyPj",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dwordx4": 2,
+          "global_load_dword": 65,
+          "global_store_dwordx4": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_lds_chase": {
+        "symbol": "_Z11k_lds_chaseiPyPj",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 2,
+          "s_barrier": 1,
+          "ds_read_b32": 9,
+          "s_load_dwordx4": 1,
+          "global_store_dwordx4": 1,
+          "global_store_dword": 1
+        }
+      }
+    }
+  },
+  "raw": "gfx936-bw1000.raw.jsonl"
+}

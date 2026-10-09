@@ -1,0 +1,51 @@
+{"bench":"device","name":"BW200, UBB BW1000","gcnArchName":"gfx936:sramecc+:xnack-","cu_count":80,"warp_size":64,"clock_khz":1500000,"memory_clock_khz":1800000,"memory_bus_width":4096,"l2_bytes":8388608,"lds_per_block":65536,"lds_per_cu":65536,"regs_per_block":196608,"max_threads_per_cu":2560,"global_mem_bytes":68702699520,"wall_clock_khz":25000}
+{"bench":"launch_stream","config":{"kernels":2000},"us_per_kernel_best":4.843,"us_per_kernel_med":5.647}
+{"bench":"launch_graph","config":{"kernels":2000},"us_per_kernel_best":4.783,"us_per_kernel_med":4.784}
+{"bench":"launch_single","config":{"samples":190},"us_best":9.440,"us_med":10.880}
+HIP_PROF:on Fri Oct  9 15:27:28 2026
+HIP_PROF:process id '671438'
+HIP_PROF:db file '/tmp/kra_tl/lp.db'
+HIP_PROF:out put file '/tmp/kra_tl/lp'
+HIP_PROF:profiling ' /tmp/kra_calibrate_build/microbench launch'
+HIP_PROF:process begin
+HIP_PROF:process end run total cost:1(s)
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HIP_PROF:IP:[31m10.16.1.47[0m HIP API statistics
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Name                                                          |Calls          |TotalDurationNs            |AverageNs                  |Percentage                 |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|hipMalloc                                                     |1              |299562952                  |299562952                  |53.2131139503108           |
+|hipEventRecord                                                |422            |140099821                  |331990                     |24.8867481426446           |
+|hipLaunchKernel                                               |14200          |51001336                   |3591                       |9.05966470842525           |
+|hipGraphLaunch                                                |6              |42923543                   |7153923                    |7.62475923528109           |
+|hipEventSynchronize                                           |211            |17305177                   |82015                      |3.07401949901768           |
+|hipGraphInstantiate                                           |1              |2924749                    |2924749                    |0.51954021942292           |
+|hipGraphExecDestroy                                           |1              |2594091                    |2594091                    |0.460803510777513          |
+|__hipPushCallConfiguration                                    |14200          |2344052                    |165                        |0.416387625200909          |
+|__hipPopCallConfiguration                                     |14200          |1479917                    |104                        |0.262886286278826          |
+|hipDeviceSynchronize                                          |1              |916416                     |916416                     |0.162788317808699          |
+|hipStreamDestroy                                              |1              |806207                     |806207                     |0.143211250497152          |
+|hipGraphDestroy                                               |1              |695667                     |695667                     |0.123575385725505          |
+|hipEventElapsedTime                                           |211            |240249                     |1138                       |0.042676830789971          |
+|hipFree                                                       |1              |12900                      |12900                      |0.00229150222140623        |
+|hipStreamBeginCapture                                         |1              |9990                       |9990                       |0.00177458195285646        |
+|hipStreamEndCapture                                           |1              |9310                       |9310                       |0.00165378958769706        |
+|hipGetDeviceProperties                                        |1              |5370                       |5370                       |0.000953904413097014       |
+|hipEventDestroy                                               |4              |5170                       |1292                       |0.000918377246873661       |
+|hipStreamCreate                                               |1              |4820                       |4820                       |0.000856204705982795       |
+|hipEventCreate                                                |4              |4370                       |1092                       |0.000776268581980251       |
+|hipDeviceGetAttribute                                         |1              |3380                       |3380                       |0.000600409109174657       |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Total                                                         |43470          |562949487                  |12950                      |100.0                      |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HIP_PROF:IP:[31m10.16.1.47[0m HIPOPS API statistics
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Name                                                          |Calls          |TotalDurationNs            |AverageNs                  |Percentage                 |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|k_empty()                                                     |24200          |105063814                  |4341                       |100.0                      |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Total                                                         |24200          |105063814                  |4341                       |100.0                      |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HIP_PROF:dump json trace (0/67671)HIP_PROF:dump json trace (0/67671)HIP_PROF:dump json trace (0/67671)HIP_PROF:dump json trace (8693/67671)HIP_PROF:dump json trace (8694/67671)HIP_PROF:dump json trace (11589/67671)HIP_PROF:dump json trace (11589/67671)HIP_PROF:dump json trace (11589/67671)HIP_PROF:dump json trace (20282/67671)HIP_PROF:dump json trace (20282/67671)HIP_PROF:dump json trace (23178/67671)HIP_PROF:dump json trace (23178/67671)HIP_PROF:dump json trace (23178/67671)HIP_PROF:dump json trace (31871/67671)HIP_PROF:dump json trace (31871/67671)HIP_PROF:dump json trace (34766/67671)HIP_PROF:dump json trace (34766/67671)HIP_PROF:dump json trace (34766/67671)HIP_PROF:dump json trace (43459/67671)HIP_PROF:dump json trace (43459/67671)HIP_PROF:dump json trace (46356/67671)HIP_PROF:dump json trace (46356/67671)HIP_PROF:dump json trace (46356/67671)HIP_PROF:dump json trace (55054/67671)HIP_PROF:dump json trace (55054/67671)HIP_PROF:dump json trace (67671/67671)
+HIP_PROF:finish

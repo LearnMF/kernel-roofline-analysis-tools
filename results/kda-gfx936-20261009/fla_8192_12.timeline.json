@@ -1,0 +1,469 @@
+{
+  "schema": "kra.timeline/1",
+  "source": "results/kda-gfx936-20261009/raw/fla_8192_12.json.gz",
+  "marker": "spin_kernel",
+  "device": null,
+  "n_windows": 5,
+  "trust": {
+    "reference_ms": 7.4829,
+    "traced_over_reference": 0.935358617648238,
+    "ok": true,
+    "note": "traced span vs. unprofiled per-iteration time; tracing inflates host API cost, so host_late gaps are upper bounds when this ratio is > 1"
+  },
+  "summary": {
+    "span_us": {
+      "median": 6999.195,
+      "min": 6982.555,
+      "max": 7122.715
+    },
+    "busy_us": {
+      "median": 6172.956,
+      "min": 6160.476,
+      "max": 6295.197
+    },
+    "bubble_us": {
+      "median": 824.799,
+      "min": 810.559,
+      "max": 828.96
+    },
+    "bubble_ratio": {
+      "median": 0.11773326525892026,
+      "min": 0.11606748177672704,
+      "max": 0.11843647733775098
+    },
+    "kernel_sum_us": {
+      "median": 6167.996,
+      "min": 6155.356,
+      "max": 6290.237
+    },
+    "n_kernels": {
+      "median": 27,
+      "min": 27,
+      "max": 27
+    },
+    "gap_us_median": {
+      "median": 137.3595,
+      "min": 121.76,
+      "max": 141.04000000000002
+    },
+    "embedded_dispatch_ratio_upper": {
+      "median": 0.006526215546206367,
+      "min": 0.006110029672673973,
+      "max": 0.006543409729913949
+    }
+  },
+  "representative": {
+    "span_us": 6999.195,
+    "busy_us": 6170.235,
+    "bubble_us": 828.96,
+    "bubble_ratio": 0.11843647733775098,
+    "kernel_sum_us": 6165.115,
+    "copy_sum_us": 5.12,
+    "concurrency": 1.0,
+    "n_kernels": 27,
+    "n_copies": 1,
+    "n_small_kernels": 2,
+    "n_queued_back_to_back": 21,
+    "n_gaps": 6,
+    "gap_us_by_cause": {
+      "host_late": 828.96
+    },
+    "gap_us_median": 141.04000000000002,
+    "largest_gaps": [
+      {
+        "gap_us": 235.52,
+        "after": "l2norm_fwd_kernel",
+        "before": "kda_gate_chunk_cumsum_vector_kernel",
+        "cause": "host_late",
+        "submit_lead_us": -228.065,
+        "sync_api": null
+      },
+      {
+        "gap_us": 159.68,
+        "after": "kda_gate_chunk_cumsum_vector_kernel",
+        "before": "recompute_w_u_fwd_kda_kernel",
+        "cause": "host_late",
+        "submit_lead_us": -151.689,
+        "sync_api": null
+      },
+      {
+        "gap_us": 142.56,
+        "after": "l2norm_fwd_kernel",
+        "before": "l2norm_fwd_kernel",
+        "cause": "host_late",
+        "submit_lead_us": -134.766,
+        "sync_api": null
+      },
+      {
+        "gap_us": 139.52,
+        "after": "chunk_gla_fwd_kernel_o",
+        "before": "kda_gate_chunk_cumsum_vector_kernel",
+        "cause": "host_late",
+        "submit_lead_us": -131.6,
+        "sync_api": null
+      },
+      {
+        "gap_us": 134.88,
+        "after": "vectorized_elementwise_kernel",
+        "before": "chunk_kda_fwd_kernel_intra_sub_chunk",
+        "cause": "host_late",
+        "submit_lead_us": -127.024,
+        "sync_api": null
+      },
+      {
+        "gap_us": 16.8,
+        "after": "recompute_w_u_fwd_kda_kernel",
+        "before": "chunk_gated_delta_rule_fwd_kernel_h_blockdim64",
+        "cause": "host_late",
+        "submit_lead_us": -12.713,
+        "sync_api": null
+      }
+    ],
+    "streams_busy_us": {
+      "q0": 6170.235
+    },
+    "per_kernel": {
+      "chunk_kda_bwd_kernel_wy_dqkg_fused": {
+        "count": 1,
+        "total_us": 1349.919,
+        "full_name": "chunk_kda_bwd_kernel_wy_dqkg_fused",
+        "mean_us": 1349.919,
+        "share_of_span": 0.19286775121996172
+      },
+      "chunk_kda_bwd_kernel_intra": {
+        "count": 1,
+        "total_us": 1104.32,
+        "full_name": "chunk_kda_bwd_kernel_intra",
+        "mean_us": 1104.32,
+        "share_of_span": 0.15777814448661595
+      },
+      "chunk_gated_delta_rule_bwd_kernel_dhu_blockdim64": {
+        "count": 1,
+        "total_us": 802.239,
+        "full_name": "chunk_gated_delta_rule_bwd_kernel_dhu_blockdim64",
+        "mean_us": 802.239,
+        "share_of_span": 0.11461875258511872
+      },
+      "chunk_gated_delta_rule_fwd_kernel_h_blockdim64": {
+        "count": 2,
+        "total_us": 798.24,
+        "full_name": "chunk_gated_delta_rule_fwd_kernel_h_blockdim64",
+        "mean_us": 399.12,
+        "share_of_span": 0.11404740116541974
+      },
+      "recompute_w_u_fwd_kda_kernel": {
+        "count": 2,
+        "total_us": 542.398,
+        "full_name": "recompute_w_u_fwd_kda_kernel",
+        "mean_us": 271.199,
+        "share_of_span": 0.07749434042057694
+      },
+      "chunk_kda_fwd_kernel_intra_sub_chunk": {
+        "count": 1,
+        "total_us": 210.56,
+        "full_name": "chunk_kda_fwd_kernel_intra_sub_chunk",
+        "mean_us": 210.56,
+        "share_of_span": 0.030083459597853753
+      },
+      "kda_gate_chunk_cumsum_vector_kernel": {
+        "count": 2,
+        "total_us": 206.39999999999998,
+        "full_name": "kda_gate_chunk_cumsum_vector_kernel",
+        "mean_us": 103.19999999999999,
+        "share_of_span": 0.02948910553285056
+      },
+      "chunk_gla_fwd_kernel_o": {
+        "count": 1,
+        "total_us": 204.64,
+        "full_name": "chunk_gla_fwd_kernel_o",
+        "mean_us": 204.64,
+        "share_of_span": 0.02923764804381075
+      },
+      "chunk_kda_fwd_kernel_inter_solve_fused": {
+        "count": 1,
+        "total_us": 173.28,
+        "full_name": "chunk_kda_fwd_kernel_inter_solve_fused",
+        "mean_us": 173.28,
+        "share_of_span": 0.02475713278455594
+      },
+      "l2norm_bwd_kernel": {
+        "count": 2,
+        "total_us": 158.4,
+        "full_name": "l2norm_bwd_kernel",
+        "mean_us": 79.2,
+        "share_of_span": 0.02263117401358299
+      },
+      "chunk_kda_bwd_kernel_dAv": {
+        "count": 1,
+        "total_us": 138.72,
+        "full_name": "chunk_kda_bwd_kernel_dAv",
+        "mean_us": 138.72,
+        "share_of_span": 0.019819422090683287
+      },
+      "kda_gate_bwd_kernel": {
+        "count": 1,
+        "total_us": 116.8,
+        "full_name": "kda_gate_bwd_kernel",
+        "mean_us": 116.8,
+        "share_of_span": 0.016687633363551096
+      },
+      "chunk_local_cumsum_vector_kernel": {
+        "count": 1,
+        "total_us": 103.199,
+        "full_name": "chunk_local_cumsum_vector_kernel",
+        "mean_us": 103.199,
+        "share_of_span": 0.014744409892851964
+      },
+      "l2norm_fwd_kernel": {
+        "count": 2,
+        "total_us": 82.24000000000001,
+        "full_name": "l2norm_fwd_kernel",
+        "mean_us": 41.120000000000005,
+        "share_of_span": 0.011749922669678444
+      },
+      "operator": {
+        "count": 3,
+        "total_us": 70.24000000000001,
+        "full_name": "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)",
+        "mean_us": 23.413333333333338,
+        "share_of_span": 0.01003543978986155
+      },
+      "bfloat16_copy_kernel_cuda": {
+        "count": 1,
+        "total_us": 59.84,
+        "full_name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(float)#1}, std::array<char*, 2ul>)",
+        "mean_us": 59.84,
+        "share_of_span": 0.008549554627353574
+      },
+      "vectorized_elementwise_kernel": {
+        "count": 3,
+        "total_us": 38.4,
+        "full_name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+        "mean_us": 12.799999999999999,
+        "share_of_span": 0.005486345215414058
+      },
+      "bfloat16tofloat32_copy_kernel_cuda": {
+        "count": 1,
+        "total_us": 5.28,
+        "full_name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat32_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(c10::BFloat16)#1}, std::array<char*, 2ul> >(int, at::native::bfloat16tofloat32_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(c10::BFloat16)#1}, std::array<char*, 2ul>)",
+        "mean_us": 5.28,
+        "share_of_span": 0.000754372467119433
+      }
+    },
+    "launch_floor_us": {
+      "stream": 60.928000000000004,
+      "graph": 46.732,
+      "note": "n_ops x back-to-back empty-kernel cost from machine.json (dispatch floor)"
+    },
+    "recoverable_bubble_us_upper": 818.9459999999999,
+    "embedded_dispatch_us_upper": 45.696000000000005,
+    "embedded_dispatch_ratio_upper": 0.00652875080634273,
+    "verdict": {
+      "system_bound": true,
+      "flags": [
+        {
+          "class": "A.launch",
+          "reason": "bubble_ratio 11.8% >= 10%; dominant gap cause: host_late"
+        }
+      ],
+      "next_step": "fix system-level bubbles first (Graph / fewer launches / remove syncs), then per-kernel analysis"
+    }
+  },
+  "windows": [
+    {
+      "span_us": 7122.715,
+      "busy_us": 6295.197,
+      "bubble_us": 827.518,
+      "bubble_ratio": 0.11618013636654001,
+      "kernel_sum_us": 6290.237,
+      "copy_sum_us": 4.96,
+      "concurrency": 1.0,
+      "n_kernels": 27,
+      "n_copies": 1,
+      "n_small_kernels": 2,
+      "n_queued_back_to_back": 20,
+      "n_gaps": 7,
+      "gap_us_by_cause": {
+        "host_late": 827.518
+      },
+      "gap_us_median": 121.76,
+      "streams_busy_us": {
+        "q0": 6295.197
+      },
+      "launch_floor_us": {
+        "stream": 60.928000000000004,
+        "graph": 46.732,
+        "note": "n_ops x back-to-back empty-kernel cost from machine.json (dispatch floor)"
+      },
+      "recoverable_bubble_us_upper": 815.835,
+      "embedded_dispatch_us_upper": 43.52,
+      "embedded_dispatch_ratio_upper": 0.006110029672673973,
+      "verdict": {
+        "system_bound": true,
+        "flags": [
+          {
+            "class": "A.launch",
+            "reason": "bubble_ratio 11.6% >= 10%; dominant gap cause: host_late"
+          }
+        ],
+        "next_step": "fix system-level bubbles first (Graph / fewer launches / remove syncs), then per-kernel analysis"
+      }
+    },
+    {
+      "span_us": 6983.515,
+      "busy_us": 6172.956,
+      "bubble_us": 810.559,
+      "bubble_ratio": 0.11606748177672704,
+      "kernel_sum_us": 6167.996,
+      "copy_sum_us": 4.96,
+      "concurrency": 1.0,
+      "n_kernels": 27,
+      "n_copies": 1,
+      "n_small_kernels": 2,
+      "n_queued_back_to_back": 21,
+      "n_gaps": 6,
+      "gap_us_by_cause": {
+        "host_late": 810.559
+      },
+      "gap_us_median": 137.3595,
+      "streams_busy_us": {
+        "q0": 6172.956
+      },
+      "launch_floor_us": {
+        "stream": 60.928000000000004,
+        "graph": 46.732,
+        "note": "n_ops x back-to-back empty-kernel cost from machine.json (dispatch floor)"
+      },
+      "recoverable_bubble_us_upper": 800.545,
+      "embedded_dispatch_us_upper": 45.696000000000005,
+      "embedded_dispatch_ratio_upper": 0.006543409729913949,
+      "verdict": {
+        "system_bound": true,
+        "flags": [
+          {
+            "class": "A.launch",
+            "reason": "bubble_ratio 11.6% >= 10%; dominant gap cause: host_late"
+          }
+        ],
+        "next_step": "fix system-level bubbles first (Graph / fewer launches / remove syncs), then per-kernel analysis"
+      }
+    },
+    {
+      "span_us": 6999.195,
+      "busy_us": 6170.235,
+      "bubble_us": 828.96,
+      "bubble_ratio": 0.11843647733775098,
+      "kernel_sum_us": 6165.115,
+      "copy_sum_us": 5.12,
+      "concurrency": 1.0,
+      "n_kernels": 27,
+      "n_copies": 1,
+      "n_small_kernels": 2,
+      "n_queued_back_to_back": 21,
+      "n_gaps": 6,
+      "gap_us_by_cause": {
+        "host_late": 828.96
+      },
+      "gap_us_median": 141.04000000000002,
+      "streams_busy_us": {
+        "q0": 6170.235
+      },
+      "launch_floor_us": {
+        "stream": 60.928000000000004,
+        "graph": 46.732,
+        "note": "n_ops x back-to-back empty-kernel cost from machine.json (dispatch floor)"
+      },
+      "recoverable_bubble_us_upper": 818.9459999999999,
+      "embedded_dispatch_us_upper": 45.696000000000005,
+      "embedded_dispatch_ratio_upper": 0.00652875080634273,
+      "verdict": {
+        "system_bound": true,
+        "flags": [
+          {
+            "class": "A.launch",
+            "reason": "bubble_ratio 11.8% >= 10%; dominant gap cause: host_late"
+          }
+        ],
+        "next_step": "fix system-level bubbles first (Graph / fewer launches / remove syncs), then per-kernel analysis"
+      }
+    },
+    {
+      "span_us": 7001.914,
+      "busy_us": 6177.115,
+      "bubble_us": 824.799,
+      "bubble_ratio": 0.11779621971935102,
+      "kernel_sum_us": 6172.315,
+      "copy_sum_us": 4.8,
+      "concurrency": 1.0,
+      "n_kernels": 27,
+      "n_copies": 1,
+      "n_small_kernels": 2,
+      "n_queued_back_to_back": 21,
+      "n_gaps": 6,
+      "gap_us_by_cause": {
+        "host_late": 824.799
+      },
+      "gap_us_median": 140.08,
+      "streams_busy_us": {
+        "q0": 6177.115
+      },
+      "launch_floor_us": {
+        "stream": 60.928000000000004,
+        "graph": 46.732,
+        "note": "n_ops x back-to-back empty-kernel cost from machine.json (dispatch floor)"
+      },
+      "recoverable_bubble_us_upper": 814.7850000000001,
+      "embedded_dispatch_us_upper": 45.696000000000005,
+      "embedded_dispatch_ratio_upper": 0.006526215546206367,
+      "verdict": {
+        "system_bound": true,
+        "flags": [
+          {
+            "class": "A.launch",
+            "reason": "bubble_ratio 11.8% >= 10%; dominant gap cause: host_late"
+          }
+        ],
+        "next_step": "fix system-level bubbles first (Graph / fewer launches / remove syncs), then per-kernel analysis"
+      }
+    },
+    {
+      "span_us": 6982.555,
+      "busy_us": 6160.476,
+      "bubble_us": 822.079,
+      "bubble_ratio": 0.11773326525892026,
+      "kernel_sum_us": 6155.356,
+      "copy_sum_us": 5.12,
+      "concurrency": 1.0,
+      "n_kernels": 27,
+      "n_copies": 1,
+      "n_small_kernels": 2,
+      "n_queued_back_to_back": 20,
+      "n_gaps": 7,
+      "gap_us_by_cause": {
+        "host_late": 822.0790000000001
+      },
+      "gap_us_median": 127.84,
+      "streams_busy_us": {
+        "q0": 6160.476
+      },
+      "launch_floor_us": {
+        "stream": 60.928000000000004,
+        "graph": 46.732,
+        "note": "n_ops x back-to-back empty-kernel cost from machine.json (dispatch floor)"
+      },
+      "recoverable_bubble_us_upper": 810.396,
+      "embedded_dispatch_us_upper": 43.52,
+      "embedded_dispatch_ratio_upper": 0.006232675575058127,
+      "verdict": {
+        "system_bound": true,
+        "flags": [
+          {
+            "class": "A.launch",
+            "reason": "bubble_ratio 11.8% >= 10%; dominant gap cause: host_late"
+          }
+        ],
+        "next_step": "fix system-level bubbles first (Graph / fewer launches / remove syncs), then per-kernel analysis"
+      }
+    }
+  ]
+}

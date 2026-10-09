@@ -1,0 +1,14 @@
+windows=5 span_us(median)=4481.9 bubble_ratio(median)=0.00% -> /tmp/kra_tl/g2_8192_12.timeline.{json,md}
+g2_8192_12 reference_ms=4.8387
+windows=5 span_us(median)=8437.6 bubble_ratio(median)=0.00% -> /tmp/kra_tl/g2_8192_24.timeline.{json,md}
+g2_8192_24 reference_ms=8.7323
+windows=5 span_us(median)=16183.3 bubble_ratio(median)=0.00% -> /tmp/kra_tl/g2_8192_48.timeline.{json,md}
+g2_8192_48 reference_ms=16.5249
+windows=5 span_us(median)=8531.7 bubble_ratio(median)=0.00% -> /tmp/kra_tl/g2_16384_12.timeline.{json,md}
+g2_16384_12 reference_ms=8.8731
+windows=5 span_us(median)=16572.0 bubble_ratio(median)=0.00% -> /tmp/kra_tl/g2_32768_12.timeline.{json,md}
+g2_32768_12 reference_ms=16.8645
+windows=5 span_us(median)=6999.2 bubble_ratio(median)=11.77% -> /tmp/kra_tl/fla_8192_12.timeline.{json,md}
+fla_8192_12 reference_ms=7.4829
+windows=5 span_us(median)=22233.6 bubble_ratio(median)=0.40% -> /tmp/kra_tl/fla_8192_48.timeline.{json,md}
+fla_8192_48 reference_ms=22.7984
