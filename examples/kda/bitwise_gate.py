@@ -20,6 +20,10 @@ def dump(a):
     g = {}
     exec(compile(src, "kda_op_bench_tp", "exec"), g)
     L, D_O, CU, CU_CPU = g["LEAVES"], g["D_O"], g["CU"], g["CU_CPU"]
+    if a.gate_extreme:   # every token's decay saturates at lower_bound: widest exp2 argument ranges
+        with torch.no_grad():
+            L["g"].mul_(0).add_(8.0)
+            L["A_log"].fill_(float(torch.log(torch.tensor(16.0))))
     from hip_kda.fla import chunk_kda
     kw = dict(A_log=L["A_log"], dt_bias=L["dt_bias"], scale=None, output_final_state=False,
               use_qk_l2norm_in_kernel=True, use_gate_in_kernel=True, use_beta_sigmoid_in_kernel=False,
@@ -67,6 +71,7 @@ d.add_argument("--T", type=int, default=8192)
 d.add_argument("--H", type=int, default=12)
 d.add_argument("--out", required=True)
 d.add_argument("--keep-state", action="store_true")
+d.add_argument("--gate-extreme", action="store_true", help="saturate every token's decay at lower_bound")
 c = sp.add_parser("cmp")
 c.add_argument("base")
 c.add_argument("cand")

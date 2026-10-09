@@ -9,8 +9,8 @@ KRA=${KRA:-$(cd "$(dirname "$0")/../.." && pwd)}; G=$KRA/examples/kda/bitwise_ga
 mkdir -p "$CACHE"; fail=0
 for s in $SHAPES; do
   T=${s%:*}; H=${s#*:}
-  for ks in "" "--keep-state"; do
-    tag="${T}_${H}${ks:+_ks}"
+  for ks in "" "--keep-state" "--gate-extreme"; do
+    tag="${T}_${H}${ks:+_${ks#--}}"
     [ -f "$CACHE/base_$tag.pt" ] || PYTHONPATH=/opt/kda_env:$BASE:/opt/kda_env/takeover \
       python3 "$G" dump --tree "$BASE" --T "$T" --H "$H" --out "$CACHE/base_$tag.pt" $ks > /dev/null 2>&1
     PYTHONPATH=/opt/kda_env:$CAND:/opt/kda_env/takeover \
