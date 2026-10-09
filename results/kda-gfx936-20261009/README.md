@@ -29,4 +29,4 @@
 
 - 这是单算子 bench 的结果。在 Megatron 中，主机侧还有其他算子和框架开销，空泡可能不同，需要用同样的工具在模型内采集一次。
 - hipprof 会把相互依赖的连续 kernel 之间的派发开销并入 kernel 时长（见 [docs/methodology.md](../../docs/methodology.md) §2.3）。所以 trace 里 kernel 时长本身不能直接用于判断短 kernel 的类型，逐 kernel 分类要用 L2 的口径。
-- 下一步（P1）：逐 kernel 先验上限（op_spec）与实测 SOL% 分类。
+- P1（逐 kernel 先验上限与实测 SOL% 分类）的结果见 [waterlevel/README.md](waterlevel/README.md)。

@@ -1,0 +1,998 @@
+{
+  "schema": "kra.waterlevel/1",
+  "operator": "Kimi K3 KDA fwd+bwd, hip_kda G2 (R5 tree), K=V=128, chunk 64, bf16",
+  "shape": {
+    "T": 8192,
+    "H": 24
+  },
+  "machine": "gfx936-bw1000",
+  "totals": {
+    "t_us": 8465.753999999999,
+    "T_lower_prior_us": 3455.949868578256,
+    "T_lower_impl_us": 4531.04234265233,
+    "attainment_prior": 0.4082270602923563,
+    "attainment_impl": 0.5352201756219624,
+    "headroom_x": 2.4496171304367698
+  },
+  "fusion_floor": {
+    "fwd": {
+      "in_MB": 202.125408,
+      "out_MB": 102.23616,
+      "T_us": 227.27118279569893
+    },
+    "bwd": {
+      "in_MB": 305.934432,
+      "out_MB": 202.125408,
+      "T_us": 379.3756272401434
+    }
+  },
+  "critical_path_min_us": 38.92224000000001,
+  "audit": [],
+  "priority": [
+    {
+      "launcher": "wy_s4_split",
+      "recoverable_us": 1388.0787132616488,
+      "share_of_total": 0.16396397925827386
+    },
+    {
+      "launcher": "fwd_prep",
+      "recoverable_us": 874.2525448028673,
+      "share_of_total": 0.1032693065263729
+    },
+    {
+      "launcher": "dhu_bn",
+      "recoverable_us": 681.0375663082436,
+      "share_of_total": 0.0804461795497771
+    },
+    {
+      "launcher": "fwd_h_o",
+      "recoverable_us": 519.3159892473118,
+      "share_of_total": 0.06134314666446862
+    },
+    {
+      "launcher": "fwd_h_bn",
+      "recoverable_us": 447.4209354838709,
+      "share_of_total": 0.052850689434617515
+    },
+    {
+      "launcher": "wu",
+      "recoverable_us": 446.1172759856631,
+      "share_of_total": 0.05269669730370894
+    },
+    {
+      "launcher": "dav",
+      "recoverable_us": 324.34710035842295,
+      "share_of_total": 0.03831284258418364
+    },
+    {
+      "launcher": "bwd_tail",
+      "recoverable_us": 245.24387455197126,
+      "share_of_total": 0.028968934669253477
+    },
+    {
+      "launcher": "head_gate",
+      "recoverable_us": 61.00064516129031,
+      "share_of_total": 0.007205577336796027
+    },
+    {
+      "launcher": "(unattributed)",
+      "recoverable_us": 9.808649940262843,
+      "share_of_total": 0.0011586268559496112
+    },
+    {
+      "launcher": "(unattributed)",
+      "recoverable_us": 8.368793309438471,
+      "share_of_total": 0.0009885467153236997
+    },
+    {
+      "launcher": "l2n_apply",
+      "recoverable_us": 4.812043010752689,
+      "share_of_total": 0.0005684128089184601
+    }
+  ],
+  "rows": [
+    {
+      "launcher": "fwd_prep",
+      "kernels": [
+        {
+          "t_us": 880.64,
+          "ctas": 3072,
+          "block": 256,
+          "active_cus": 80,
+          "hbm_GBps": 442.53106831395354,
+          "hbm_rd_MB": 162.315328,
+          "hbm_wr_MB": 227.395232,
+          "sol_pipe": 0.7958139534883722,
+          "sol_mem": 0.3304443461125698,
+          "sol_pipe_active": 0.7958139534883722,
+          "sol_mem_active": 0.3304443461125698,
+          "mmac_slot_share": 0.4108708357685564,
+          "lds_conflict_ratio": 0.000930232558139535,
+          "vgpr": 156,
+          "lds_bytes": 21504,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 291.00250896057344,
+            "par_mem_impl": 291.00250896057344,
+            "pipe": 700.8256,
+            "par_pipe": 700.8256,
+            "mmac_impl": 297.3654950068809,
+            "launch": 2.176
+          },
+          "name": "g2_fwd_prep_a_kernel",
+          "classification": {
+            "class": "B.compute.valu",
+            "subtypes": [],
+            "regime": "throughput",
+            "causes": [],
+            "reasons": [
+              "pipe 80%, HBM 33% of attainable"
+            ]
+          }
+        },
+        {
+          "t_us": 353.6,
+          "ctas": 3072,
+          "block": 256,
+          "active_cus": 80,
+          "hbm_GBps": 996.7303167420814,
+          "hbm_rd_MB": 176.202432,
+          "hbm_wr_MB": 176.241408,
+          "sol_pipe": 0.2407239819004525,
+          "sol_mem": 0.7442729366353654,
+          "sol_pipe_active": 0.2407239819004525,
+          "sol_mem_active": 0.7442729366353654,
+          "mmac_slot_share": 0.23097744360902256,
+          "lds_conflict_ratio": 0.03706787330316742,
+          "vgpr": 72,
+          "lds_bytes": 17408,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 263.1749103942652,
+            "par_mem_impl": 263.1749103942652,
+            "pipe": 85.12,
+            "par_pipe": 85.12,
+            "mmac_impl": 20.30376068325787,
+            "launch": 2.176
+          },
+          "name": "g2_fwd_prep_b_kernel",
+          "classification": {
+            "class": "B.memory.hbm",
+            "subtypes": [],
+            "regime": "throughput",
+            "causes": [],
+            "reasons": [
+              "pipe 24%, HBM 74% of attainable"
+            ]
+          }
+        }
+      ],
+      "t_us": 1234.24,
+      "interface_MB": {
+        "in": 202.125408,
+        "out": 279.969792
+      },
+      "components_us": {
+        "launch": 4.352,
+        "mem_min": 359.98745519713265,
+        "par_mem_min": 359.98745519713265
+      },
+      "critical_path": {},
+      "T_lower_prior_us": 359.98745519713265,
+      "binding_prior": "par_mem_min",
+      "T_lower_impl_us": 964.0005103942652,
+      "attainment_prior": 0.2916673055460305,
+      "attainment_impl": 0.7810478597308994,
+      "headroom_x": 3.4285639184957657,
+      "recoverable_us": 874.2525448028673,
+      "dominant_class": "B.compute.valu",
+      "verdict": "throughput_bound"
+    },
+    {
+      "launcher": "fwd_h_o",
+      "kernels": [
+        {
+          "t_us": 727.199,
+          "ctas": 96,
+          "block": 256,
+          "active_cus": 80,
+          "hbm_GBps": 384.1807703255918,
+          "hbm_rd_MB": 229.043776,
+          "hbm_wr_MB": 50.332096,
+          "sol_pipe": 0.2352170451279499,
+          "sol_mem": 0.2868733350698863,
+          "sol_pipe_active": 0.2352170451279499,
+          "sol_mem_active": 0.2868733350698863,
+          "mmac_slot_share": 0.3832525770302883,
+          "lds_conflict_ratio": 0.04956662481659079,
+          "vgpr": 176,
+          "lds_bytes": 14848,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 208.61400238948627,
+            "par_mem_impl": 208.61400238948627,
+            "pipe": 171.0496,
+            "par_pipe": 171.0496,
+            "mmac_impl": 67.69903016881848,
+            "launch": 2.176
+          },
+          "name": "g2_fwd_h_v8o4_kernel",
+          "classification": {
+            "class": "C",
+            "subtypes": [
+              "C.serial"
+            ],
+            "regime": "latency",
+            "causes": [],
+            "reasons": [
+              "pipe 24%, HBM 29% of attainable"
+            ]
+          }
+        }
+      ],
+      "t_us": 727.199,
+      "interface_MB": {
+        "in": 228.06528,
+        "out": 50.331648
+      },
+      "components_us": {
+        "launch": 2.176,
+        "mem_min": 207.88301075268816,
+        "par_mem_min": 207.88301075268816,
+        "cp_min": 12.974080000000002
+      },
+      "critical_path": {
+        "steps": 128,
+        "chain_impl_cycles": 760.24,
+        "chain_min_cycles": 152.04000000000002,
+        "T_cp_impl": 64.87381333333333,
+        "T_cp_min": 12.974080000000002
+      },
+      "T_lower_prior_us": 207.88301075268816,
+      "binding_prior": "par_mem_min",
+      "T_lower_impl_us": 208.61400238948627,
+      "attainment_prior": 0.28586811966557735,
+      "attainment_impl": 0.2868733350698863,
+      "headroom_x": 3.4981165481826006,
+      "recoverable_us": 519.3159892473118,
+      "dominant_class": "C",
+      "verdict": "large_headroom"
+    },
+    {
+      "launcher": "l2n_apply",
+      "kernels": [
+        {
+          "t_us": 156.32,
+          "ctas": 24576,
+          "block": 256,
+          "active_cus": 80,
+          "hbm_GBps": 1298.0032753326511,
+          "hbm_rd_MB": 102.240576,
+          "hbm_wr_MB": 100.663296,
+          "sol_pipe": 0.3039508700102354,
+          "sol_mem": 0.9692378101348947,
+          "sol_pipe_active": 0.3039508700102354,
+          "sol_mem_active": 0.9692378101348947,
+          "mmac_slot_share": 0.0,
+          "lds_conflict_ratio": 0.0,
+          "vgpr": 20,
+          "lds_bytes": 0,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 151.51125448028674,
+            "par_mem_impl": 151.51125448028674,
+            "pipe": 47.5136,
+            "par_pipe": 47.5136,
+            "mmac_impl": 0.0,
+            "launch": 2.176
+          },
+          "name": "g2_l2n_apply_kernel",
+          "classification": {
+            "class": "B.memory.hbm",
+            "subtypes": [],
+            "regime": "near-limit",
+            "causes": [],
+            "reasons": [
+              "pipe 30%, HBM 97% of attainable"
+            ]
+          }
+        }
+      ],
+      "t_us": 156.32,
+      "interface_MB": {
+        "in": 102.23616,
+        "out": 100.663296
+      },
+      "components_us": {
+        "launch": 2.176,
+        "mem_min": 151.5079569892473,
+        "par_mem_min": 151.5079569892473
+      },
+      "critical_path": {},
+      "T_lower_prior_us": 151.5079569892473,
+      "binding_prior": "par_mem_min",
+      "T_lower_impl_us": 151.51125448028674,
+      "attainment_prior": 0.9692167156425749,
+      "attainment_impl": 0.9692378101348947,
+      "headroom_x": 1.031760992005814,
+      "recoverable_us": 4.812043010752689,
+      "dominant_class": "B.memory.hbm",
+      "verdict": "at_ceiling"
+    },
+    {
+      "launcher": "head_gate",
+      "kernels": [
+        {
+          "t_us": 173.76,
+          "ctas": 3072,
+          "block": 256,
+          "active_cus": 80,
+          "hbm_GBps": 869.118232044199,
+          "hbm_rd_MB": 50.354688,
+          "hbm_wr_MB": 100.663296,
+          "sol_pipe": 0.9462983425414366,
+          "sol_mem": 0.6489831481811521,
+          "sol_pipe_active": 0.9462983425414366,
+          "sol_mem_active": 0.6489831481811521,
+          "mmac_slot_share": 0.24287716020551145,
+          "lds_conflict_ratio": 0.0,
+          "vgpr": 96,
+          "lds_bytes": 2048,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 112.76731182795699,
+            "par_mem_impl": 112.76731182795699,
+            "pipe": 164.4288,
+            "par_pipe": 164.4288,
+            "mmac_impl": 41.24201388786755,
+            "launch": 2.176
+          },
+          "name": "g2_gate_kernel",
+          "classification": {
+            "class": "B.compute.valu",
+            "subtypes": [],
+            "regime": "near-limit",
+            "causes": [],
+            "reasons": [
+              "pipe 95%, HBM 65% of attainable"
+            ]
+          }
+        }
+      ],
+      "t_us": 173.76,
+      "interface_MB": {
+        "in": 50.344032,
+        "out": 100.663296
+      },
+      "components_us": {
+        "launch": 2.176,
+        "mem_min": 112.75935483870968,
+        "par_mem_min": 112.75935483870968
+      },
+      "critical_path": {},
+      "T_lower_prior_us": 112.75935483870968,
+      "binding_prior": "par_mem_min",
+      "T_lower_impl_us": 164.4288,
+      "attainment_prior": 0.6489373551951525,
+      "attainment_impl": 0.9462983425414365,
+      "headroom_x": 1.5409807926672272,
+      "recoverable_us": 61.00064516129031,
+      "dominant_class": "B.compute.valu",
+      "verdict": "hardware_busy_redundant_work"
+    },
+    {
+      "launcher": "wu",
+      "kernels": [
+        {
+          "t_us": 954.08,
+          "ctas": 3072,
+          "block": 256,
+          "active_cus": 80,
+          "hbm_GBps": 834.790910615462,
+          "hbm_rd_MB": 391.16864,
+          "hbm_wr_MB": 405.288672,
+          "sol_pipe": 0.35777964112024147,
+          "sol_mem": 0.6233504410211036,
+          "sol_pipe_active": 0.35777964112024147,
+          "sol_mem_active": 0.6233504410211036,
+          "mmac_slot_share": 0.2111894405279736,
+          "lds_conflict_ratio": 0.19576723125943318,
+          "vgpr": 88,
+          "lds_bytes": 26368,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 594.7261887694145,
+            "par_mem_impl": 594.7261887694145,
+            "pipe": 341.3504,
+            "par_pipe": 341.3504,
+            "mmac_impl": 74.44712250527886,
+            "launch": 2.176
+          },
+          "name": "g2_wu_kernel",
+          "classification": {
+            "class": "B.memory.hbm",
+            "subtypes": [],
+            "regime": "throughput",
+            "causes": [
+              {
+                "id": "D.lds_conflict",
+                "value": 0.196
+              }
+            ],
+            "reasons": [
+              "pipe 36%, HBM 62% of attainable"
+            ]
+          }
+        }
+      ],
+      "t_us": 954.08,
+      "interface_MB": {
+        "in": 277.610496,
+        "out": 402.653184
+      },
+      "components_us": {
+        "launch": 2.176,
+        "mem_min": 507.9627240143369,
+        "par_mem_min": 507.9627240143369
+      },
+      "critical_path": {},
+      "T_lower_prior_us": 507.9627240143369,
+      "binding_prior": "par_mem_min",
+      "T_lower_impl_us": 594.7261887694145,
+      "attainment_prior": 0.5324110389216176,
+      "attainment_impl": 0.6233504410211036,
+      "headroom_x": 1.87824805816474,
+      "recoverable_us": 446.1172759856631,
+      "dominant_class": "B.memory.hbm",
+      "verdict": "throughput_bound"
+    },
+    {
+      "launcher": "(unattributed)",
+      "kernels": [
+        {
+          "t_us": 10.72,
+          "ctas": 768,
+          "block": 128,
+          "active_cus": 80,
+          "hbm_GBps": 293.7253731343284,
+          "hbm_rd_MB": 1.575872,
+          "hbm_wr_MB": 1.572864,
+          "sol_pipe": 0.07283582089552237,
+          "sol_mem": 0.2193289823285009,
+          "sol_pipe_active": 0.07283582089552237,
+          "sol_mem_active": 0.2193289823285009,
+          "mmac_slot_share": 0.0,
+          "lds_conflict_ratio": 0.0,
+          "vgpr": 16,
+          "lds_bytes": 0,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 2.3512066905615296,
+            "par_mem_impl": 2.3512066905615296,
+            "pipe": 0.7808,
+            "par_pipe": 0.7808,
+            "mmac_impl": 0.0,
+            "launch": 2.176
+          },
+          "name": "elementwise_kernel_manual_unroll",
+          "classification": {
+            "class": "C",
+            "subtypes": [
+              "C.unresolved"
+            ],
+            "regime": "latency",
+            "causes": [],
+            "reasons": [
+              "pipe 7%, HBM 22% of attainable",
+              "latency subtype (mem latency / sync / divergence) needs L3 (SQTT)"
+            ]
+          }
+        }
+      ],
+      "t_us": 10.72,
+      "interface_MB": null,
+      "components_us": {
+        "launch": 2.176
+      },
+      "critical_path": {},
+      "T_lower_prior_us": 2.3512066905615296,
+      "binding_prior": "par_mem_impl",
+      "T_lower_impl_us": 2.3512066905615296,
+      "attainment_prior": 0.2193289823285009,
+      "attainment_impl": 0.2193289823285009,
+      "headroom_x": 4.559360962621191,
+      "recoverable_us": 8.368793309438471,
+      "dominant_class": "C",
+      "verdict": "large_headroom"
+    },
+    {
+      "launcher": "(unattributed)",
+      "kernels": [
+        {
+          "t_us": 12.16,
+          "ctas": 768,
+          "block": 128,
+          "active_cus": 80,
+          "hbm_GBps": 258.95789473684215,
+          "hbm_rd_MB": 1.576064,
+          "hbm_wr_MB": 1.572864,
+          "sol_pipe": 0.19473684210526318,
+          "sol_mem": 0.19336760359680563,
+          "sol_pipe_active": 0.19473684210526318,
+          "sol_mem_active": 0.19336760359680563,
+          "mmac_slot_share": 0.0,
+          "lds_conflict_ratio": 0.0,
+          "vgpr": 16,
+          "lds_bytes": 0,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 2.3513500597371566,
+            "par_mem_impl": 2.3513500597371566,
+            "pipe": 2.368,
+            "par_pipe": 2.368,
+            "mmac_impl": 0.0,
+            "launch": 2.176
+          },
+          "name": "elementwise_kernel_manual_unroll",
+          "classification": {
+            "class": "C",
+            "subtypes": [
+              "C.unresolved"
+            ],
+            "regime": "latency",
+            "causes": [],
+            "reasons": [
+              "pipe 19%, HBM 19% of attainable",
+              "latency subtype (mem latency / sync / divergence) needs L3 (SQTT)"
+            ]
+          }
+        }
+      ],
+      "t_us": 12.16,
+      "interface_MB": null,
+      "components_us": {
+        "launch": 2.176
+      },
+      "critical_path": {},
+      "T_lower_prior_us": 2.3513500597371566,
+      "binding_prior": "par_mem_impl",
+      "T_lower_impl_us": 2.368,
+      "attainment_prior": 0.19336760359680563,
+      "attainment_impl": 0.19473684210526315,
+      "headroom_x": 5.1714970936140805,
+      "recoverable_us": 9.808649940262843,
+      "dominant_class": "C",
+      "verdict": "large_headroom"
+    },
+    {
+      "launcher": "fwd_h_bn",
+      "kernels": [
+        {
+          "t_us": 711.679,
+          "ctas": 96,
+          "block": 256,
+          "active_cus": 80,
+          "hbm_GBps": 497.29449372540154,
+          "hbm_rd_MB": 152.587456,
+          "hbm_wr_MB": 201.326592,
+          "sol_pipe": 0.20178535547627516,
+          "sol_mem": 0.3713369875488362,
+          "sol_pipe_active": 0.20178535547627516,
+          "sol_mem_active": 0.3713369875488362,
+          "mmac_slot_share": 0.3195846424671881,
+          "lds_conflict_ratio": 0.009208646032832219,
+          "vgpr": 176,
+          "lds_bytes": 14848,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 264.2727359617682,
+            "par_mem_impl": 264.2727359617682,
+            "pipe": 143.6064,
+            "par_pipe": 143.6064,
+            "mmac_impl": 47.39526948556061,
+            "launch": 2.176
+          },
+          "name": "g2_fwd_h_v8o4_kernel",
+          "classification": {
+            "class": "C",
+            "subtypes": [
+              "C.serial"
+            ],
+            "regime": "latency",
+            "causes": [],
+            "reasons": [
+              "pipe 20%, HBM 37% of attainable"
+            ]
+          }
+        }
+      ],
+      "t_us": 711.679,
+      "interface_MB": {
+        "in": 152.567808,
+        "out": 201.326592
+      },
+      "components_us": {
+        "launch": 2.176,
+        "mem_min": 264.2580645161291,
+        "par_mem_min": 264.2580645161291,
+        "cp_min": 12.974080000000002
+      },
+      "critical_path": {
+        "steps": 128,
+        "chain_impl_cycles": 760.24,
+        "chain_min_cycles": 152.04000000000002,
+        "T_cp_impl": 64.87381333333333,
+        "T_cp_min": 12.974080000000002
+      },
+      "T_lower_prior_us": 264.2580645161291,
+      "binding_prior": "par_mem_min",
+      "T_lower_impl_us": 264.2727359617682,
+      "attainment_prior": 0.3713163722916218,
+      "attainment_impl": 0.3713369875488362,
+      "headroom_x": 2.693121215820312,
+      "recoverable_us": 447.4209354838709,
+      "dominant_class": "C",
+      "verdict": "large_headroom"
+    },
+    {
+      "launcher": "dav",
+      "kernels": [
+        {
+          "t_us": 568.639,
+          "ctas": 3072,
+          "block": 256,
+          "active_cus": 80,
+          "hbm_GBps": 608.676253299545,
+          "hbm_rd_MB": 144.104256,
+          "hbm_wr_MB": 202.0128,
+          "sol_pipe": 0.1686440782288939,
+          "sol_mem": 0.45450735760121347,
+          "sol_pipe_active": 0.1686440782288939,
+          "sol_mem_active": 0.45450735760121347,
+          "mmac_slot_share": 0.1366791243993593,
+          "lds_conflict_ratio": 0.08067543731611795,
+          "vgpr": 76,
+          "lds_bytes": 17408,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 258.45060931899644,
+            "par_mem_impl": 258.45060931899644,
+            "pipe": 95.8976,
+            "par_pipe": 95.8976,
+            "mmac_impl": 13.535840455505246,
+            "launch": 2.176
+          },
+          "name": "g2_dav_kernel",
+          "classification": {
+            "class": "C",
+            "subtypes": [
+              "C.unresolved"
+            ],
+            "regime": "latency",
+            "causes": [
+              {
+                "id": "D.lds_conflict",
+                "value": 0.081
+              }
+            ],
+            "reasons": [
+              "pipe 17%, HBM 45% of attainable",
+              "latency subtype (mem latency / sync / divergence) needs L3 (SQTT)"
+            ]
+          }
+        }
+      ],
+      "t_us": 568.639,
+      "interface_MB": {
+        "in": 125.82912,
+        "out": 201.326592
+      },
+      "components_us": {
+        "launch": 2.176,
+        "mem_min": 244.29189964157706,
+        "par_mem_min": 244.29189964157706
+      },
+      "critical_path": {},
+      "T_lower_prior_us": 244.29189964157706,
+      "binding_prior": "par_mem_min",
+      "T_lower_impl_us": 258.45060931899644,
+      "attainment_prior": 0.42960806353693126,
+      "attainment_impl": 0.45450735760121347,
+      "headroom_x": 2.3277030504666842,
+      "recoverable_us": 324.34710035842295,
+      "dominant_class": "C",
+      "verdict": "large_headroom"
+    },
+    {
+      "launcher": "dhu_bn",
+      "kernels": [
+        {
+          "t_us": 982.879,
+          "ctas": 96,
+          "block": 256,
+          "active_cus": 80,
+          "hbm_GBps": 413.6853956590792,
+          "hbm_rd_MB": 255.60672,
+          "hbm_wr_MB": 150.995968,
+          "sol_pipe": 0.1937849928628041,
+          "sol_mem": 0.3089048653368273,
+          "sol_pipe_active": 0.1937849928628041,
+          "sol_mem_active": 0.3089048653368273,
+          "mmac_slot_share": 0.3097730212866047,
+          "lds_conflict_ratio": 0.006667758696645264,
+          "vgpr": 188,
+          "lds_bytes": 20992,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 303.6161051373955,
+            "par_mem_impl": 303.6161051373955,
+            "pipe": 190.4672,
+            "par_pipe": 190.4672,
+            "mmac_impl": 60.931109941065856,
+            "launch": 2.176
+          },
+          "name": "g2_dhu_v8b4_kernel",
+          "classification": {
+            "class": "C",
+            "subtypes": [
+              "C.serial"
+            ],
+            "regime": "latency",
+            "causes": [],
+            "reasons": [
+              "pipe 19%, HBM 31% of attainable"
+            ]
+          }
+        }
+      ],
+      "t_us": 982.879,
+      "interface_MB": {
+        "in": 253.231104,
+        "out": 150.994944
+      },
+      "components_us": {
+        "launch": 2.176,
+        "mem_min": 301.8414336917563,
+        "par_mem_min": 301.8414336917563,
+        "cp_min": 12.974080000000002
+      },
+      "critical_path": {
+        "steps": 128,
+        "chain_impl_cycles": 760.24,
+        "chain_min_cycles": 152.04000000000002,
+        "T_cp_impl": 64.87381333333333,
+        "T_cp_min": 12.974080000000002
+      },
+      "T_lower_prior_us": 301.8414336917563,
+      "binding_prior": "par_mem_min",
+      "T_lower_impl_us": 303.6161051373955,
+      "attainment_prior": 0.30709928047272994,
+      "attainment_impl": 0.3089048653368273,
+      "headroom_x": 3.2562759458786776,
+      "recoverable_us": 681.0375663082436,
+      "dominant_class": "C",
+      "verdict": "large_headroom"
+    },
+    {
+      "launcher": "wy_s4_split",
+      "kernels": [
+        {
+          "t_us": 800.48,
+          "ctas": 3072,
+          "block": 256,
+          "active_cus": 80,
+          "hbm_GBps": 671.8541674995002,
+          "hbm_rd_MB": 383.610752,
+          "hbm_wr_MB": 154.195072,
+          "sol_pipe": 0.18612832300619628,
+          "sol_mem": 0.5016832194590056,
+          "sol_pipe_active": 0.18612832300619628,
+          "sol_mem_active": 0.5016832194590056,
+          "mmac_slot_share": 0.2639175257731959,
+          "lds_conflict_ratio": 0.004093543873675795,
+          "vgpr": 184,
+          "lds_bytes": 26112,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 401.5873835125448,
+            "par_mem_impl": 401.5873835125448,
+            "pipe": 148.992,
+            "par_pipe": 148.992,
+            "mmac_impl": 40.60752136651574,
+            "launch": 2.176
+          },
+          "name": "p3_wy_s4a_kernel",
+          "classification": {
+            "class": "C",
+            "subtypes": [
+              "C.unresolved"
+            ],
+            "regime": "latency",
+            "causes": [],
+            "reasons": [
+              "pipe 19%, HBM 50% of attainable",
+              "latency subtype (mem latency / sync / divergence) needs L3 (SQTT)"
+            ]
+          }
+        },
+        {
+          "t_us": 1434.399,
+          "ctas": 3072,
+          "block": 256,
+          "active_cus": 80,
+          "hbm_GBps": 693.417594407135,
+          "hbm_rd_MB": 686.408064,
+          "hbm_wr_MB": 308.22944,
+          "sol_pipe": 0.3505177894481708,
+          "sol_mem": 0.517784942060286,
+          "sol_pipe_active": 0.3505177894481708,
+          "sol_mem_active": 0.517784942060286,
+          "mmac_slot_share": 0.716906605913188,
+          "lds_conflict_ratio": 0.05025770374909632,
+          "vgpr": 256,
+          "lds_bytes": 30720,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 742.7102031063322,
+            "par_mem_impl": 742.7102031063322,
+            "pipe": 502.78236666666663,
+            "par_pipe": 502.78236666666663,
+            "mmac_impl": 372.2356125263943,
+            "launch": 2.176
+          },
+          "name": "p3_wy_s4b_kernel",
+          "classification": {
+            "class": "C",
+            "subtypes": [
+              "C.unresolved"
+            ],
+            "regime": "latency",
+            "causes": [
+              {
+                "id": "D.lds_conflict",
+                "value": 0.05
+              }
+            ],
+            "reasons": [
+              "pipe 35%, HBM 52% of attainable",
+              "latency subtype (mem latency / sync / divergence) needs L3 (SQTT)"
+            ]
+          }
+        }
+      ],
+      "t_us": 2234.879,
+      "interface_MB": {
+        "in": 780.926976,
+        "out": 353.107968
+      },
+      "components_us": {
+        "launch": 4.352,
+        "mem_min": 846.8002867383512,
+        "par_mem_min": 846.8002867383512
+      },
+      "critical_path": {},
+      "T_lower_prior_us": 846.8002867383512,
+      "binding_prior": "par_mem_min",
+      "T_lower_impl_us": 1144.297586618877,
+      "attainment_prior": 0.3789020733285119,
+      "attainment_impl": 0.5120176916150168,
+      "headroom_x": 2.639204349597185,
+      "recoverable_us": 1388.0787132616488,
+      "dominant_class": "C",
+      "verdict": "large_headroom"
+    },
+    {
+      "launcher": "bwd_tail",
+      "kernels": [
+        {
+          "t_us": 690.559,
+          "ctas": 3072,
+          "block": 256,
+          "active_cus": 80,
+          "hbm_GBps": 911.9150369483274,
+          "hbm_rd_MB": 477.009472,
+          "hbm_wr_MB": 152.721664,
+          "sol_pipe": 0.5599637395211705,
+          "sol_mem": 0.6809401410904475,
+          "sol_pipe_active": 0.5599637395211705,
+          "sol_mem_active": 0.6809401410904475,
+          "mmac_slot_share": 0.10327706057596822,
+          "lds_conflict_ratio": 0.0,
+          "vgpr": 136,
+          "lds_bytes": 6144,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 470.22934289127835,
+            "par_mem_impl": 470.22934289127835,
+            "pipe": 386.688,
+            "par_pipe": 386.688,
+            "mmac_impl": 41.24201388786755,
+            "launch": 2.176
+          },
+          "name": "g2_bwd_tail_kernel",
+          "classification": {
+            "class": "B.memory.hbm",
+            "subtypes": [],
+            "regime": "throughput",
+            "causes": [],
+            "reasons": [
+              "pipe 56%, HBM 68% of attainable"
+            ]
+          }
+        },
+        {
+          "t_us": 8.64,
+          "ctas": 24,
+          "block": 256,
+          "active_cus": 24,
+          "hbm_GBps": 185.02592592592595,
+          "hbm_rd_MB": 1.58624,
+          "hbm_wr_MB": 0.012384,
+          "sol_pipe": 0.029328703703703704,
+          "sol_mem": 0.13816153369618123,
+          "sol_pipe_active": 0.09776234567901235,
+          "sol_mem_active": 0.2179339527984993,
+          "mmac_slot_share": 0.0,
+          "lds_conflict_ratio": 0.0,
+          "vgpr": 16,
+          "lds_bytes": 0,
+          "scratch": 0,
+          "T": {
+            "mem_impl": 1.193715651135006,
+            "par_mem_impl": 1.8829493521790341,
+            "pipe": 0.25339999999999996,
+            "par_pipe": 0.8446666666666667,
+            "mmac_impl": 0.0,
+            "launch": 2.176
+          },
+          "name": "g2_bwd_tail_reduce_kernel",
+          "classification": {
+            "class": "C",
+            "subtypes": [
+              "C.parallelism"
+            ],
+            "regime": "latency",
+            "causes": [
+              {
+                "id": "E.tiny",
+                "value": 8.64
+              }
+            ],
+            "reasons": [
+              "pipe 3%, HBM 14% of attainable",
+              "24 CTAs < 80 CUs; on active CUs: pipe 10%, HBM 22%"
+            ]
+          }
+        }
+      ],
+      "t_us": 699.199,
+      "interface_MB": {
+        "in": 456.142944,
+        "out": 151.79376
+      },
+      "components_us": {
+        "launch": 4.352,
+        "mem_min": 453.9551254480287,
+        "par_mem_min": 453.9551254480287
+      },
+      "critical_path": {},
+      "T_lower_prior_us": 453.9551254480287,
+      "binding_prior": "par_mem_min",
+      "T_lower_impl_us": 472.40534289127834,
+      "attainment_prior": 0.6492502498545174,
+      "attainment_impl": 0.6756378983540857,
+      "headroom_x": 1.5402381442657556,
+      "recoverable_us": 245.24387455197126,
+      "dominant_class": "B.memory.hbm",
+      "verdict": "throughput_bound"
+    }
+  ],
+  "notes": [
+    "t_us: PMC run kernel time (EndNs-BeginNs, min of the read/write replays)",
+    "prior bound = max(interface bytes at attainable BW for the grid, dependency-only critical path, launch)",
+    "impl bound = same work as measured, at 100% of attainable bandwidth / VALU-pipe issue rate",
+    "compute prior is not modelled per kernel; implementation MMAC work is in T.mmac_impl",
+    "all HBM bytes use the single highest measured bandwidth (mixed traffic beats the write/copy microbenchmarks)",
+    "fusion floor: per phase, only tensors crossing the phase boundary at peak bandwidth (loose; ignores on-chip capacity)"
+  ]
+}

@@ -49,9 +49,9 @@ Step4 结论/停止   → 到顶(≥80% of T_下限) / 停滞且 <50% 换思路 
 |---|---|---|
 | L0 硬件标定 | `kra calibrate`：HBM/L2/LDS 带宽，各 dtype MMAC、VALU、SFU 峰值，访存/LDS/MMAC/barrier 延迟，launch 代价，PCIe；ISA 核对 | P0 ✅ |
 | L1 系统层 | `kra timeline`：hipprof trace → 窗口切分、空泡、gap 成因、launch 下限、可信性 | P0 ✅ |
-| L2 实测分类 | PMC → 各单元 SOL% → B/C 分类 | P1 |
-| L3 延迟诊断 | SQTT(xprof + XCompute CLI) → C 类子类型与 D 层病因 | P1/P2 |
-| L4 上限模型 | `op_spec` → FLOPs/字节/关键路径 → T_下限、SOL 得分 | P1 |
+| L2 实测分类 | `kra pmc`：PMC（语义经标定）→ 流水线/HBM SOL% → B/C 分类，C 类给出并行度/串行子类型，D 层：LDS 冲突、spill、过短 | P1 ✅ |
+| L3 延迟诊断 | SQTT(xprof + XCompute CLI) → C.unresolved 的子类型与 D 层病因 | P2 |
+| L4 上限模型 | `kra analyze`：op_spec + launcher 接口捕获 → 先验下限（接口字节@grid 可达带宽、依赖链、launch）、实现下限、融合下限、可回收时间排序 | P1 ✅ |
 | L5 结论 | 规则引擎（触发→分析→建议）、停止条件、对外结论模板、水位表 | P2 |
 | Agent | skill 封装，诊断结论以方法 ID 交给 hygon-hip-kernel-optimizer 执行 | P3 |
 

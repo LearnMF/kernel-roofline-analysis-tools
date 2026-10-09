@@ -5,9 +5,9 @@
     "host": "bw7",
     "arch": "gfx936",
     "visible_devices": "1",
-    "timestamp_utc": "2026-10-09T07:31:10Z",
+    "timestamp_utc": "2026-10-09T08:10:17Z",
     "hipcc_version": "dcc version: 25.10.0-0\nclang version 17.0.0 (http://10.4.0.1/dcutoolkit/driverruntime/llvm-project.git ff5bf917a679c83afe927af051a20b86fef7b07d)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/dtk/llvm/bin",
-    "smi": "================================= System Management Interface ==================================\n================================================================================================\nHCU     Temp     AvgPwr     Perf     PwrCap     VRAM%      HCU%      Dec%      Enc%      Mode     \n0       39.0C    132.0W     manual   800.0W     84%        0.0%      0.0%      0.0%      Normal   \n1       42.0C    140.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n2       37.0C    132.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n3       35.0C    134.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n4       40.0C    132.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n5       40.0C    133.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n6       38.0C    132.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n7       36.0C    132.0W     manual   800.0W     84%        0.0%      0.0%      0.0%      Normal   \n================================================================================================\n======================================== End of SMI Log ========================================",
+    "smi": "================================= System Management Interface ==================================\n================================================================================================\nHCU     Temp     AvgPwr     Perf     PwrCap     VRAM%      HCU%      Dec%      Enc%      Mode     \n0       39.0C    132.0W     manual   800.0W     84%        0.0%      0.0%      0.0%      Normal   \n1       41.0C    147.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n2       37.0C    132.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n3       35.0C    133.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n4       40.0C    132.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n5       40.0C    133.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n6       38.0C    132.0W     manual   800.0W     85%        0.0%      0.0%      0.0%      Normal   \n7       36.0C    132.0W     manual   800.0W     84%        0.0%      0.0%      0.0%      Normal   \n================================================================================================\n======================================== End of SMI Log ========================================",
     "tool_git_sha": null,
     "source": "/public/home/tanbo/kra/kra/calibrate/microbench.hip"
   },
@@ -207,6 +207,23 @@
       },
       "n_configs": 4,
       "unit": "Gop/s"
+    },
+    "hbm_read_vs_ctas": {
+      "unit": "GB/s",
+      "curve": {
+        "1": 41.6,
+        "2": 84.3,
+        "4": 168.7,
+        "8": 336.1,
+        "12": 481.3,
+        "16": 636.0,
+        "24": 849.0,
+        "32": 1064.5,
+        "48": 1248.3,
+        "64": 1322.1,
+        "80": 1334.7
+      },
+      "note": "best of block 256/512, 4 loads in flight per thread"
     }
   },
   "ridge_points_flop_per_byte": {
@@ -307,7 +324,7 @@
   "warnings": [],
   "isa_check": {
     "ok": true,
-    "asm": "/tmp/kra_cal2/microbench-hip-amdgcn-amd-amdhsa-gfx936.s",
+    "asm": "/tmp/kra_cal3/microbench-hip-amdgcn-amd-amdhsa-gfx936.s",
     "kernels": {
       "k_mmac_bf16": {
         "symbol": "_Z11k_mmac_bf16ILi4EEviPf",

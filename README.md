@@ -12,7 +12,9 @@ Kernel 瓶颈分类与性能上限判定工具，首个目标平台为海光 HCU
 |---|---|---|
 | L0 | `kra calibrate`：实测可达峰值（HBM/L2/LDS、MMAC 各 dtype、VALU、SFU）、延迟（访存/LDS/MMAC/barrier）、launch 代价、PCIe，并核对 ISA | ✅ P0 |
 | L1 | `kra timeline`：hipprof trace → 空泡占比、gap 成因、launch 下限、隐藏的派发开销、可信性检查 | ✅ P0 |
-| L2–L5 | 实测分类（PMC SOL%）、SQTT 延迟诊断、先验上限模型（op_spec）、规则引擎与结论 | 计划中（P1–P2） |
+| L2 | `kra pmc`：PMC 采集（gfx936 计数器语义已用已知工作量标定）→ 流水线 / HBM SOL% → B/C/D 分类 | ✅ P1 |
+| L4 | `kra analyze`：op_spec + launcher 接口捕获 → 先验下限 / 实现下限 / 融合下限 → 逐 kernel 水位表 | ✅ P1 |
+| L3、L5 | SQTT 延迟子类型诊断、规则引擎与对外结论模板 | 计划中（P2） |
 
 ## 用法
 
@@ -27,6 +29,12 @@ hipprof --hip-trace --output-type 0 -o /tmp/tl/run  python3 examples/kda/kda_ite
 python -m kra timeline /tmp/tl/run.json --marker spin_kernel \
        --machine machines/gfx936-bw1000.json --reference-ms 4.84
 
+# L2 + L4：launcher 接口捕获（不需要 profiler）+ PMC 采集，然后生成水位表
+python3 examples/kda/kda_iter.py --T 8192 --H 12 --iters 2 --optrace /tmp/wl/g2.optrace.json
+python -m kra pmc --out /tmp/wl/g2 --marker spin_kernel -- python3 examples/kda/kda_iter.py --T 8192 --H 12 --iters 1
+python -m kra analyze --machine machines/gfx936-bw1000.json --pmc /tmp/wl/g2.pmc.json \
+       --opspec examples/kda/op_spec.json --optrace /tmp/wl/g2.optrace.json --shape T=8192,H=12 --out /tmp/wl/g2
+
 # 测试
 python -m unittest discover -s tests
 ```
@@ -36,6 +44,9 @@ python -m unittest discover -s tests
 ```
 kra/calibrate/   L0：microbench.hip（HIP 微基准）+ run.py（构建、运行、汇总、ISA 核对）
 kra/timeline/    L1：hipprof_json.py（trace 解析）+ analyze.py（窗口、空泡、gap 成因、结论）
+kra/pmc/         L2：hipprof PMC 采集与解析（计数器语义见 docs/methodology.md §3）
+kra/opspec/      L4 输入：launcher 接口捕获（PyTorch 包装的任意算子通用）
+kra/model/       L2 分类 + L4 下限模型 + 水位表报告
 kra/taxonomy.json, kra/thresholds.json
 machines/        各机器的标定结果（machine.json + 原始输出）
 examples/kda/    KDA 算子的采集驱动与脚本

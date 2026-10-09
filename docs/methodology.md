@@ -84,6 +84,62 @@ python -m kra timeline OUT.json --marker spin_kernel --machine machines/gfx936-b
 
 `traced_over_reference = trace 中窗口 span 的中位数 / 不开 profiler 的每窗口耗时`，超过 2 时结论不可信（NV Triage Guide D0）。注意，KDA 示例的参考计时从“算子调用开始”算起，包含了窗口开头主机发出第一个 kernel 前的时间（因为每轮之前都做了同步，队列是空的）。trace 窗口则从第一个设备操作开始，所以这个比值可能略小于 1。
 
-## 3. 阈值
+## 3. L2 实测分类（`kra pmc` + `kra analyze`）
+
+### 3.1 采集
+
+```bash
+python -m kra pmc --out OUT --marker spin_kernel -- <app>   # 两次运行：--pmc-read、--pmc-write（csv）
+```
+
+在 gfx936 / DTK 25.10 上，可用的只有 `--pmc-read` 和 `--pmc-write` 两个预设：默认的 `--pmc` 预设在本机每次都会在队列创建时 abort（signal 6）；GPU1 上 PMC 也会 abort，GPU0 正常。两次 profiler 运行之间需要间隔几秒，`kra pmc` 已内置间隔和重试。
+
+### 3.2 计数器语义（用工作量已知的 kernel 实测标定）
+
+`microbench pmccal` 每个参考 kernel 只发射一次，工作量精确已知。原始 csv 在 [`results/pmc-semantics-gfx936-20261009/`](../results/pmc-semantics-gfx936-20261009/)，对应回归测试为 `tests/test_pmc_semantics.py`。
+
+| 计数器 | 实测语义 | 证据 |
+|---|---|---|
+| `TCC_EA_RDREQ` / `_32B` | 每个请求 64 B（32B 请求 32 B） | 读 1 GiB → 2^24 个请求，误差 < 0.01% |
+| `TCC_EA_WRREQ` / `_64B` | 64B 请求 64 B，其余 32 B | 写 1 GiB 完全吻合 |
+| `SQ_INSTS_VALU` | wave 级 VALU 指令数，**包含 MMAC** | MMAC 6.71 亿条 → INSTS 6.71 亿 + 循环开销 |
+| `SQ_ACTIVE_INST_VALU` | **VALU 流水线发射槽**：普通 VALU 计 1，MMAC 16x16x16 计 2，exp 计 4 | ACTIVE 与 INSTS 之比：pk_fma 1.00，MMAC 2.00，exp 4.00 |
+| 流水线利用率 | `ACTIVE / (周期数 × CU 数)`，三种峰值下都达到 0.97–0.98 | 分母使用较快那次 replay 的时间 × 1.5 GHz |
+| `ACTIVE − INSTS` | 多槽指令的额外槽位：没有超越函数时等于 MMAC 条数；有超越函数时为 MMAC 条数的上限 | |
+| `TA_TA_BUSY` | 无法归一化（超过 GRBM 周期数），**不使用** | |
+
+注意：
+- 之前 `pmc_lds.py` 中的 “valu_busy = ACTIVE / CU 周期 / 4” 多除了一个 4，把 VALU 利用率低估了 4 倍。
+- read 和 write 两次 replay 的 kernel 时长在长时间计算 kernel 上可能相差约 12%。kra 取两次中较小的作为 `t_us`。
+
+### 3.3 分类规则
+
+- 两个顶层 SOL：`sol_pipe` 为流水线利用率；`sol_mem` 为 HBM 实测字节数按可达读/写带宽折算的时间 ÷ 实测时间。
+- 任一 SOL ≥ 60% 判为 B 类（算力或访存，取较高者；MMAC 发射槽占比 ≥ 50% 判为 `B.compute.mmac`）。两者都在 40–60% 判为均衡型。否则判为 C 类，再细分：
+  - CTA 数少于 CU 数 → `C.parallelism`，同时给出“仅按活跃 CU 计算”的 SOL；
+  - op_spec 声明为串行 → `C.serial`；
+  - 其余为 `C.unresolved`，子类型需要 L3（SQTT）确认。
+- D 层病因：LDS bank conflict 周期 ≥ 5%（`SQ_LDS_BANK_CONFLICT / (周期 × CU)`）、scratch > 0、kernel 短于 10 µs。
+
+## 4. L4 下限模型
+
+每个 launcher 调用（1–2 个 kernel）有两种下限：
+
+| 下限 | 组成 | 回答的问题 |
+|---|---|---|
+| **先验下限** `T_lower_prior` | max(接口字节按该 grid 可达带宽折算的时间, 只算依赖的关键路径, launch) | 换任何实现、只要保持这个算法和 launcher 边界，最快能到多少 |
+| **实现下限** `T_lower_impl` | max(实测字节按可达带宽, VALU 流水线发射槽满载, MMAC 工作量, 当前数据流的关键路径, launch) | 不改工作量、只把硬件用满，最快能到多少 |
+
+- **接口字节**：由 `kra.opspec.capture` 在真实运行中逐个记录每个 launcher 的输入/输出张量（同一 storage 只计一次）。假设每个输入至少读一次、每个输出至少写一次。
+- **小 grid 的带宽**：L0 的 `hbm_read_vs_ctas` 曲线，每个 CTA 约 42 GB/s，48 个 CTA 时 1248 GB/s，80 个 CTA 时 1335 GB/s。
+- **关键路径**：`串行步数 × Σ(原语个数 × L0 测得的原语延迟)`。原语包括 barrier、LDS、相互依赖的 MMAC。`chain` 描述当前数据流；`chain_min` 只保留算法上不可避免的依赖（一次跨 lane 的状态交换，加两级 MMAC），用于先验下限。项数只会少算，因此仍是合法的下限。
+- **结论档位**（阈值见 `thresholds.json`）：
+  - 先验达成率 ≥ 80%：已到顶；
+  - 实现达成率 ≥ 80%：硬件已忙，但有多余工作；
+  - 先验达成率 < 50%：空间很大；
+  - 其余：中等空间。
+- **可回收时间** = 实测 − 先验下限，按此排序就是优化优先级（Amdahl 定律）。
+
+## 5. 阈值
 
 所有判定阈值在 [`kra/thresholds.json`](../kra/thresholds.json)，每项标注来源（NV Triage Guide、KernelPro、AutoKernel、团队约定）以及 `hcu_calibrated`。目前除噪声门槛外都尚未经 HCU 校准，KDA 是第一个校准样本。

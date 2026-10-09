@@ -1,130 +1,152 @@
-{"bench":"device","name":"BW200, UBB BW1000","gcnArchName":"gfx936:sramecc+:xnack-","cu_count":80,"warp_size":64,"clock_khz":1500000,"memory_clock_khz":1800000,"memory_bus_width":4096,"l2_bytes":8388608,"lds_per_block":65536,"lds_per_cu":65536,"regs_per_block":196608,"max_threads_per_cu":2560,"global_mem_bytes":68702699520,"wall_clock_khz":25000}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":320,"block":256,"unroll":1},"ms_min":0.83664,"ms_med":0.84000,"GBps_best":1283.4,"GBps_med":1278.3}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":320,"block":256,"unroll":4},"ms_min":0.84288,"ms_med":0.84528,"GBps_best":1273.9,"GBps_med":1270.3}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":320,"block":512,"unroll":1},"ms_min":0.80176,"ms_med":0.83568,"GBps_best":1339.2,"GBps_med":1284.9}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":320,"block":512,"unroll":4},"ms_min":0.87456,"ms_med":0.87760,"GBps_best":1227.8,"GBps_med":1223.5}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":640,"block":256,"unroll":1},"ms_min":0.84048,"ms_med":0.84752,"GBps_best":1277.5,"GBps_med":1266.9}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":640,"block":256,"unroll":4},"ms_min":0.87680,"ms_med":0.88128,"GBps_best":1224.6,"GBps_med":1218.4}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":640,"block":512,"unroll":1},"ms_min":0.84528,"ms_med":0.85808,"GBps_best":1270.3,"GBps_med":1251.3}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":640,"block":512,"unroll":4},"ms_min":0.88144,"ms_med":0.88656,"GBps_best":1218.2,"GBps_med":1211.1}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":1280,"block":256,"unroll":1},"ms_min":0.85248,"ms_med":0.86240,"GBps_best":1259.5,"GBps_med":1245.1}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":1280,"block":256,"unroll":4},"ms_min":0.87808,"ms_med":0.88128,"GBps_best":1222.8,"GBps_med":1218.4}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":1280,"block":512,"unroll":1},"ms_min":0.85120,"ms_med":0.85680,"GBps_best":1261.4,"GBps_med":1253.2}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":1280,"block":512,"unroll":4},"ms_min":0.88944,"ms_med":0.89200,"GBps_best":1207.2,"GBps_med":1203.7}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":2560,"block":256,"unroll":1},"ms_min":0.85936,"ms_med":0.86480,"GBps_best":1249.5,"GBps_med":1241.6}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":2560,"block":256,"unroll":4},"ms_min":0.88256,"ms_med":0.88400,"GBps_best":1216.6,"GBps_med":1214.6}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":2560,"block":512,"unroll":1},"ms_min":0.84336,"ms_med":0.84656,"GBps_best":1273.2,"GBps_med":1268.4}
-{"bench":"hbm_read","config":{"bytes_per_pass":1073741824,"grid":2560,"block":512,"unroll":4},"ms_min":0.86672,"ms_med":0.86752,"GBps_best":1238.9,"GBps_med":1237.7}
-{"bench":"hbm_read_nt","config":{"bytes_per_pass":1073741824,"grid":320,"block":256,"unroll":1},"ms_min":0.83648,"ms_med":0.83968,"GBps_best":1283.6,"GBps_med":1278.8}
-{"bench":"hbm_read_nt","config":{"bytes_per_pass":1073741824,"grid":320,"block":512,"unroll":1},"ms_min":0.82000,"ms_med":0.83488,"GBps_best":1309.4,"GBps_med":1286.1}
-{"bench":"hbm_read_nt","config":{"bytes_per_pass":1073741824,"grid":640,"block":256,"unroll":1},"ms_min":0.83920,"ms_med":0.85088,"GBps_best":1279.5,"GBps_med":1261.9}
-{"bench":"hbm_read_nt","config":{"bytes_per_pass":1073741824,"grid":640,"block":512,"unroll":1},"ms_min":0.84992,"ms_med":0.86240,"GBps_best":1263.3,"GBps_med":1245.1}
-{"bench":"hbm_read_nt","config":{"bytes_per_pass":1073741824,"grid":1280,"block":256,"unroll":1},"ms_min":0.86064,"ms_med":0.86784,"GBps_best":1247.6,"GBps_med":1237.3}
-{"bench":"hbm_read_nt","config":{"bytes_per_pass":1073741824,"grid":1280,"block":512,"unroll":1},"ms_min":0.85536,"ms_med":0.86048,"GBps_best":1255.3,"GBps_med":1247.8}
-{"bench":"hbm_read_nt","config":{"bytes_per_pass":1073741824,"grid":2560,"block":256,"unroll":1},"ms_min":0.85968,"ms_med":0.86560,"GBps_best":1249.0,"GBps_med":1240.5}
-{"bench":"hbm_read_nt","config":{"bytes_per_pass":1073741824,"grid":2560,"block":512,"unroll":1},"ms_min":0.84368,"ms_med":0.84736,"GBps_best":1272.7,"GBps_med":1267.2}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":320,"block":256,"unroll":1},"ms_min":0.97568,"ms_med":0.97984,"GBps_best":1100.5,"GBps_med":1095.8}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":320,"block":256,"unroll":4},"ms_min":0.98928,"ms_med":0.99552,"GBps_best":1085.4,"GBps_med":1078.6}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":320,"block":512,"unroll":1},"ms_min":0.99120,"ms_med":1.00048,"GBps_best":1083.3,"GBps_med":1073.2}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":320,"block":512,"unroll":4},"ms_min":0.98752,"ms_med":0.99296,"GBps_best":1087.3,"GBps_med":1081.4}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":640,"block":256,"unroll":1},"ms_min":1.10528,"ms_med":1.10896,"GBps_best":971.5,"GBps_med":968.2}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":640,"block":256,"unroll":4},"ms_min":1.09792,"ms_med":1.10880,"GBps_best":978.0,"GBps_med":968.4}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":640,"block":512,"unroll":1},"ms_min":1.12336,"ms_med":1.13664,"GBps_best":955.8,"GBps_med":944.7}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":640,"block":512,"unroll":4},"ms_min":1.11584,"ms_med":1.13568,"GBps_best":962.3,"GBps_med":945.5}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":1280,"block":256,"unroll":1},"ms_min":1.69088,"ms_med":1.69920,"GBps_best":635.0,"GBps_med":631.9}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":1280,"block":256,"unroll":4},"ms_min":1.66112,"ms_med":1.69936,"GBps_best":646.4,"GBps_med":631.9}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":1280,"block":512,"unroll":1},"ms_min":1.07392,"ms_med":1.08848,"GBps_best":999.8,"GBps_med":986.5}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":1280,"block":512,"unroll":4},"ms_min":1.06032,"ms_med":1.07776,"GBps_best":1012.7,"GBps_med":996.3}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":2560,"block":256,"unroll":1},"ms_min":1.52208,"ms_med":1.55184,"GBps_best":705.4,"GBps_med":691.9}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":2560,"block":256,"unroll":4},"ms_min":1.62224,"ms_med":1.63856,"GBps_best":661.9,"GBps_med":655.3}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":2560,"block":512,"unroll":1},"ms_min":1.01776,"ms_med":1.02448,"GBps_best":1055.0,"GBps_med":1048.1}
-{"bench":"hbm_write","config":{"bytes_per_pass":1073741824,"grid":2560,"block":512,"unroll":4},"ms_min":1.03312,"ms_med":1.03952,"GBps_best":1039.3,"GBps_med":1032.9}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":320,"block":256,"unroll":1},"ms_min":1.87472,"ms_med":1.88944,"GBps_best":1145.5,"GBps_med":1136.6}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":320,"block":256,"unroll":4},"ms_min":1.93008,"ms_med":1.94016,"GBps_best":1112.6,"GBps_med":1106.9}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":320,"block":512,"unroll":1},"ms_min":1.95344,"ms_med":1.96000,"GBps_best":1099.3,"GBps_med":1095.7}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":320,"block":512,"unroll":4},"ms_min":1.98240,"ms_med":1.98864,"GBps_best":1083.3,"GBps_med":1079.9}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":640,"block":256,"unroll":1},"ms_min":1.93760,"ms_med":1.94320,"GBps_best":1108.3,"GBps_med":1105.1}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":640,"block":256,"unroll":4},"ms_min":1.95648,"ms_med":1.96496,"GBps_best":1097.6,"GBps_med":1092.9}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":640,"block":512,"unroll":1},"ms_min":1.96176,"ms_med":1.97024,"GBps_best":1094.7,"GBps_med":1090.0}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":640,"block":512,"unroll":4},"ms_min":2.06384,"ms_med":2.12560,"GBps_best":1040.5,"GBps_med":1010.3}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":1280,"block":256,"unroll":1},"ms_min":1.96320,"ms_med":1.97200,"GBps_best":1093.9,"GBps_med":1089.0}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":1280,"block":256,"unroll":4},"ms_min":2.00448,"ms_med":2.02848,"GBps_best":1071.3,"GBps_med":1058.7}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":1280,"block":512,"unroll":1},"ms_min":1.94512,"ms_med":1.95264,"GBps_best":1104.0,"GBps_med":1099.8}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":1280,"block":512,"unroll":4},"ms_min":2.06144,"ms_med":2.07760,"GBps_best":1041.7,"GBps_med":1033.6}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":2560,"block":256,"unroll":1},"ms_min":1.92096,"ms_med":1.92576,"GBps_best":1117.9,"GBps_med":1115.1}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":2560,"block":256,"unroll":4},"ms_min":1.98752,"ms_med":1.99248,"GBps_best":1080.5,"GBps_med":1077.8}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":2560,"block":512,"unroll":1},"ms_min":1.91472,"ms_med":1.92736,"GBps_best":1121.6,"GBps_med":1114.2}
-{"bench":"hbm_copy","config":{"bytes_per_pass":2147483648,"grid":2560,"block":512,"unroll":4},"ms_min":2.00944,"ms_med":2.01872,"GBps_best":1068.7,"GBps_med":1063.8}
-{"bench":"l2_read","config":{"working_set":2097152,"l2_size":8388608,"resident":true,"grid":320,"block":256,"loads_per_thread":1024},"ms_min":0.22912,"GBps_best":5858.0,"GBps_med":5841.6}
-{"bench":"l2_read","config":{"working_set":2097152,"l2_size":8388608,"resident":true,"grid":320,"block":512,"loads_per_thread":1024},"ms_min":0.47056,"GBps_best":5704.6,"GBps_med":5637.5}
-{"bench":"l2_read","config":{"working_set":2097152,"l2_size":8388608,"resident":true,"grid":640,"block":256,"loads_per_thread":1024},"ms_min":0.47248,"GBps_best":5681.4,"GBps_med":5613.0}
-{"bench":"l2_read","config":{"working_set":2097152,"l2_size":8388608,"resident":true,"grid":640,"block":512,"loads_per_thread":1024},"ms_min":0.91488,"GBps_best":5868.2,"GBps_med":5508.0}
-{"bench":"l2_read","config":{"working_set":2097152,"l2_size":8388608,"resident":true,"grid":1280,"block":256,"loads_per_thread":1024},"ms_min":0.92688,"GBps_best":5792.2,"GBps_med":5603.6}
-{"bench":"l2_read","config":{"working_set":2097152,"l2_size":8388608,"resident":true,"grid":1280,"block":512,"loads_per_thread":1024},"ms_min":1.76000,"GBps_best":6100.8,"GBps_med":5929.9}
-{"bench":"l2_read","config":{"working_set":4194304,"l2_size":8388608,"resident":true,"grid":320,"block":256,"loads_per_thread":1024},"ms_min":0.23280,"GBps_best":5765.4,"GBps_med":5629.9}
-{"bench":"l2_read","config":{"working_set":4194304,"l2_size":8388608,"resident":true,"grid":320,"block":512,"loads_per_thread":1024},"ms_min":0.48016,"GBps_best":5590.5,"GBps_med":5560.9}
-{"bench":"l2_read","config":{"working_set":4194304,"l2_size":8388608,"resident":true,"grid":640,"block":256,"loads_per_thread":1024},"ms_min":0.47728,"GBps_best":5624.3,"GBps_med":5564.6}
-{"bench":"l2_read","config":{"working_set":4194304,"l2_size":8388608,"resident":true,"grid":640,"block":512,"loads_per_thread":1024},"ms_min":0.92624,"GBps_best":5796.2,"GBps_med":5414.6}
-{"bench":"l2_read","config":{"working_set":4194304,"l2_size":8388608,"resident":true,"grid":1280,"block":256,"loads_per_thread":1024},"ms_min":0.93536,"GBps_best":5739.7,"GBps_med":5548.0}
-{"bench":"l2_read","config":{"working_set":4194304,"l2_size":8388608,"resident":true,"grid":1280,"block":512,"loads_per_thread":1024},"ms_min":1.81712,"GBps_best":5909.0,"GBps_med":5739.2}
-{"bench":"l2_read","config":{"working_set":33554432,"l2_size":8388608,"resident":false,"grid":320,"block":256,"loads_per_thread":1024},"ms_min":0.80864,"GBps_best":1659.8,"GBps_med":1623.5}
-{"bench":"l2_read","config":{"working_set":33554432,"l2_size":8388608,"resident":false,"grid":320,"block":512,"loads_per_thread":1024},"ms_min":1.64864,"GBps_best":1628.2,"GBps_med":1614.1}
-{"bench":"l2_read","config":{"working_set":33554432,"l2_size":8388608,"resident":false,"grid":640,"block":256,"loads_per_thread":1024},"ms_min":1.71872,"GBps_best":1561.8,"GBps_med":1556.8}
-{"bench":"l2_read","config":{"working_set":33554432,"l2_size":8388608,"resident":false,"grid":640,"block":512,"loads_per_thread":1024},"ms_min":3.52480,"GBps_best":1523.1,"GBps_med":1490.1}
-{"bench":"l2_read","config":{"working_set":33554432,"l2_size":8388608,"resident":false,"grid":1280,"block":256,"loads_per_thread":1024},"ms_min":3.50912,"GBps_best":1529.9,"GBps_med":1523.5}
-{"bench":"l2_read","config":{"working_set":33554432,"l2_size":8388608,"resident":false,"grid":1280,"block":512,"loads_per_thread":1024},"ms_min":5.47232,"GBps_best":1962.1,"GBps_med":1904.7}
-{"bench":"lds_read","config":{"grid":320,"block":256,"iters":4096},"ms_min":1.42768,"GBps_best":15041.8,"GBps_med":14996.4}
-{"bench":"lds_read","config":{"grid":640,"block":256,"iters":4096},"ms_min":2.83136,"GBps_best":15169.3,"GBps_med":15136.8}
-{"bench":"lds_read","config":{"grid":1280,"block":256,"iters":4096},"ms_min":5.63760,"GBps_best":15236.9,"GBps_med":15230.4}
-{"bench":"mmac_bf16","config":{"grid":320,"block":256,"chains":4,"iters":32768,"ops_per_inst_wave":8192},"ms_min":3.24624,"TOPS_best":423.379,"TOPS_med":422.733}
-{"bench":"mmac_bf16","config":{"grid":320,"block":256,"chains":8,"iters":16384,"ops_per_inst_wave":8192},"ms_min":3.15936,"TOPS_best":435.022,"TOPS_med":434.340}
-{"bench":"mmac_f16","config":{"grid":320,"block":256,"chains":8,"iters":16384,"ops_per_inst_wave":8192},"ms_min":3.06016,"TOPS_best":449.124,"TOPS_med":448.420}
-{"bench":"mmac_f32x8","config":{"grid":320,"block":256,"chains":8,"iters":4096,"ops_per_inst_wave":4096},"ms_min":2.88272,"TOPS_best":59.596,"TOPS_med":59.500}
-{"bench":"mmac_tf32","config":{"grid":320,"block":256,"chains":8,"iters":16384,"ops_per_inst_wave":4096},"ms_min":3.15568,"TOPS_best":217.765,"TOPS_med":217.390}
-{"bench":"mmac_i8","config":{"grid":320,"block":256,"chains":8,"iters":16384,"ops_per_inst_wave":16384},"ms_min":3.15552,"TOPS_best":871.103,"TOPS_med":869.736}
-{"bench":"valu_fma_f32","config":{"grid":320,"block":256,"chains":8,"iters":65536,"ops_per_inst_wave":128},"ms_min":3.17088,"TOPS_best":27.090,"TOPS_med":27.050}
-{"bench":"valu_fma_f32","config":{"grid":320,"block":256,"chains":16,"iters":32768,"ops_per_inst_wave":128},"ms_min":3.04256,"TOPS_best":28.233,"TOPS_med":28.190}
-{"bench":"sfu_exp2","config":{"grid":320,"block":256,"chains":8,"iters":16384,"ops_per_inst_wave":64},"ms_min":5.63904,"TOPS_best":1.904,"TOPS_med":1.902}
-{"bench":"mmac_bf16","config":{"grid":320,"block":512,"chains":4,"iters":32768,"ops_per_inst_wave":8192},"ms_min":6.05888,"TOPS_best":453.678,"TOPS_med":453.319}
-{"bench":"mmac_bf16","config":{"grid":320,"block":512,"chains":8,"iters":16384,"ops_per_inst_wave":8192},"ms_min":5.95696,"TOPS_best":461.440,"TOPS_med":461.056}
-{"bench":"mmac_f16","config":{"grid":320,"block":512,"chains":8,"iters":16384,"ops_per_inst_wave":8192},"ms_min":5.85264,"TOPS_best":469.665,"TOPS_med":469.280}
-{"bench":"mmac_f32x8","config":{"grid":320,"block":512,"chains":8,"iters":4096,"ops_per_inst_wave":4096},"ms_min":5.67936,"TOPS_best":60.499,"TOPS_med":60.448}
-{"bench":"mmac_tf32","config":{"grid":320,"block":512,"chains":8,"iters":16384,"ops_per_inst_wave":4096},"ms_min":5.96480,"TOPS_best":230.417,"TOPS_med":230.232}
-{"bench":"mmac_i8","config":{"grid":320,"block":512,"chains":8,"iters":16384,"ops_per_inst_wave":16384},"ms_min":5.96496,"TOPS_best":921.643,"TOPS_med":920.926}
-{"bench":"valu_fma_f32","config":{"grid":320,"block":512,"chains":8,"iters":65536,"ops_per_inst_wave":128},"ms_min":6.05375,"TOPS_best":28.379,"TOPS_med":28.356}
-{"bench":"valu_fma_f32","config":{"grid":320,"block":512,"chains":16,"iters":32768,"ops_per_inst_wave":128},"ms_min":5.88351,"TOPS_best":29.200,"TOPS_med":29.176}
-{"bench":"sfu_exp2","config":{"grid":320,"block":512,"chains":8,"iters":16384,"ops_per_inst_wave":64},"ms_min":11.23151,"TOPS_best":1.912,"TOPS_med":1.911}
-{"bench":"mmac_bf16","config":{"grid":640,"block":256,"chains":4,"iters":32768,"ops_per_inst_wave":8192},"ms_min":6.05888,"TOPS_best":453.678,"TOPS_med":453.319}
-{"bench":"mmac_bf16","config":{"grid":640,"block":256,"chains":8,"iters":16384,"ops_per_inst_wave":8192},"ms_min":5.95696,"TOPS_best":461.440,"TOPS_med":461.056}
-{"bench":"mmac_f16","config":{"grid":640,"block":256,"chains":8,"iters":16384,"ops_per_inst_wave":8192},"ms_min":5.85263,"TOPS_best":469.665,"TOPS_med":469.280}
-{"bench":"mmac_f32x8","config":{"grid":640,"block":256,"chains":8,"iters":4096,"ops_per_inst_wave":4096},"ms_min":5.67951,"TOPS_best":60.498,"TOPS_med":60.448}
-{"bench":"mmac_tf32","config":{"grid":640,"block":256,"chains":8,"iters":16384,"ops_per_inst_wave":4096},"ms_min":5.96480,"TOPS_best":230.417,"TOPS_med":230.232}
-{"bench":"mmac_i8","config":{"grid":640,"block":256,"chains":8,"iters":16384,"ops_per_inst_wave":16384},"ms_min":5.96480,"TOPS_best":921.668,"TOPS_med":920.729}
-{"bench":"valu_fma_f32","config":{"grid":640,"block":256,"chains":8,"iters":65536,"ops_per_inst_wave":128},"ms_min":6.05375,"TOPS_best":28.379,"TOPS_med":28.356}
-{"bench":"valu_fma_f32","config":{"grid":640,"block":256,"chains":16,"iters":32768,"ops_per_inst_wave":128},"ms_min":5.88351,"TOPS_best":29.200,"TOPS_med":29.176}
-{"bench":"sfu_exp2","config":{"grid":640,"block":256,"chains":8,"iters":16384,"ops_per_inst_wave":64},"ms_min":11.23183,"TOPS_best":1.912,"TOPS_med":1.911}
-{"bench":"mmac_bf16","config":{"grid":640,"block":512,"chains":4,"iters":32768,"ops_per_inst_wave":8192},"ms_min":11.65823,"TOPS_best":471.560,"TOPS_med":471.373}
-{"bench":"mmac_bf16","config":{"grid":640,"block":512,"chains":8,"iters":16384,"ops_per_inst_wave":8192},"ms_min":11.55058,"TOPS_best":475.955,"TOPS_med":475.751}
-{"bench":"mmac_f16","config":{"grid":640,"block":512,"chains":8,"iters":16384,"ops_per_inst_wave":8192},"ms_min":11.44623,"TOPS_best":480.294,"TOPS_med":480.086}
-{"bench":"mmac_f32x8","config":{"grid":640,"block":512,"chains":8,"iters":4096,"ops_per_inst_wave":4096},"ms_min":11.27279,"TOPS_best":60.960,"TOPS_med":54.214}
-{"bench":"mmac_tf32","config":{"grid":640,"block":512,"chains":8,"iters":16384,"ops_per_inst_wave":4096},"ms_min":11.56351,"TOPS_best":237.711,"TOPS_med":212.068}
-{"bench":"mmac_i8","config":{"grid":640,"block":512,"chains":8,"iters":16384,"ops_per_inst_wave":16384},"ms_min":11.56351,"TOPS_best":950.846,"TOPS_med":848.389}
-{"bench":"valu_fma_f32","config":{"grid":640,"block":512,"chains":8,"iters":65536,"ops_per_inst_wave":128},"ms_min":11.82143,"TOPS_best":29.066,"TOPS_med":29.054}
-{"bench":"valu_fma_f32","config":{"grid":640,"block":512,"chains":16,"iters":32768,"ops_per_inst_wave":128},"ms_min":11.56879,"TOPS_best":29.700,"TOPS_med":26.459}
-{"bench":"sfu_exp2","config":{"grid":640,"block":512,"chains":8,"iters":16384,"ops_per_inst_wave":64},"ms_min":22.42191,"TOPS_best":1.916,"TOPS_med":1.915}
-{"bench":"gmem_latency","config":{"working_set":16384,"steps":20000},"cycles_per_step":152.02,"ns_per_step":101.34,"shader_clock_mhz":1500.0,"wall_clock_khz":25000}
-{"bench":"gmem_latency","config":{"working_set":2097152,"steps":20000},"cycles_per_step":369.37,"ns_per_step":246.25,"shader_clock_mhz":1500.0,"wall_clock_khz":25000}
-{"bench":"gmem_latency","config":{"working_set":536870912,"steps":20000},"cycles_per_step":577.07,"ns_per_step":384.71,"shader_clock_mhz":1500.0,"wall_clock_khz":25000}
-{"bench":"lds_latency","config":{"steps":100000},"cycles_per_step":64.00,"ns_per_step":42.67,"shader_clock_mhz":1500.0,"wall_clock_khz":25000}
-{"bench":"mmac_bf16_latency","config":{"iters":100000},"cycles_per_step":44.02,"ns_per_step":29.34,"shader_clock_mhz":1500.1,"wall_clock_khz":25000}
-{"bench":"barrier","config":{"block":256,"mode":"syncthreads"},"cycles_per_step":52.00,"ns_per_step":34.67,"shader_clock_mhz":1500.0,"wall_clock_khz":25000}
-{"bench":"barrier","config":{"block":256,"mode":"lds_barrier"},"cycles_per_step":52.00,"ns_per_step":34.67,"shader_clock_mhz":1500.0,"wall_clock_khz":25000}
-{"bench":"barrier","config":{"block":512,"mode":"syncthreads"},"cycles_per_step":56.00,"ns_per_step":37.33,"shader_clock_mhz":1500.0,"wall_clock_khz":25000}
-{"bench":"barrier","config":{"block":512,"mode":"lds_barrier"},"cycles_per_step":56.00,"ns_per_step":37.33,"shader_clock_mhz":1500.0,"wall_clock_khz":25000}
-{"bench":"barrier","config":{"block":1024,"mode":"syncthreads"},"cycles_per_step":68.00,"ns_per_step":45.33,"shader_clock_mhz":1500.0,"wall_clock_khz":25000}
-{"bench":"barrier","config":{"block":1024,"mode":"lds_barrier"},"cycles_per_step":76.00,"ns_per_step":50.67,"shader_clock_mhz":1500.0,"wall_clock_khz":25000}
-{"bench":"launch_stream","config":{"kernels":2000},"us_per_kernel_best":2.176,"us_per_kernel_med":2.642}
-{"bench":"launch_graph","config":{"kernels":2000},"us_per_kernel_best":1.669,"us_per_kernel_med":1.669}
-{"bench":"launch_single","config":{"samples":190},"us_best":6.400,"us_med":8.160}
-{"bench":"pcie_h2d","config":{"bytes":268435456,"pinned":true},"GBps_best":28.60}
-{"bench":"pcie_d2h","config":{"bytes":268435456,"pinned":true},"GBps_best":38.13}
+{"bench": "device", "name": "BW200, UBB BW1000", "gcnArchName": "gfx936:sramecc+:xnack-", "cu_count": 80, "warp_size": 64, "clock_khz": 1500000, "memory_clock_khz": 1800000, "memory_bus_width": 4096, "l2_bytes": 8388608, "lds_per_block": 65536, "lds_per_cu": 65536, "regs_per_block": 196608, "max_threads_per_cu": 2560, "global_mem_bytes": 68702699520, "wall_clock_khz": 25000}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 320, "block": 256, "unroll": 1}, "ms_min": 0.83664, "ms_med": 0.84, "GBps_best": 1283.4, "GBps_med": 1278.3}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 320, "block": 256, "unroll": 4}, "ms_min": 0.84288, "ms_med": 0.84528, "GBps_best": 1273.9, "GBps_med": 1270.3}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 320, "block": 512, "unroll": 1}, "ms_min": 0.80176, "ms_med": 0.83568, "GBps_best": 1339.2, "GBps_med": 1284.9}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 320, "block": 512, "unroll": 4}, "ms_min": 0.87456, "ms_med": 0.8776, "GBps_best": 1227.8, "GBps_med": 1223.5}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 640, "block": 256, "unroll": 1}, "ms_min": 0.84048, "ms_med": 0.84752, "GBps_best": 1277.5, "GBps_med": 1266.9}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 640, "block": 256, "unroll": 4}, "ms_min": 0.8768, "ms_med": 0.88128, "GBps_best": 1224.6, "GBps_med": 1218.4}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 640, "block": 512, "unroll": 1}, "ms_min": 0.84528, "ms_med": 0.85808, "GBps_best": 1270.3, "GBps_med": 1251.3}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 640, "block": 512, "unroll": 4}, "ms_min": 0.88144, "ms_med": 0.88656, "GBps_best": 1218.2, "GBps_med": 1211.1}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 1280, "block": 256, "unroll": 1}, "ms_min": 0.85248, "ms_med": 0.8624, "GBps_best": 1259.5, "GBps_med": 1245.1}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 1280, "block": 256, "unroll": 4}, "ms_min": 0.87808, "ms_med": 0.88128, "GBps_best": 1222.8, "GBps_med": 1218.4}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 1280, "block": 512, "unroll": 1}, "ms_min": 0.8512, "ms_med": 0.8568, "GBps_best": 1261.4, "GBps_med": 1253.2}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 1280, "block": 512, "unroll": 4}, "ms_min": 0.88944, "ms_med": 0.892, "GBps_best": 1207.2, "GBps_med": 1203.7}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 2560, "block": 256, "unroll": 1}, "ms_min": 0.85936, "ms_med": 0.8648, "GBps_best": 1249.5, "GBps_med": 1241.6}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 2560, "block": 256, "unroll": 4}, "ms_min": 0.88256, "ms_med": 0.884, "GBps_best": 1216.6, "GBps_med": 1214.6}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 2560, "block": 512, "unroll": 1}, "ms_min": 0.84336, "ms_med": 0.84656, "GBps_best": 1273.2, "GBps_med": 1268.4}
+{"bench": "hbm_read", "config": {"bytes_per_pass": 1073741824, "grid": 2560, "block": 512, "unroll": 4}, "ms_min": 0.86672, "ms_med": 0.86752, "GBps_best": 1238.9, "GBps_med": 1237.7}
+{"bench": "hbm_read_nt", "config": {"bytes_per_pass": 1073741824, "grid": 320, "block": 256, "unroll": 1}, "ms_min": 0.83648, "ms_med": 0.83968, "GBps_best": 1283.6, "GBps_med": 1278.8}
+{"bench": "hbm_read_nt", "config": {"bytes_per_pass": 1073741824, "grid": 320, "block": 512, "unroll": 1}, "ms_min": 0.82, "ms_med": 0.83488, "GBps_best": 1309.4, "GBps_med": 1286.1}
+{"bench": "hbm_read_nt", "config": {"bytes_per_pass": 1073741824, "grid": 640, "block": 256, "unroll": 1}, "ms_min": 0.8392, "ms_med": 0.85088, "GBps_best": 1279.5, "GBps_med": 1261.9}
+{"bench": "hbm_read_nt", "config": {"bytes_per_pass": 1073741824, "grid": 640, "block": 512, "unroll": 1}, "ms_min": 0.84992, "ms_med": 0.8624, "GBps_best": 1263.3, "GBps_med": 1245.1}
+{"bench": "hbm_read_nt", "config": {"bytes_per_pass": 1073741824, "grid": 1280, "block": 256, "unroll": 1}, "ms_min": 0.86064, "ms_med": 0.86784, "GBps_best": 1247.6, "GBps_med": 1237.3}
+{"bench": "hbm_read_nt", "config": {"bytes_per_pass": 1073741824, "grid": 1280, "block": 512, "unroll": 1}, "ms_min": 0.85536, "ms_med": 0.86048, "GBps_best": 1255.3, "GBps_med": 1247.8}
+{"bench": "hbm_read_nt", "config": {"bytes_per_pass": 1073741824, "grid": 2560, "block": 256, "unroll": 1}, "ms_min": 0.85968, "ms_med": 0.8656, "GBps_best": 1249.0, "GBps_med": 1240.5}
+{"bench": "hbm_read_nt", "config": {"bytes_per_pass": 1073741824, "grid": 2560, "block": 512, "unroll": 1}, "ms_min": 0.84368, "ms_med": 0.84736, "GBps_best": 1272.7, "GBps_med": 1267.2}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 320, "block": 256, "unroll": 1}, "ms_min": 0.97568, "ms_med": 0.97984, "GBps_best": 1100.5, "GBps_med": 1095.8}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 320, "block": 256, "unroll": 4}, "ms_min": 0.98928, "ms_med": 0.99552, "GBps_best": 1085.4, "GBps_med": 1078.6}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 320, "block": 512, "unroll": 1}, "ms_min": 0.9912, "ms_med": 1.00048, "GBps_best": 1083.3, "GBps_med": 1073.2}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 320, "block": 512, "unroll": 4}, "ms_min": 0.98752, "ms_med": 0.99296, "GBps_best": 1087.3, "GBps_med": 1081.4}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 640, "block": 256, "unroll": 1}, "ms_min": 1.10528, "ms_med": 1.10896, "GBps_best": 971.5, "GBps_med": 968.2}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 640, "block": 256, "unroll": 4}, "ms_min": 1.09792, "ms_med": 1.1088, "GBps_best": 978.0, "GBps_med": 968.4}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 640, "block": 512, "unroll": 1}, "ms_min": 1.12336, "ms_med": 1.13664, "GBps_best": 955.8, "GBps_med": 944.7}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 640, "block": 512, "unroll": 4}, "ms_min": 1.11584, "ms_med": 1.13568, "GBps_best": 962.3, "GBps_med": 945.5}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 1280, "block": 256, "unroll": 1}, "ms_min": 1.69088, "ms_med": 1.6992, "GBps_best": 635.0, "GBps_med": 631.9}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 1280, "block": 256, "unroll": 4}, "ms_min": 1.66112, "ms_med": 1.69936, "GBps_best": 646.4, "GBps_med": 631.9}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 1280, "block": 512, "unroll": 1}, "ms_min": 1.07392, "ms_med": 1.08848, "GBps_best": 999.8, "GBps_med": 986.5}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 1280, "block": 512, "unroll": 4}, "ms_min": 1.06032, "ms_med": 1.07776, "GBps_best": 1012.7, "GBps_med": 996.3}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 2560, "block": 256, "unroll": 1}, "ms_min": 1.52208, "ms_med": 1.55184, "GBps_best": 705.4, "GBps_med": 691.9}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 2560, "block": 256, "unroll": 4}, "ms_min": 1.62224, "ms_med": 1.63856, "GBps_best": 661.9, "GBps_med": 655.3}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 2560, "block": 512, "unroll": 1}, "ms_min": 1.01776, "ms_med": 1.02448, "GBps_best": 1055.0, "GBps_med": 1048.1}
+{"bench": "hbm_write", "config": {"bytes_per_pass": 1073741824, "grid": 2560, "block": 512, "unroll": 4}, "ms_min": 1.03312, "ms_med": 1.03952, "GBps_best": 1039.3, "GBps_med": 1032.9}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 320, "block": 256, "unroll": 1}, "ms_min": 1.87472, "ms_med": 1.88944, "GBps_best": 1145.5, "GBps_med": 1136.6}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 320, "block": 256, "unroll": 4}, "ms_min": 1.93008, "ms_med": 1.94016, "GBps_best": 1112.6, "GBps_med": 1106.9}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 320, "block": 512, "unroll": 1}, "ms_min": 1.95344, "ms_med": 1.96, "GBps_best": 1099.3, "GBps_med": 1095.7}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 320, "block": 512, "unroll": 4}, "ms_min": 1.9824, "ms_med": 1.98864, "GBps_best": 1083.3, "GBps_med": 1079.9}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 640, "block": 256, "unroll": 1}, "ms_min": 1.9376, "ms_med": 1.9432, "GBps_best": 1108.3, "GBps_med": 1105.1}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 640, "block": 256, "unroll": 4}, "ms_min": 1.95648, "ms_med": 1.96496, "GBps_best": 1097.6, "GBps_med": 1092.9}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 640, "block": 512, "unroll": 1}, "ms_min": 1.96176, "ms_med": 1.97024, "GBps_best": 1094.7, "GBps_med": 1090.0}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 640, "block": 512, "unroll": 4}, "ms_min": 2.06384, "ms_med": 2.1256, "GBps_best": 1040.5, "GBps_med": 1010.3}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 1280, "block": 256, "unroll": 1}, "ms_min": 1.9632, "ms_med": 1.972, "GBps_best": 1093.9, "GBps_med": 1089.0}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 1280, "block": 256, "unroll": 4}, "ms_min": 2.00448, "ms_med": 2.02848, "GBps_best": 1071.3, "GBps_med": 1058.7}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 1280, "block": 512, "unroll": 1}, "ms_min": 1.94512, "ms_med": 1.95264, "GBps_best": 1104.0, "GBps_med": 1099.8}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 1280, "block": 512, "unroll": 4}, "ms_min": 2.06144, "ms_med": 2.0776, "GBps_best": 1041.7, "GBps_med": 1033.6}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 2560, "block": 256, "unroll": 1}, "ms_min": 1.92096, "ms_med": 1.92576, "GBps_best": 1117.9, "GBps_med": 1115.1}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 2560, "block": 256, "unroll": 4}, "ms_min": 1.98752, "ms_med": 1.99248, "GBps_best": 1080.5, "GBps_med": 1077.8}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 2560, "block": 512, "unroll": 1}, "ms_min": 1.91472, "ms_med": 1.92736, "GBps_best": 1121.6, "GBps_med": 1114.2}
+{"bench": "hbm_copy", "config": {"bytes_per_pass": 2147483648, "grid": 2560, "block": 512, "unroll": 4}, "ms_min": 2.00944, "ms_med": 2.01872, "GBps_best": 1068.7, "GBps_med": 1063.8}
+{"bench": "l2_read", "config": {"working_set": 2097152, "l2_size": 8388608, "resident": true, "grid": 320, "block": 256, "loads_per_thread": 1024}, "ms_min": 0.22912, "GBps_best": 5858.0, "GBps_med": 5841.6}
+{"bench": "l2_read", "config": {"working_set": 2097152, "l2_size": 8388608, "resident": true, "grid": 320, "block": 512, "loads_per_thread": 1024}, "ms_min": 0.47056, "GBps_best": 5704.6, "GBps_med": 5637.5}
+{"bench": "l2_read", "config": {"working_set": 2097152, "l2_size": 8388608, "resident": true, "grid": 640, "block": 256, "loads_per_thread": 1024}, "ms_min": 0.47248, "GBps_best": 5681.4, "GBps_med": 5613.0}
+{"bench": "l2_read", "config": {"working_set": 2097152, "l2_size": 8388608, "resident": true, "grid": 640, "block": 512, "loads_per_thread": 1024}, "ms_min": 0.91488, "GBps_best": 5868.2, "GBps_med": 5508.0}
+{"bench": "l2_read", "config": {"working_set": 2097152, "l2_size": 8388608, "resident": true, "grid": 1280, "block": 256, "loads_per_thread": 1024}, "ms_min": 0.92688, "GBps_best": 5792.2, "GBps_med": 5603.6}
+{"bench": "l2_read", "config": {"working_set": 2097152, "l2_size": 8388608, "resident": true, "grid": 1280, "block": 512, "loads_per_thread": 1024}, "ms_min": 1.76, "GBps_best": 6100.8, "GBps_med": 5929.9}
+{"bench": "l2_read", "config": {"working_set": 4194304, "l2_size": 8388608, "resident": true, "grid": 320, "block": 256, "loads_per_thread": 1024}, "ms_min": 0.2328, "GBps_best": 5765.4, "GBps_med": 5629.9}
+{"bench": "l2_read", "config": {"working_set": 4194304, "l2_size": 8388608, "resident": true, "grid": 320, "block": 512, "loads_per_thread": 1024}, "ms_min": 0.48016, "GBps_best": 5590.5, "GBps_med": 5560.9}
+{"bench": "l2_read", "config": {"working_set": 4194304, "l2_size": 8388608, "resident": true, "grid": 640, "block": 256, "loads_per_thread": 1024}, "ms_min": 0.47728, "GBps_best": 5624.3, "GBps_med": 5564.6}
+{"bench": "l2_read", "config": {"working_set": 4194304, "l2_size": 8388608, "resident": true, "grid": 640, "block": 512, "loads_per_thread": 1024}, "ms_min": 0.92624, "GBps_best": 5796.2, "GBps_med": 5414.6}
+{"bench": "l2_read", "config": {"working_set": 4194304, "l2_size": 8388608, "resident": true, "grid": 1280, "block": 256, "loads_per_thread": 1024}, "ms_min": 0.93536, "GBps_best": 5739.7, "GBps_med": 5548.0}
+{"bench": "l2_read", "config": {"working_set": 4194304, "l2_size": 8388608, "resident": true, "grid": 1280, "block": 512, "loads_per_thread": 1024}, "ms_min": 1.81712, "GBps_best": 5909.0, "GBps_med": 5739.2}
+{"bench": "l2_read", "config": {"working_set": 33554432, "l2_size": 8388608, "resident": false, "grid": 320, "block": 256, "loads_per_thread": 1024}, "ms_min": 0.80864, "GBps_best": 1659.8, "GBps_med": 1623.5}
+{"bench": "l2_read", "config": {"working_set": 33554432, "l2_size": 8388608, "resident": false, "grid": 320, "block": 512, "loads_per_thread": 1024}, "ms_min": 1.64864, "GBps_best": 1628.2, "GBps_med": 1614.1}
+{"bench": "l2_read", "config": {"working_set": 33554432, "l2_size": 8388608, "resident": false, "grid": 640, "block": 256, "loads_per_thread": 1024}, "ms_min": 1.71872, "GBps_best": 1561.8, "GBps_med": 1556.8}
+{"bench": "l2_read", "config": {"working_set": 33554432, "l2_size": 8388608, "resident": false, "grid": 640, "block": 512, "loads_per_thread": 1024}, "ms_min": 3.5248, "GBps_best": 1523.1, "GBps_med": 1490.1}
+{"bench": "l2_read", "config": {"working_set": 33554432, "l2_size": 8388608, "resident": false, "grid": 1280, "block": 256, "loads_per_thread": 1024}, "ms_min": 3.50912, "GBps_best": 1529.9, "GBps_med": 1523.5}
+{"bench": "l2_read", "config": {"working_set": 33554432, "l2_size": 8388608, "resident": false, "grid": 1280, "block": 512, "loads_per_thread": 1024}, "ms_min": 5.47232, "GBps_best": 1962.1, "GBps_med": 1904.7}
+{"bench": "lds_read", "config": {"grid": 320, "block": 256, "iters": 4096}, "ms_min": 1.42768, "GBps_best": 15041.8, "GBps_med": 14996.4}
+{"bench": "lds_read", "config": {"grid": 640, "block": 256, "iters": 4096}, "ms_min": 2.83136, "GBps_best": 15169.3, "GBps_med": 15136.8}
+{"bench": "lds_read", "config": {"grid": 1280, "block": 256, "iters": 4096}, "ms_min": 5.6376, "GBps_best": 15236.9, "GBps_med": 15230.4}
+{"bench": "mmac_bf16", "config": {"grid": 320, "block": 256, "chains": 4, "iters": 32768, "ops_per_inst_wave": 8192}, "ms_min": 3.24624, "TOPS_best": 423.379, "TOPS_med": 422.733}
+{"bench": "mmac_bf16", "config": {"grid": 320, "block": 256, "chains": 8, "iters": 16384, "ops_per_inst_wave": 8192}, "ms_min": 3.15936, "TOPS_best": 435.022, "TOPS_med": 434.34}
+{"bench": "mmac_f16", "config": {"grid": 320, "block": 256, "chains": 8, "iters": 16384, "ops_per_inst_wave": 8192}, "ms_min": 3.06016, "TOPS_best": 449.124, "TOPS_med": 448.42}
+{"bench": "mmac_f32x8", "config": {"grid": 320, "block": 256, "chains": 8, "iters": 4096, "ops_per_inst_wave": 4096}, "ms_min": 2.88272, "TOPS_best": 59.596, "TOPS_med": 59.5}
+{"bench": "mmac_tf32", "config": {"grid": 320, "block": 256, "chains": 8, "iters": 16384, "ops_per_inst_wave": 4096}, "ms_min": 3.15568, "TOPS_best": 217.765, "TOPS_med": 217.39}
+{"bench": "mmac_i8", "config": {"grid": 320, "block": 256, "chains": 8, "iters": 16384, "ops_per_inst_wave": 16384}, "ms_min": 3.15552, "TOPS_best": 871.103, "TOPS_med": 869.736}
+{"bench": "valu_fma_f32", "config": {"grid": 320, "block": 256, "chains": 8, "iters": 65536, "ops_per_inst_wave": 128}, "ms_min": 3.17088, "TOPS_best": 27.09, "TOPS_med": 27.05}
+{"bench": "valu_fma_f32", "config": {"grid": 320, "block": 256, "chains": 16, "iters": 32768, "ops_per_inst_wave": 128}, "ms_min": 3.04256, "TOPS_best": 28.233, "TOPS_med": 28.19}
+{"bench": "sfu_exp2", "config": {"grid": 320, "block": 256, "chains": 8, "iters": 16384, "ops_per_inst_wave": 64}, "ms_min": 5.63904, "TOPS_best": 1.904, "TOPS_med": 1.902}
+{"bench": "mmac_bf16", "config": {"grid": 320, "block": 512, "chains": 4, "iters": 32768, "ops_per_inst_wave": 8192}, "ms_min": 6.05888, "TOPS_best": 453.678, "TOPS_med": 453.319}
+{"bench": "mmac_bf16", "config": {"grid": 320, "block": 512, "chains": 8, "iters": 16384, "ops_per_inst_wave": 8192}, "ms_min": 5.95696, "TOPS_best": 461.44, "TOPS_med": 461.056}
+{"bench": "mmac_f16", "config": {"grid": 320, "block": 512, "chains": 8, "iters": 16384, "ops_per_inst_wave": 8192}, "ms_min": 5.85264, "TOPS_best": 469.665, "TOPS_med": 469.28}
+{"bench": "mmac_f32x8", "config": {"grid": 320, "block": 512, "chains": 8, "iters": 4096, "ops_per_inst_wave": 4096}, "ms_min": 5.67936, "TOPS_best": 60.499, "TOPS_med": 60.448}
+{"bench": "mmac_tf32", "config": {"grid": 320, "block": 512, "chains": 8, "iters": 16384, "ops_per_inst_wave": 4096}, "ms_min": 5.9648, "TOPS_best": 230.417, "TOPS_med": 230.232}
+{"bench": "mmac_i8", "config": {"grid": 320, "block": 512, "chains": 8, "iters": 16384, "ops_per_inst_wave": 16384}, "ms_min": 5.96496, "TOPS_best": 921.643, "TOPS_med": 920.926}
+{"bench": "valu_fma_f32", "config": {"grid": 320, "block": 512, "chains": 8, "iters": 65536, "ops_per_inst_wave": 128}, "ms_min": 6.05375, "TOPS_best": 28.379, "TOPS_med": 28.356}
+{"bench": "valu_fma_f32", "config": {"grid": 320, "block": 512, "chains": 16, "iters": 32768, "ops_per_inst_wave": 128}, "ms_min": 5.88351, "TOPS_best": 29.2, "TOPS_med": 29.176}
+{"bench": "sfu_exp2", "config": {"grid": 320, "block": 512, "chains": 8, "iters": 16384, "ops_per_inst_wave": 64}, "ms_min": 11.23151, "TOPS_best": 1.912, "TOPS_med": 1.911}
+{"bench": "mmac_bf16", "config": {"grid": 640, "block": 256, "chains": 4, "iters": 32768, "ops_per_inst_wave": 8192}, "ms_min": 6.05888, "TOPS_best": 453.678, "TOPS_med": 453.319}
+{"bench": "mmac_bf16", "config": {"grid": 640, "block": 256, "chains": 8, "iters": 16384, "ops_per_inst_wave": 8192}, "ms_min": 5.95696, "TOPS_best": 461.44, "TOPS_med": 461.056}
+{"bench": "mmac_f16", "config": {"grid": 640, "block": 256, "chains": 8, "iters": 16384, "ops_per_inst_wave": 8192}, "ms_min": 5.85263, "TOPS_best": 469.665, "TOPS_med": 469.28}
+{"bench": "mmac_f32x8", "config": {"grid": 640, "block": 256, "chains": 8, "iters": 4096, "ops_per_inst_wave": 4096}, "ms_min": 5.67951, "TOPS_best": 60.498, "TOPS_med": 60.448}
+{"bench": "mmac_tf32", "config": {"grid": 640, "block": 256, "chains": 8, "iters": 16384, "ops_per_inst_wave": 4096}, "ms_min": 5.9648, "TOPS_best": 230.417, "TOPS_med": 230.232}
+{"bench": "mmac_i8", "config": {"grid": 640, "block": 256, "chains": 8, "iters": 16384, "ops_per_inst_wave": 16384}, "ms_min": 5.9648, "TOPS_best": 921.668, "TOPS_med": 920.729}
+{"bench": "valu_fma_f32", "config": {"grid": 640, "block": 256, "chains": 8, "iters": 65536, "ops_per_inst_wave": 128}, "ms_min": 6.05375, "TOPS_best": 28.379, "TOPS_med": 28.356}
+{"bench": "valu_fma_f32", "config": {"grid": 640, "block": 256, "chains": 16, "iters": 32768, "ops_per_inst_wave": 128}, "ms_min": 5.88351, "TOPS_best": 29.2, "TOPS_med": 29.176}
+{"bench": "sfu_exp2", "config": {"grid": 640, "block": 256, "chains": 8, "iters": 16384, "ops_per_inst_wave": 64}, "ms_min": 11.23183, "TOPS_best": 1.912, "TOPS_med": 1.911}
+{"bench": "mmac_bf16", "config": {"grid": 640, "block": 512, "chains": 4, "iters": 32768, "ops_per_inst_wave": 8192}, "ms_min": 11.65823, "TOPS_best": 471.56, "TOPS_med": 471.373}
+{"bench": "mmac_bf16", "config": {"grid": 640, "block": 512, "chains": 8, "iters": 16384, "ops_per_inst_wave": 8192}, "ms_min": 11.55058, "TOPS_best": 475.955, "TOPS_med": 475.751}
+{"bench": "mmac_f16", "config": {"grid": 640, "block": 512, "chains": 8, "iters": 16384, "ops_per_inst_wave": 8192}, "ms_min": 11.44623, "TOPS_best": 480.294, "TOPS_med": 480.086}
+{"bench": "mmac_f32x8", "config": {"grid": 640, "block": 512, "chains": 8, "iters": 4096, "ops_per_inst_wave": 4096}, "ms_min": 11.27279, "TOPS_best": 60.96, "TOPS_med": 54.214}
+{"bench": "mmac_tf32", "config": {"grid": 640, "block": 512, "chains": 8, "iters": 16384, "ops_per_inst_wave": 4096}, "ms_min": 11.56351, "TOPS_best": 237.711, "TOPS_med": 212.068}
+{"bench": "mmac_i8", "config": {"grid": 640, "block": 512, "chains": 8, "iters": 16384, "ops_per_inst_wave": 16384}, "ms_min": 11.56351, "TOPS_best": 950.846, "TOPS_med": 848.389}
+{"bench": "valu_fma_f32", "config": {"grid": 640, "block": 512, "chains": 8, "iters": 65536, "ops_per_inst_wave": 128}, "ms_min": 11.82143, "TOPS_best": 29.066, "TOPS_med": 29.054}
+{"bench": "valu_fma_f32", "config": {"grid": 640, "block": 512, "chains": 16, "iters": 32768, "ops_per_inst_wave": 128}, "ms_min": 11.56879, "TOPS_best": 29.7, "TOPS_med": 26.459}
+{"bench": "sfu_exp2", "config": {"grid": 640, "block": 512, "chains": 8, "iters": 16384, "ops_per_inst_wave": 64}, "ms_min": 22.42191, "TOPS_best": 1.916, "TOPS_med": 1.915}
+{"bench": "gmem_latency", "config": {"working_set": 16384, "steps": 20000}, "cycles_per_step": 152.02, "ns_per_step": 101.34, "shader_clock_mhz": 1500.0, "wall_clock_khz": 25000}
+{"bench": "gmem_latency", "config": {"working_set": 2097152, "steps": 20000}, "cycles_per_step": 369.37, "ns_per_step": 246.25, "shader_clock_mhz": 1500.0, "wall_clock_khz": 25000}
+{"bench": "gmem_latency", "config": {"working_set": 536870912, "steps": 20000}, "cycles_per_step": 577.07, "ns_per_step": 384.71, "shader_clock_mhz": 1500.0, "wall_clock_khz": 25000}
+{"bench": "lds_latency", "config": {"steps": 100000}, "cycles_per_step": 64.0, "ns_per_step": 42.67, "shader_clock_mhz": 1500.0, "wall_clock_khz": 25000}
+{"bench": "mmac_bf16_latency", "config": {"iters": 100000}, "cycles_per_step": 44.02, "ns_per_step": 29.34, "shader_clock_mhz": 1500.1, "wall_clock_khz": 25000}
+{"bench": "barrier", "config": {"block": 256, "mode": "syncthreads"}, "cycles_per_step": 52.0, "ns_per_step": 34.67, "shader_clock_mhz": 1500.0, "wall_clock_khz": 25000}
+{"bench": "barrier", "config": {"block": 256, "mode": "lds_barrier"}, "cycles_per_step": 52.0, "ns_per_step": 34.67, "shader_clock_mhz": 1500.0, "wall_clock_khz": 25000}
+{"bench": "barrier", "config": {"block": 512, "mode": "syncthreads"}, "cycles_per_step": 56.0, "ns_per_step": 37.33, "shader_clock_mhz": 1500.0, "wall_clock_khz": 25000}
+{"bench": "barrier", "config": {"block": 512, "mode": "lds_barrier"}, "cycles_per_step": 56.0, "ns_per_step": 37.33, "shader_clock_mhz": 1500.0, "wall_clock_khz": 25000}
+{"bench": "barrier", "config": {"block": 1024, "mode": "syncthreads"}, "cycles_per_step": 68.0, "ns_per_step": 45.33, "shader_clock_mhz": 1500.0, "wall_clock_khz": 25000}
+{"bench": "barrier", "config": {"block": 1024, "mode": "lds_barrier"}, "cycles_per_step": 76.0, "ns_per_step": 50.67, "shader_clock_mhz": 1500.0, "wall_clock_khz": 25000}
+{"bench": "launch_stream", "config": {"kernels": 2000}, "us_per_kernel_best": 2.176, "us_per_kernel_med": 2.642}
+{"bench": "launch_graph", "config": {"kernels": 2000}, "us_per_kernel_best": 1.669, "us_per_kernel_med": 1.669}
+{"bench": "launch_single", "config": {"samples": 190}, "us_best": 6.4, "us_med": 8.16}
+{"bench": "pcie_h2d", "config": {"bytes": 268435456, "pinned": true}, "GBps_best": 28.6}
+{"bench": "pcie_d2h", "config": {"bytes": 268435456, "pinned": true}, "GBps_best": 38.13}
+{"bench": "hbm_read_ctas", "config": {"ctas": 1, "block": 256, "bytes": 268435456}, "ms_min": 12.7864, "GBps_best": 21.0, "GBps_med": 21.0}
+{"bench": "hbm_read_ctas", "config": {"ctas": 1, "block": 512, "bytes": 268435456}, "ms_min": 6.4483, "GBps_best": 41.6, "GBps_med": 41.3}
+{"bench": "hbm_read_ctas", "config": {"ctas": 2, "block": 256, "bytes": 268435456}, "ms_min": 6.3995, "GBps_best": 41.9, "GBps_med": 41.9}
+{"bench": "hbm_read_ctas", "config": {"ctas": 2, "block": 512, "bytes": 268435456}, "ms_min": 3.1858, "GBps_best": 84.3, "GBps_med": 83.5}
+{"bench": "hbm_read_ctas", "config": {"ctas": 4, "block": 256, "bytes": 268435456}, "ms_min": 3.163, "GBps_best": 84.9, "GBps_med": 84.6}
+{"bench": "hbm_read_ctas", "config": {"ctas": 4, "block": 512, "bytes": 268435456}, "ms_min": 1.5912, "GBps_best": 168.7, "GBps_med": 167.9}
+{"bench": "hbm_read_ctas", "config": {"ctas": 8, "block": 256, "bytes": 268435456}, "ms_min": 1.5896, "GBps_best": 168.9, "GBps_med": 168.1}
+{"bench": "hbm_read_ctas", "config": {"ctas": 8, "block": 512, "bytes": 268435456}, "ms_min": 0.7986, "GBps_best": 336.1, "GBps_med": 332.3}
+{"bench": "hbm_read_ctas", "config": {"ctas": 12, "block": 256, "bytes": 268435456}, "ms_min": 1.055, "GBps_best": 254.4, "GBps_med": 253.7}
+{"bench": "hbm_read_ctas", "config": {"ctas": 12, "block": 512, "bytes": 268435456}, "ms_min": 0.5578, "GBps_best": 481.3, "GBps_med": 477.3}
+{"bench": "hbm_read_ctas", "config": {"ctas": 16, "block": 256, "bytes": 268435456}, "ms_min": 0.7894, "GBps_best": 340.0, "GBps_med": 338.4}
+{"bench": "hbm_read_ctas", "config": {"ctas": 16, "block": 512, "bytes": 268435456}, "ms_min": 0.4221, "GBps_best": 636.0, "GBps_med": 626.0}
+{"bench": "hbm_read_ctas", "config": {"ctas": 24, "block": 256, "bytes": 268435456}, "ms_min": 0.5387, "GBps_best": 498.3, "GBps_med": 491.9}
+{"bench": "hbm_read_ctas", "config": {"ctas": 24, "block": 512, "bytes": 268435456}, "ms_min": 0.3162, "GBps_best": 849.0, "GBps_med": 833.9}
+{"bench": "hbm_read_ctas", "config": {"ctas": 32, "block": 256, "bytes": 268435456}, "ms_min": 0.4107, "GBps_best": 653.6, "GBps_med": 648.5}
+{"bench": "hbm_read_ctas", "config": {"ctas": 32, "block": 512, "bytes": 268435456}, "ms_min": 0.2522, "GBps_best": 1064.5, "GBps_med": 1046.0}
+{"bench": "hbm_read_ctas", "config": {"ctas": 48, "block": 256, "bytes": 268435456}, "ms_min": 0.3038, "GBps_best": 883.5, "GBps_med": 859.5}
+{"bench": "hbm_read_ctas", "config": {"ctas": 48, "block": 512, "bytes": 268435456}, "ms_min": 0.215, "GBps_best": 1248.3, "GBps_med": 1219.3}
+{"bench": "hbm_read_ctas", "config": {"ctas": 64, "block": 256, "bytes": 268435456}, "ms_min": 0.245, "GBps_best": 1095.8, "GBps_med": 1065.2}
+{"bench": "hbm_read_ctas", "config": {"ctas": 64, "block": 512, "bytes": 268435456}, "ms_min": 0.203, "GBps_best": 1322.1, "GBps_med": 1298.5}
+{"bench": "hbm_read_ctas", "config": {"ctas": 80, "block": 256, "bytes": 268435456}, "ms_min": 0.2259, "GBps_best": 1188.2, "GBps_med": 1170.8}
+{"bench": "hbm_read_ctas", "config": {"ctas": 80, "block": 512, "bytes": 268435456}, "ms_min": 0.2011, "GBps_best": 1334.7, "GBps_med": 1307.7}

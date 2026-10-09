@@ -379,6 +379,28 @@ static void bench_hbm() {
     CK(hipFree(b));
 }
 
+// Attainable HBM read bandwidth when only `n` CTAs run (one per CU, 512 threads,
+// 4 loads in flight per thread): the bandwidth a small-grid kernel can draw at best.
+static void bench_hbm_ctas() {
+    const size_t bytes = (size_t)256 << 20, n4 = bytes / 16;
+    v4f* a;
+    CK(hipMalloc(&a, bytes));
+    CK(hipMemset(a, 0, bytes));
+    std::vector<int> ns = {1, 2, 4, 8, 12, 16, 24, 32, 48, 64, g_cus};
+    for (int n : ns) {
+        if (n > g_cus) continue;
+        for (int block : {256, 512}) {
+            auto t = time_ms([&] { hipLaunchKernelGGL(k_read<4>, n, block, 0, 0, a, n4, g_sink); }, 1, 5);
+            CK(hipGetLastError());
+            printf("{\"bench\":\"hbm_read_ctas\",\"config\":{\"ctas\":%d,\"block\":%d,\"bytes\":%zu},"
+                   "\"ms_min\":%.4f,\"GBps_best\":%.1f,\"GBps_med\":%.1f}\n",
+                   n, block, bytes, vmin(t), bytes / vmin(t) / 1e6, bytes / vmed(t) / 1e6);
+            fflush(stdout);
+        }
+    }
+    CK(hipFree(a));
+}
+
 static void bench_l2() {
     const size_t l2 = g_prop.l2CacheSize > 0 ? (size_t)g_prop.l2CacheSize : (4u << 20);
     v4f* a;
@@ -606,6 +628,54 @@ static void bench_pcie() {
     fflush(stdout);
 }
 
+// PMC semantics calibration: each reference kernel launched exactly once, with exactly
+// known work, so profiler counters (hipprof --pmc*) can be mapped to physical quantities.
+// Launch order (one line per launch) is printed so run.py can join PMC rows to it.
+static void bench_pmccal() {
+    const size_t bytes = (size_t)1 << 30, n4 = bytes / 16;
+    v4f *a, *b;
+    CK(hipMalloc(&a, bytes));
+    CK(hipMalloc(&b, bytes));
+    CK(hipMemset(a, 0, bytes));
+    CK(hipDeviceSynchronize());
+    const int W = g_prop.warpSize;
+    auto emit = [&](const char* name, int grid, int block, double expect_wave_insts,
+                    const char* inst, double bytes_rd, double bytes_wr) {
+        CK(hipDeviceSynchronize());
+        printf("{\"bench\":\"pmccal\",\"name\":\"%s\",\"grid\":%d,\"block\":%d,\"waves\":%d,"
+               "\"expect_wave_insts\":%.0f,\"inst\":\"%s\",\"bytes_rd\":%.0f,\"bytes_wr\":%.0f}\n",
+               name, grid, block, grid * block / W, expect_wave_insts, inst, bytes_rd, bytes_wr);
+        fflush(stdout);
+    };
+    int g = grid_for(4), blk = 512;
+    hipLaunchKernelGGL(k_read<1>, g, blk, 0, 0, a, n4, g_sink);
+    emit("hbm_read", g, blk, 0, "global_load_dwordx4", (double)bytes, 0);
+    hipLaunchKernelGGL(k_write<1>, g, blk, 0, 0, a, n4, 1.f);
+    emit("hbm_write", g, blk, 0, "global_store_dwordx4", 0, (double)bytes);
+    hipLaunchKernelGGL(k_copy<1>, g, blk, 0, 0, a, b, n4);
+    emit("hbm_copy", g, blk, 0, "", (double)bytes, (double)bytes);
+    {
+        const int it = 16384, gg = grid_for(8), bb = 512;
+        hipLaunchKernelGGL(k_mmac_bf16<8>, gg, bb, 0, 0, it, g_sink);
+        emit("mmac_bf16_full", gg, bb, (double)gg * bb / W * it * 8, "v_mmac_f32_16x16x16_bf16", 0, 0);
+        // 48 single-wave-group CTAs: partial occupancy reference (like KDA's recurrent grid)
+        hipLaunchKernelGGL(k_mmac_bf16<8>, 48, 256, 0, 0, it, g_sink);
+        emit("mmac_bf16_48cta", 48, 256, 48.0 * 256 / W * it * 8, "v_mmac_f32_16x16x16_bf16", 0, 0);
+        hipLaunchKernelGGL(k_fma_f32<16>, gg, bb, 0, 0, it * 2, g_sink);
+        emit("valu_pk_fma", gg, bb, (double)gg * bb / W * it * 2 * 8, "v_pk_fma_f32", 0, 0);
+        hipLaunchKernelGGL(k_exp2<8>, gg, bb, 0, 0, it, g_sink);
+        emit("sfu_exp2", gg, bb, (double)gg * bb / W * it * 8, "v_exp_f32", 0, 0);
+    }
+    {
+        const int it = 4096, gg = grid_for(16), bb = 256;
+        hipLaunchKernelGGL(k_lds_read, gg, bb, 0, 0, it, g_sink);
+        emit("lds_read", gg, bb, (double)gg * bb / W * it * 4, "ds_read_b128", 0, 0);
+    }
+    CK(hipDeviceSynchronize());
+    CK(hipFree(a));
+    CK(hipFree(b));
+}
+
 static void print_device() {
     int wall_khz = 0;
     CK(hipDeviceGetAttribute(&wall_khz, hipDeviceAttributeWallClockRate, 0));
@@ -625,6 +695,11 @@ int main(int argc, char** argv) {
     g_cus = g_prop.multiProcessorCount;
     CK(hipMalloc(&g_sink, 64));
     print_device();
+    if (argc >= 2 && !strcmp(argv[1], "pmccal")) {  // never part of the default run
+        bench_pmccal();
+        CK(hipFree(g_sink));
+        return 0;
+    }
     auto want = [&](const char* b) {
         if (argc < 2) return true;
         for (int i = 1; i < argc; ++i)
@@ -632,6 +707,7 @@ int main(int argc, char** argv) {
         return false;
     };
     if (want("hbm")) bench_hbm();
+    if (want("hbm_ctas")) bench_hbm_ctas();
     if (want("l2")) bench_l2();
     if (want("lds")) bench_lds();
     if (want("compute")) bench_compute();

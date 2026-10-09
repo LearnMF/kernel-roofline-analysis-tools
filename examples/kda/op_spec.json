@@ -1,0 +1,132 @@
+{
+  "schema": "kra.opspec/1",
+  "operator": "Kimi K3 KDA fwd+bwd, hip_kda G2 (R5 tree), K=V=128, chunk 64, bf16",
+  "launcher_module": "hip_kda.ops.g2_ops",
+  "vars": {
+    "NT": "T // 64"
+  },
+  "groups": [
+    {
+      "launcher": "fwd_prep",
+      "phase": "fwd",
+      "kernels": [
+        "g2_fwd_prep_a_kernel",
+        "g2_fwd_prep_b_kernel"
+      ],
+      "what": "l2norm + gate + intra-chunk Aqk/Akk, (I+A)^-1, W/U natives"
+    },
+    {
+      "launcher": "fwd_h_o",
+      "phase": "fwd",
+      "kernels": [
+        "g2_fwd_h_v8o"
+      ],
+      "what": "forward state recurrence fused with output o",
+      "serial": {
+        "steps": "NT",
+        "chain": {
+          "barrier": 2,
+          "lds": 2,
+          "mmac_dep": 12
+        },
+        "chain_min": {
+          "lds": 1,
+          "mmac_dep": 2
+        },
+        "note": "per chunk step the state h_i -> h_{i+1} dependency. chain (current dataflow): LDS read of h, 8 dependent MMACs (v_new = U - W h, K=128 reduction), LDS write+barrier of v_new, 4 dependent MMACs (K^T v_new), LDS write+barrier of h. chain_min (dependency only): one cross-lane exchange of the state and two MMAC levels (both GEMMs with a tree reduction); barriers and the serial K-reduction are implementation choices and are dropped, so this stays a valid lower bound for any dataflow that keeps the chunk algorithm."
+      }
+    },
+    {
+      "launcher": "l2n_apply",
+      "phase": "bwd",
+      "kernels": [
+        "g2_l2n_apply_kernel"
+      ],
+      "what": "qn/kn from saved rstd (backward)"
+    },
+    {
+      "launcher": "head_gate",
+      "phase": "bwd",
+      "kernels": [
+        "g2_gate_kernel"
+      ],
+      "what": "gate chunk-local cumsum (backward)"
+    },
+    {
+      "launcher": "wu",
+      "phase": "bwd",
+      "kernels": [
+        "g2_wu_kernel"
+      ],
+      "what": "recompute W/U and all P2/P3 operand layouts"
+    },
+    {
+      "launcher": "fwd_h_bn",
+      "phase": "bwd",
+      "kernels": [
+        "g2_fwd_h_v8o"
+      ],
+      "what": "backward recompute of the forward recurrence (emits h, v_new)",
+      "serial": {
+        "steps": "NT",
+        "chain": {
+          "barrier": 2,
+          "lds": 2,
+          "mmac_dep": 12
+        },
+        "chain_min": {
+          "lds": 1,
+          "mmac_dep": 2
+        },
+        "note": "same recurrence as fwd_h_o"
+      }
+    },
+    {
+      "launcher": "dav",
+      "phase": "bwd",
+      "kernels": [
+        "g2_dav_kernel"
+      ],
+      "what": "dAqk, dV_new, dO layouts"
+    },
+    {
+      "launcher": "dhu_bn",
+      "phase": "bwd",
+      "kernels": [
+        "g2_dhu_v8b"
+      ],
+      "what": "reverse state recurrence dh",
+      "serial": {
+        "steps": "NT",
+        "chain": {
+          "barrier": 2,
+          "lds": 2,
+          "mmac_dep": 12
+        },
+        "chain_min": {
+          "lds": 1,
+          "mmac_dep": 2
+        },
+        "note": "dh_i -> dh_{i-1}: 8 dependent MMACs (K dh), LDS write+barrier of dv2, 4 dependent MMACs (q dO - W dv2), LDS write+barrier of dh (g2_engine.cuh g2_dhu_v8b_kernel)"
+      }
+    },
+    {
+      "launcher": "wy_s4_split",
+      "phase": "bwd",
+      "kernels": [
+        "p3_wy_s4a_kernel",
+        "p3_wy_s4b_kernel"
+      ],
+      "what": "chunk-parallel dq/dk/dv/dg/db (wy + intra fused, split in two kernels)"
+    },
+    {
+      "launcher": "bwd_tail",
+      "phase": "bwd",
+      "kernels": [
+        "g2_bwd_tail_kernel",
+        "g2_bwd_tail_reduce_kernel?"
+      ],
+      "what": "dg reverse cumsum, gate/l2norm/beta backward"
+    }
+  ]
+}

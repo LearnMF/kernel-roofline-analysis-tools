@@ -37,8 +37,29 @@ def thresholds() -> dict:
     return {k: v["value"] for k, v in t.items()}
 
 
+def _itanium_last_component(name: str) -> str | None:
+    """Last component of an Itanium-mangled nested name (_ZN<len><id>...[I...]E...),
+    e.g. _ZN2g212_GLOBAL__N_119g2_l2n_apply_kernelEPKs -> g2_l2n_apply_kernel."""
+    m = re.match(r"_ZN?((?:[0-9]+[A-Za-z_][A-Za-z0-9_]*)+)", name)
+    if not m:
+        return None
+    parts, s, i = [], m.group(1), 0
+    while i < len(s) and s[i].isdigit():
+        j = i
+        while j < len(s) and s[j].isdigit():
+            j += 1
+        n = int(s[i:j])
+        parts.append(s[j:j + n])
+        i = j + n
+    return parts[-1] if parts else None
+
+
 def short_name(name: str) -> str:
     """Demangled-ish kernel name -> compact label (template args and params dropped)."""
+    if name.startswith("_Z"):
+        comp = _itanium_last_component(name)
+        if comp:
+            return comp
     n = re.sub(r"\(anonymous namespace\)::", "", name)
     n = re.sub(r"\(.*$", "", n)                    # parameter list
     n = re.sub(r"^void\s+", "", n)

@@ -176,6 +176,8 @@ def summarize(rows: list[dict]) -> dict:
     cus, clk = dev.get("cu_count"), dev.get("clock_khz")
     if cus and clk:
         for k, v in peaks.items():
+            if "value" not in v:
+                continue
             if v["unit"] in ("TFLOPS", "TOPS"):
                 v["ops_per_cu_per_clock"] = round(v["value"] * 1e12 / (cus * clk * 1e3), 1)
             elif v["unit"].startswith("GB/s") and k.startswith(("lds", "l2")):
@@ -209,6 +211,15 @@ def summarize(rows: list[dict]) -> dict:
         if r:
             launch[b] = {"best_us": r[key], "median_us": r[key.replace("best", "med")]}
     pcie = {r["bench"]: r["GBps_best"] for r in rows if r.get("bench", "").startswith("pcie")}
+    # Attainable HBM read bandwidth vs number of resident CTAs (one per CU).
+    curve = {}
+    for r in rows:
+        if r.get("bench") == "hbm_read_ctas":
+            n = r["config"]["ctas"]
+            curve[n] = max(curve.get(n, 0.0), r["GBps_best"])
+    if curve:
+        peaks["hbm_read_vs_ctas"] = {"unit": "GB/s", "curve": {str(k): curve[k] for k in sorted(curve)},
+                                     "note": "best of block 256/512, 4 loads in flight per thread"}
     return {
         "device": dev,
         "peaks": peaks,
@@ -249,7 +260,9 @@ def main(argv=None) -> int:
     p.add_argument("--build-dir", default="/tmp/kra_calibrate_build")
     p.add_argument("--id", default=None, help="machine id, e.g. gfx936-bw1000")
     p.add_argument("--bench", nargs="*", default=[],
-                   help="subset: hbm l2 lds compute latency launch pcie (default all)")
+                   help="subset: hbm hbm_ctas l2 lds compute latency launch pcie (default all)")
+    p.add_argument("--merge", default=None,
+                   help="existing machine.json: keep its rows and add/replace the benches run now")
     a = p.parse_args(argv)
 
     arch = a.arch or detect_arch()
@@ -258,7 +271,16 @@ def main(argv=None) -> int:
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     raw_path = out.with_suffix(".raw.jsonl")
+    old_rows = []
+    if a.merge:
+        old_raw = Path(a.merge).with_suffix(".raw.jsonl")
+        old_rows = [json.loads(l) for l in old_raw.read_text().splitlines() if l.startswith("{")]
     rows = run_bench(exe, a.bench, raw_path)
+    if old_rows:
+        fresh = {r["bench"] for r in rows if r.get("bench") != "device"}
+        rows = [r for r in old_rows if r.get("bench") not in fresh] + \
+               [r for r in rows if r.get("bench") != "device"]
+        raw_path.write_text("".join(json.dumps(r) + "\n" for r in rows))
     summary = summarize(rows)
     doc = {
         "schema": SCHEMA,

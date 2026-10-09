@@ -26,6 +26,8 @@ p.add_argument("--iters", type=int, default=5)
 p.add_argument("--warmup", type=int, default=3)
 p.add_argument("--sync", action="store_true")
 p.add_argument("--time", action="store_true", help="print unprofiled per-iteration ms")
+p.add_argument("--optrace", default=None,
+               help="write launcher interface capture (kra.opspec.capture) of the last iteration here")
 a = p.parse_args()
 
 # kda_op_bench_tp.py defines the inputs and fwd()/bwd() closures for each arm before
@@ -40,10 +42,20 @@ for _ in range(a.warmup):
     g["bwd"](o)
     del o
 torch.cuda.synchronize()
+cap = None
+if a.optrace:
+    import os
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+    import hip_kda.ops.g2_ops as g2_ops
+    from kra.opspec.capture import LauncherCapture
+    cap = LauncherCapture(g2_ops)
 times = []
-for _ in range(a.iters):
+for it in range(a.iters):
     torch.cuda._sleep(200000)          # marker kernel; analysis windows start after it
     torch.cuda.synchronize()
+    last = it == a.iters - 1
+    if cap is not None and last:
+        cap.__enter__()
     e0, e1 = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
     e0.record()
     o = g["fwd"](a.arm)
@@ -53,6 +65,9 @@ for _ in range(a.iters):
     e1.record()
     del o
     torch.cuda.synchronize()
+    if cap is not None and last:
+        cap.__exit__(None, None, None)
+        cap.dump(a.optrace, meta={"T": a.T, "H": a.H, "arm": a.arm, "tree": a.tree})
     times.append(e0.elapsed_time(e1))
 if a.time:
     s = sorted(times)

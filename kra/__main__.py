@@ -6,6 +6,8 @@ import sys
 COMMANDS = {
     "calibrate": "kra.calibrate.run",
     "timeline": "kra.timeline.cli",
+    "pmc": "kra.pmc.cli",
+    "analyze": "kra.model.cli",
 }
 
 
