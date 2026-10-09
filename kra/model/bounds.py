@@ -115,6 +115,10 @@ def kernel_metrics(k: dict, M: Machine, th: dict) -> dict:
         "sol_mem_active": T["par_mem_impl"] / k["t_us"] if k["t_us"] else 0.0,
         "mmac_slot_share": 2 * mmac_est / slots if slots else 0.0,
         "lds_conflict_ratio": k["lds_bank_conflict_cycles"] / (cyc * M.cus) if cyc else 0.0,
+        # SQ_WAIT_INST_LDS: wave-cycles (units of 4) waiting to issue LDS instructions, per
+        # SIMD-cycle.  Criticality evidence for LDS findings (validation P-1: a 19.6% conflict
+        # ratio with a 3.6% LDS wait share was real but off the critical path, 1.4% gain).
+        "lds_wait_share": 4 * k.get("lds_wait", 0.0) / (cyc * M.cus * 4) if cyc else 0.0,
         "vgpr": k["arch_vgpr"] + k["accum_vgpr"], "lds_bytes": k["lds_bytes"], "scratch": k["scratch"],
         "T": T,
     }
@@ -148,7 +152,11 @@ def classify(m: dict, serial: bool, th: dict, cus: int) -> dict:
             reasons.append("latency subtype (mem latency / sync / divergence) needs L3 (SQTT)")
     causes = []
     if m["lds_conflict_ratio"] >= 0.05:
-        causes.append({"id": "D.lds_conflict", "value": round(m["lds_conflict_ratio"], 3)})
+        critical = m.get("lds_wait_share", 1.0) >= th.get("kernel.lds_wait_critical", 0.05)
+        causes.append({"id": "D.lds_conflict", "value": round(m["lds_conflict_ratio"], 3),
+                       "critical": critical, "lds_wait_share": round(m.get("lds_wait_share", 0.0), 3),
+                       "note": "on the critical path: removing it should save time" if critical else
+                               "present but NOT critical (LDS issue wait small): expected time gain small"})
     if m["scratch"]:
         causes.append({"id": "D.spill", "value": m["scratch"]})
     if m["t_us"] is not None and m["t_us"] < th["system.small_kernel_us"]:

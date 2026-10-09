@@ -2,25 +2,93 @@
   "schema": "kra.thresholds/1",
   "note": "Decision thresholds. 'source' says where each value comes from. Values taken from NVIDIA guidance are NOT yet calibrated on HCU ('hcu_calibrated': false) -- they are starting points to be revised with measured HCU cases (first: KDA on gfx936).",
   "thresholds": {
-    "trust.profiler_vs_bench_ratio_max": {"value": 2.0, "source": "NV Nsight Compute Triage Guide D0", "hcu_calibrated": false,
-      "meaning": "profiled kernel time vs. unprofiled timing; beyond this the capture is suspect"},
-    "system.bubble_ratio_investigate": {"value": 0.10, "source": "NV Triage Guide D2A (idle/wait > ~10% of range)", "hcu_calibrated": false,
-      "meaning": "GPU-idle time between kernels / operator span above which launch/dependency bubbles are investigated first"},
-    "system.small_kernel_us": {"value": 10.0, "source": "KernelPro SmallKernel tool (kernel < 10 us)", "hcu_calibrated": false,
-      "meaning": "kernels shorter than this are dominated by fixed launch cost"},
-    "system.inter_kernel_gap_ratio": {"value": 0.01, "source": "KernelPro InterKernelGap tool (gap > 1% runtime)", "hcu_calibrated": false,
-      "meaning": "a single gap larger than this fraction of the span is reported individually"},
-    "kernel.sol_low": {"value": 0.60, "source": "NV Triage Guide D2 / ncu SOL rule (< 60% = latency-risk regime)", "hcu_calibrated": false},
-    "kernel.sol_high": {"value": 0.80, "source": "NV Triage Guide D2/D7 (> ~80% = near-limit regime)", "hcu_calibrated": false},
-    "kernel.balanced_band": {"value": [0.40, 0.60], "source": "common practice (TensorRT-LLM ncu skill)", "hcu_calibrated": false},
-    "stop.near_ceiling": {"value": 0.80, "source": "NV D7 (limiter within ~80% of peak); AutoKernel 'plateau with high roofline (>80%): accept'", "hcu_calibrated": false,
-      "meaning": "T_lower / T_measured at or above this -> report as at ceiling for the current algorithm"},
-    "stop.radical_below": {"value": 0.50, "source": "AutoKernel 'plateau with low roofline (<50%): radical change'", "hcu_calibrated": false},
-    "stop.memory_bw_attainable": {"value": [0.85, 0.90], "source": "team guidance (文进辉, 2026-10-09)", "hcu_calibrated": false,
-      "meaning": "fraction of ATTAINABLE (machine.json) HBM bandwidth regarded as the practical ceiling of a memory-bound kernel"},
-    "latency.dominant_stall": {"value": 0.40, "source": "KernelPro WarpStall tool", "hcu_calibrated": false},
-    "latency.barrier_stall": {"value": 0.30, "source": "KernelPro BarrierStall tool", "hcu_calibrated": false},
-    "imbalance.max_over_avg": {"value": 1.2, "source": "NV Triage Guide D7", "hcu_calibrated": false},
-    "measure.noise_pct": {"value": 2.0, "source": "hygon-hip-kernel-optimizer default noise threshold", "hcu_calibrated": true}
+    "trust.profiler_vs_bench_ratio_max": {
+      "value": 2.0,
+      "source": "NV Nsight Compute Triage Guide D0",
+      "hcu_calibrated": false,
+      "meaning": "profiled kernel time vs. unprofiled timing; beyond this the capture is suspect"
+    },
+    "system.bubble_ratio_investigate": {
+      "value": 0.1,
+      "source": "NV Triage Guide D2A (idle/wait > ~10% of range)",
+      "hcu_calibrated": false,
+      "meaning": "GPU-idle time between kernels / operator span above which launch/dependency bubbles are investigated first"
+    },
+    "system.small_kernel_us": {
+      "value": 10.0,
+      "source": "KernelPro SmallKernel tool (kernel < 10 us)",
+      "hcu_calibrated": false,
+      "meaning": "kernels shorter than this are dominated by fixed launch cost"
+    },
+    "system.inter_kernel_gap_ratio": {
+      "value": 0.01,
+      "source": "KernelPro InterKernelGap tool (gap > 1% runtime)",
+      "hcu_calibrated": false,
+      "meaning": "a single gap larger than this fraction of the span is reported individually"
+    },
+    "kernel.sol_low": {
+      "value": 0.6,
+      "source": "NV Triage Guide D2 / ncu SOL rule (< 60% = latency-risk regime)",
+      "hcu_calibrated": false
+    },
+    "kernel.sol_high": {
+      "value": 0.8,
+      "source": "NV Triage Guide D2/D7 (> ~80% = near-limit regime)",
+      "hcu_calibrated": false
+    },
+    "kernel.balanced_band": {
+      "value": [
+        0.4,
+        0.6
+      ],
+      "source": "common practice (TensorRT-LLM ncu skill)",
+      "hcu_calibrated": false
+    },
+    "stop.near_ceiling": {
+      "value": 0.8,
+      "source": "NV D7 (limiter within ~80% of peak); AutoKernel 'plateau with high roofline (>80%): accept'",
+      "hcu_calibrated": false,
+      "meaning": "T_lower / T_measured at or above this -> report as at ceiling for the current algorithm"
+    },
+    "stop.radical_below": {
+      "value": 0.5,
+      "source": "AutoKernel 'plateau with low roofline (<50%): radical change'",
+      "hcu_calibrated": false
+    },
+    "stop.memory_bw_attainable": {
+      "value": [
+        0.85,
+        0.9
+      ],
+      "source": "team guidance (文进辉, 2026-10-09)",
+      "hcu_calibrated": false,
+      "meaning": "fraction of ATTAINABLE (machine.json) HBM bandwidth regarded as the practical ceiling of a memory-bound kernel"
+    },
+    "latency.dominant_stall": {
+      "value": 0.4,
+      "source": "KernelPro WarpStall tool",
+      "hcu_calibrated": false
+    },
+    "latency.barrier_stall": {
+      "value": 0.3,
+      "source": "KernelPro BarrierStall tool",
+      "hcu_calibrated": false
+    },
+    "imbalance.max_over_avg": {
+      "value": 1.2,
+      "source": "NV Triage Guide D7",
+      "hcu_calibrated": false
+    },
+    "measure.noise_pct": {
+      "value": 2.0,
+      "source": "hygon-hip-kernel-optimizer default noise threshold",
+      "hcu_calibrated": true
+    },
+    "kernel.lds_wait_critical": {
+      "value": 0.05,
+      "source": "validation P-1 (KDA wu, gfx936): conflict 19.6% with LDS-wait share 3.6% gave only 1.4% when removed",
+      "hcu_calibrated": true,
+      "meaning": "D.lds_conflict is reported as critical only if SQ_WAIT_INST_LDS share of SIMD cycles >= value"
+    }
   }
 }
