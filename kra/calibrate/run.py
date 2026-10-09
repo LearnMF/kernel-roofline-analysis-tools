@@ -220,6 +220,18 @@ def summarize(rows: list[dict]) -> dict:
     if curve:
         peaks["hbm_read_vs_ctas"] = {"unit": "GB/s", "curve": {str(k): curve[k] for k in sorted(curve)},
                                      "note": "best of block 256/512, 4 loads in flight per thread"}
+    # Per-CU vector-memory issue cost for cache-resident loads, by width (best config).
+    vm = {}
+    for r in rows:
+        if r.get("bench") == "vmem_issue":
+            c = r["config"]
+            key = f"{c['width']}_{'l1' if c['working_set'] <= 65536 else 'l2'}"
+            if key not in vm or r["clk_per_wave_inst"] < vm[key]["clk_per_wave_inst"]:
+                vm[key] = {"clk_per_wave_inst": r["clk_per_wave_inst"],
+                           "bytes_per_cu_per_clk": r["bytes_per_cu_per_clk"], "block": c["block"]}
+    if vm:
+        peaks["vmem_issue"] = {"unit": "per CU", "by_width": vm,
+                               "note": "one CTA per CU, 8 independent loads in flight per thread"}
     return {
         "device": dev,
         "peaks": peaks,

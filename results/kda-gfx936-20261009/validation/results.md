@@ -145,6 +145,31 @@ wu 真正受限于访存等待，HBM 带宽 62%，每个 CU 只放得下 2 个 C
 
 逐位一致：3 种形态（8K/H12、8K/H48、16K/H12）× 3 种输入（普通、keep-state、门控饱和），共 9 组全部 `torch.equal`。
 
+## P-7 v8o4：下一步 W 的读取推迟发出
+
+| 项 | 预测 | 实测（8K/H12，每侧 6 个进程） | 判定 |
+|---|---|---|---|
+| 逐位一致 / 资源 | 一致 / 不变 | 13 组全部一致；VGPR 175、LDS 14848，均不变 | ✅ |
+| fwd_h_o | H1：快 3–9%；H2：±0.5% | **439.5 → 438.4 µs（0.3%）** | H1 ❌ / H2 ✅ |
+| fwd_h_bn | 同上 | **407.3 → 425.3 µs（慢 4.4%）** | 停顿随读指令移动 |
+
+**结论**：停顿是向量访存发射的结构性吞吐限制，不是写后读冲突。已回退（`g2_opt` 提交 `ccff182`）。
+
+据此新增了 L0 原语 `vmem_issue`，标出每个 CU 按读宽度计算的发射成本。完整的逐指令分析和下一步方向见 [`../per_instruction/README.md`](../per_instruction/README.md)。
+
+## 合入生产（2026-10-09）
+
+P-1 到 P-4 已合入：
+- 容器生产树 `/opt/kda_env/g2_r5`，合入记录见 `KRA_PATCHES.md`。备份有两份：`/opt/kda_env/g2_r5_pre_kra_20261009`，以及 `/public/home/tanbo/backups/g2_r5_pre_kra_20261009.tgz`；
+- 本地源码镜像；
+- flash-train 的 `feat/kda-g2` 分支（本地提交 `5181c0f`，尚未推送）。
+
+验证结果：
+- 与备份树对比，13 组逐位一致（9 组 dense + 4 组 varlen）；
+- 树内测试 R5 keep-state、R4 prep、varlen phase-2 stages、public route 全部 PASS；
+- PR #556 套件 120 项通过、4 项失败，失败项与合入前的备份完全相同（都是 checkpoint-reuse，属于暂缓的状态/checkpoint 功能），不是回归；
+- flash-train：新版与旧版、新版与 hip_kda 均逐位一致（dense 8K/H12、8K/H48，以及 varlen）；`torch_kda_test` 29 项通过；trace 确认新的 kernel 确实在运行（prep_a 471 → 421 µs，flash-train 走的是 VL 实例）。
+
 ## 未完成
 
 - **v8o / dhu（合计约 1.5 ms，占 8K/H12 的 33%）**：

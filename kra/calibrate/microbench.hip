@@ -379,6 +379,58 @@ static void bench_hbm() {
     CK(hipFree(b));
 }
 
+// Per-CU vector-memory ISSUE throughput for cache-resident data (validation P-7: KDA's
+// recurrence kernels stall at global_load issue even though their loads hit L1/L2, and
+// moving the loads only moved the stall).  One CTA per CU, U independent loads of width
+// sizeof(T) per thread per iteration from a small working set; reports wave-level load
+// instructions and bytes per CU per cycle, so a kernel's per-step load count can be
+// priced in cycles and the width question (8 B vs 16 B) answered by measurement.
+template <typename T, int U>
+__global__ void LB512 k_vmem_issue(const T* __restrict__ p, int iters, int mask, float* sink) {
+    float acc = 0.f;
+    const int t = threadIdx.x;
+    for (int it = 0; it < iters; ++it) {
+        #pragma unroll
+        for (int u = 0; u < U; ++u) {
+            const T v = p[(t + u * 64 + it * 1031) & mask];
+            acc += reinterpret_cast<const float*>(&v)[0];
+        }
+    }
+    if (acc == 12345.f) sink[t] = acc;
+}
+
+template <typename T>
+static void vmem_issue_one(const char* w, const T* buf, size_t elems) {
+    for (int block : {256, 512})
+        for (size_t ws : {(size_t)16 << 10, (size_t)1 << 20}) {
+            const int mask = (int)(ws / sizeof(T)) - 1;
+            const int iters = 2048, U = 8;
+            auto t = time_ms([&] {
+                hipLaunchKernelGGL((k_vmem_issue<T, 8>), g_cus, block, 0, 0, buf, iters, mask, g_sink);
+            }, 2, 7);
+            CK(hipGetLastError());
+            const double cyc = vmin(t) * 1e-3 * g_prop.clockRate * 1e3;
+            const double winst = (double)block / g_prop.warpSize * iters * U;   // per CU
+            printf("{\"bench\":\"vmem_issue\",\"config\":{\"width\":\"%s\",\"bytes\":%zu,\"block\":%d,"
+                   "\"working_set\":%zu,\"loads_in_flight\":%d},\"ms_min\":%.4f,"
+                   "\"wave_insts_per_cu_per_clk\":%.4f,\"bytes_per_cu_per_clk\":%.2f,\"clk_per_wave_inst\":%.2f}\n",
+                   w, sizeof(T), block, ws, U, vmin(t), winst / cyc, winst * g_prop.warpSize * sizeof(T) / cyc,
+                   cyc / winst);
+            fflush(stdout);
+        }
+}
+
+static void bench_vmem_issue() {
+    const size_t bytes = (size_t)1 << 20;
+    void* b;
+    CK(hipMalloc(&b, bytes));
+    CK(hipMemset(b, 0, bytes));
+    vmem_issue_one<float>("dword", (const float*)b, bytes / 4);
+    vmem_issue_one<v2f>("dwordx2", (const v2f*)b, bytes / 8);
+    vmem_issue_one<v4f>("dwordx4", (const v4f*)b, bytes / 16);
+    CK(hipFree(b));
+}
+
 // Attainable HBM read bandwidth when only `n` CTAs run (one per CU, 512 threads,
 // 4 loads in flight per thread): the bandwidth a small-grid kernel can draw at best.
 static void bench_hbm_ctas() {
@@ -708,6 +760,7 @@ int main(int argc, char** argv) {
     };
     if (want("hbm")) bench_hbm();
     if (want("hbm_ctas")) bench_hbm_ctas();
+    if (want("vmem_issue")) bench_vmem_issue();
     if (want("l2")) bench_l2();
     if (want("lds")) bench_lds();
     if (want("compute")) bench_compute();
