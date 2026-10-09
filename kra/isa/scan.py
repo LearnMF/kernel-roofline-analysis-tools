@@ -62,6 +62,13 @@ def load_use_slack(body: list[str]) -> list[dict]:
                 branches.append((len(insns), b.group(1)))
             insns.append(ln.strip())
     loops = [(labels[t], i) for i, t in branches if t in labels and labels[t] <= i]
+    # Hot loop = the backward-branch region holding the most MMAC instructions.  Validation
+    # P-5/P-6: exposures executed once per CTA (prologues) were hidden by co-resident CTAs
+    # and gave nothing; only waits inside the hot loop repeat on the critical path.
+    mm = lambda a, b: sum(1 for s in insns[a:b + 1] if s.startswith("v_mmac"))
+    cand = [ab for ab in loops if mm(*ab) > 0]
+    hot_loops = [ab for ab in cand
+                 if not any(c != ab and ab[0] <= c[0] and c[1] <= ab[1] for c in cand)]   # innermost
     q: list[tuple[int, str]] = []
     sites = []
     for i, s in enumerate(insns):
@@ -83,7 +90,8 @@ def load_use_slack(body: list[str]) -> list[dict]:
         young = max(f[0] for f in loads)
         depth = sum(1 for a, b in loops if a <= i <= b)
         sites.append({"insn": i, "wait": s, "slack": i - young - 1, "forced_loads": len(loads),
-                      "youngest_load": insns[young], "loop_depth": depth})
+                      "youngest_load": insns[young], "loop_depth": depth,
+                      "in_hot_loop": any(a <= young and i <= b for a, b in hot_loops)})
     return sites
 
 
