@@ -119,8 +119,10 @@ def analyze_cta(perf: str, dispatch: int, asm_path: str, symbol: str, xcompute: 
     """Every wave of one traced CTA: per-wave budget by instruction group, and the stalled
     instructions of the CRITICAL wave (the one with the least barrier wait: the others wait
     for it).  The window is `steps` recurrence steps in the middle of the kernel."""
+    import shutil
     from .xcompute import group_of
-    w = Path(work) / f"d{dispatch}"
+    w = Path(work) / f"{Path(perf).stem}_d{dispatch}"   # per perf: XCompute names CSVs after the perf
+    shutil.rmtree(w, ignore_errors=True)
     _xc(xcompute, perf, w / "wf", "--sqtt-sections", "wavefronts", "--sqtt-dispatches", str(dispatch),
         "--sqtt-top", "100000")
     rows = list(csv.DictReader(open(next((w / "wf").glob("*wavefronts*.csv")), newline="")))
@@ -152,6 +154,9 @@ def analyze_cta(perf: str, dispatch: int, asm_path: str, symbol: str, xcompute: 
         for x in res["rows"]:
             cat[group_of(x["op"])] += x["stall_per_step"]
         waves.append({"wave": tag, "res": res, "cat": dict(cat)})
+    if not waves:
+        raise RuntimeError(f"no wave of CTA se{se}/cu{cu} aligned to the hot loop of {symbol} "
+                           f"(dispatch {dispatch}: wrong symbol/ISA for this capture?)")
     crit = min(waves, key=lambda x: x["cat"].get("barrier", 0.0) / max(1.0, x["res"]["cycles_per_step"]))
     return {"dispatch": dispatch, "symbol": symbol, "cta": f"se{se}/cu{cu}", "waves": waves, "critical": crit}
 
