@@ -13,7 +13,7 @@ from kra.timeline.hipprof_json import load
 
 res = collections.defaultdict(list)
 for f in sorted(glob.glob(f"{sys.argv[1]}/xpd_*.json")):
-    m = re.search(r"xpd_(fla|g2)_(\d+)_(\d+)_r(\d+)", f)
+    m = re.search(r"xpd_(fla_nr|fla|g2)_(\d+)_(\d+)_r(\d+)", f)
     arm, T, H = m.group(1), int(m.group(2)), int(m.group(3))
     wins = split_windows(load(f), "spin_kernel", None)
     sums = [sum(o.dur_ns for o in w if o.kind == "kernel") / 1e6 for w in wins]

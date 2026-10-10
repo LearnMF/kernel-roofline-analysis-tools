@@ -5,15 +5,17 @@
 set -uo pipefail
 CAND=$1; SHAPES=${2:-"8192:12 8192:48"}
 BASE=${BASE:-/opt/kda_env/g2_r5}; CACHE=${CACHE:-/tmp/gate}
+# PYTHONPATH around the tree (bw7 container: /opt/kda_env; bw52: PP_PRE=xplat/bwenv, PP_POST=stage_g2_bw7/takeover)
+PP_PRE=${PP_PRE:-/opt/kda_env}; PP_POST=${PP_POST:-/opt/kda_env/takeover}
 KRA=${KRA:-$(cd "$(dirname "$0")/../.." && pwd)}; G=$KRA/examples/kda/bitwise_gate.py
 mkdir -p "$CACHE"; fail=0
 for s in $SHAPES; do
   T=${s%:*}; H=${s#*:}
   for ks in "" "--keep-state" "--gate-extreme"; do
     tag="${T}_${H}${ks:+_${ks#--}}"
-    [ -f "$CACHE/base_$tag.pt" ] || PYTHONPATH=/opt/kda_env:$BASE:/opt/kda_env/takeover \
+    [ -f "$CACHE/base_$tag.pt" ] || PYTHONPATH=$PP_PRE:$BASE:$PP_POST \
       python3 "$G" dump --tree "$BASE" --T "$T" --H "$H" --out "$CACHE/base_$tag.pt" $ks > /dev/null 2>&1
-    PYTHONPATH=/opt/kda_env:$CAND:/opt/kda_env/takeover \
+    PYTHONPATH=$PP_PRE:$CAND:$PP_POST \
       python3 "$G" dump --tree "$CAND" --T "$T" --H "$H" --out "$CACHE/cand_$tag.pt" $ks > /dev/null 2>&1 \
       || { echo "$tag: candidate run FAILED"; fail=1; continue; }
     r=$(python3 "$G" cmp "$CACHE/base_$tag.pt" "$CACHE/cand_$tag.pt" | tail -1)
@@ -27,10 +29,10 @@ for s in $VARLEN; do
   IFS=: read -r T H CUS <<<"$s"
   for ks in "" "--keep-state"; do
     tag="vl_${T}_${H}_$(echo "$CUS" | md5sum | cut -c1-6)${ks:+_${ks#--}}"
-    [ -f "$CACHE/base_$tag.pt" ] || PYTHONPATH=/opt/kda_env:$BASE:/opt/kda_env/takeover \
+    [ -f "$CACHE/base_$tag.pt" ] || PYTHONPATH=$PP_PRE:$BASE:$PP_POST \
       python3 "$G" dump --tree "$BASE" --T "$T" --H "$H" --cu "$CUS" --out "$CACHE/base_$tag.pt" $ks > "$CACHE/base_$tag.log" 2>&1 \
       || { echo "$tag: BASE run FAILED (see $CACHE/base_$tag.log)"; fail=1; continue; }
-    PYTHONPATH=/opt/kda_env:$CAND:/opt/kda_env/takeover \
+    PYTHONPATH=$PP_PRE:$CAND:$PP_POST \
       python3 "$G" dump --tree "$CAND" --T "$T" --H "$H" --cu "$CUS" --out "$CACHE/cand_$tag.pt" $ks > /dev/null 2>&1 \
       || { echo "$tag: candidate run FAILED"; fail=1; continue; }
     r=$(python3 "$G" cmp "$CACHE/base_$tag.pt" "$CACHE/cand_$tag.pt" | tail -1)

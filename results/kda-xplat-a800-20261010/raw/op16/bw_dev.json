@@ -1,0 +1,274 @@
+{
+ "16384x12": {
+  "fla": {
+   "device_fb_ms": 12.024,
+   "procs": 3,
+   "spread": 0.0055
+  },
+  "fla_nr": {
+   "device_fb_ms": 10.546,
+   "procs": 3,
+   "spread": 0.0184
+  },
+  "g2": {
+   "device_fb_ms": 7.841,
+   "procs": 3,
+   "spread": 0.0015
+  }
+ },
+ "16384x24": {
+  "fla": {
+   "device_fb_ms": 23.574,
+   "procs": 3,
+   "spread": 0.0152
+  },
+  "fla_nr": {
+   "device_fb_ms": 20.994,
+   "procs": 3,
+   "spread": 0.0331
+  },
+  "g2": {
+   "device_fb_ms": 15.132,
+   "procs": 3,
+   "spread": 0.0007
+  }
+ },
+ "16384x48": {
+  "fla": {
+   "device_fb_ms": 44.203,
+   "procs": 3,
+   "spread": 0.0013
+  },
+  "fla_nr": {
+   "device_fb_ms": 39.927,
+   "procs": 3,
+   "spread": 0.0052
+  },
+  "g2": {
+   "device_fb_ms": 30.635,
+   "procs": 3,
+   "spread": 0.0012
+  }
+ },
+ "16384x96": {
+  "fla": {
+   "device_fb_ms": 93.32,
+   "procs": 3,
+   "spread": 0.0207
+  },
+  "fla_nr": {
+   "device_fb_ms": 82.913,
+   "procs": 3,
+   "spread": 0.0293
+  },
+  "g2": {
+   "device_fb_ms": 66.919,
+   "procs": 3,
+   "spread": 0.0146
+  }
+ },
+ "32768x12": {
+  "fla": {
+   "device_fb_ms": 24.665,
+   "procs": 3,
+   "spread": 0.0346
+  },
+  "fla_nr": {
+   "device_fb_ms": 22.067,
+   "procs": 3,
+   "spread": 0.0565
+  },
+  "g2": {
+   "device_fb_ms": 16.075,
+   "procs": 3,
+   "spread": 0.4484
+  }
+ },
+ "32768x24": {
+  "fla": {
+   "device_fb_ms": 45.291,
+   "procs": 3,
+   "spread": 0.0264
+  },
+  "fla_nr": {
+   "device_fb_ms": 39.444,
+   "procs": 3,
+   "spread": 0.0154
+  },
+  "g2": {
+   "device_fb_ms": 28.313,
+   "procs": 3,
+   "spread": 0.0008
+  }
+ },
+ "32768x48": {
+  "fla": {
+   "device_fb_ms": 85.245,
+   "procs": 3,
+   "spread": 0.0215
+  },
+  "fla_nr": {
+   "device_fb_ms": 75.816,
+   "procs": 3,
+   "spread": 0.014
+  },
+  "g2": {
+   "device_fb_ms": 57.844,
+   "procs": 3,
+   "spread": 0.0295
+  }
+ },
+ "32768x96": {
+  "fla": {
+   "device_fb_ms": 193.227,
+   "procs": 3,
+   "spread": 0.019
+  },
+  "fla_nr": {
+   "device_fb_ms": 169.597,
+   "procs": 3,
+   "spread": 0.0227
+  },
+  "g2": {
+   "device_fb_ms": 130.623,
+   "procs": 3,
+   "spread": 0.0077
+  }
+ },
+ "65536x12": {
+  "fla": {
+   "device_fb_ms": 45.409,
+   "procs": 3,
+   "spread": 0.0144
+  },
+  "fla_nr": {
+   "device_fb_ms": 40.624,
+   "procs": 3,
+   "spread": 0.057
+  },
+  "g2": {
+   "device_fb_ms": 28.59,
+   "procs": 3,
+   "spread": 0.0017
+  }
+ },
+ "65536x24": {
+  "fla": {
+   "device_fb_ms": 88.644,
+   "procs": 3,
+   "spread": 0.0153
+  },
+  "fla_nr": {
+   "device_fb_ms": 78.118,
+   "procs": 3,
+   "spread": 0.0208
+  },
+  "g2": {
+   "device_fb_ms": 56.243,
+   "procs": 3,
+   "spread": 0.0067
+  }
+ },
+ "65536x48": {
+  "fla": {
+   "device_fb_ms": 167.18,
+   "procs": 3,
+   "spread": 0.0095
+  },
+  "fla_nr": {
+   "device_fb_ms": 147.613,
+   "procs": 3,
+   "spread": 0.0153
+  },
+  "g2": {
+   "device_fb_ms": 116.646,
+   "procs": 3,
+   "spread": 0.0109
+  }
+ },
+ "65536x96": {
+  "fla": {
+   "device_fb_ms": 389.521,
+   "procs": 3,
+   "spread": 0.0166
+  },
+  "fla_nr": {
+   "device_fb_ms": 356.242,
+   "procs": 3,
+   "spread": 0.0044
+  },
+  "g2": {
+   "device_fb_ms": 253.986,
+   "procs": 3,
+   "spread": 0.003
+  }
+ },
+ "8192x12": {
+  "fla": {
+   "device_fb_ms": 6.307,
+   "procs": 3,
+   "spread": 0.0433
+  },
+  "fla_nr": {
+   "device_fb_ms": 5.589,
+   "procs": 3,
+   "spread": 0.0091
+  },
+  "g2": {
+   "device_fb_ms": 4.141,
+   "procs": 3,
+   "spread": 0.0024
+  }
+ },
+ "8192x24": {
+  "fla": {
+   "device_fb_ms": 11.773,
+   "procs": 3,
+   "spread": 0.0025
+  },
+  "fla_nr": {
+   "device_fb_ms": 10.363,
+   "procs": 3,
+   "spread": 0.0029
+  },
+  "g2": {
+   "device_fb_ms": 7.795,
+   "procs": 3,
+   "spread": 0.0006
+  }
+ },
+ "8192x48": {
+  "fla": {
+   "device_fb_ms": 22.066,
+   "procs": 3,
+   "spread": 0.0023
+  },
+  "fla_nr": {
+   "device_fb_ms": 19.854,
+   "procs": 3,
+   "spread": 0.0074
+  },
+  "g2": {
+   "device_fb_ms": 15.369,
+   "procs": 3,
+   "spread": 0.0024
+  }
+ },
+ "8192x96": {
+  "fla": {
+   "device_fb_ms": 49.128,
+   "procs": 3,
+   "spread": 0.0057
+  },
+  "fla_nr": {
+   "device_fb_ms": 44.375,
+   "procs": 3,
+   "spread": 0.0011
+  },
+  "g2": {
+   "device_fb_ms": 34.962,
+   "procs": 3,
+   "spread": 0.0007
+  }
+ }
+}

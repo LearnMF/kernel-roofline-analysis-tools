@@ -9,9 +9,10 @@ set -euo pipefail
 A=$1; B=$2; T=$3; H=$4; ROUNDS=${5:-2}; ITERS=${6:-8}; OUT=${7:-/tmp/kra_abk}
 KRA=${KRA:-$(cd "$(dirname "$0")/../.." && pwd)}
 KS=${KEEP_STATE:+--keep-state}
+PP_PRE=${PP_PRE:-/opt/kda_env}; PP_POST=${PP_POST:-/opt/kda_env/takeover}   # bw52: xplat/bwenv, stage_g2_bw7/takeover
 mkdir -p "$OUT"; tag="${T}_${H}${KS:+_ks}"
 trace() {  # tree label round
-  PYTHONPATH=/opt/kda_env:$1:/opt/kda_env/takeover hipprof --hip-trace --output-type 0 \
+  PYTHONPATH=$PP_PRE:$1:$PP_POST hipprof --hip-trace --output-type 0 \
     -o "$OUT/${2}_${tag}_r$3" python3 "$KRA/examples/kda/kda_iter.py" --tree "$1" --T "$T" --H "$H" \
     --iters "$ITERS" $KS > "$OUT/${2}_${tag}_r$3.log" 2>&1
 }
