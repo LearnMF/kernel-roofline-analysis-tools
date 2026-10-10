@@ -366,9 +366,29 @@ def analyze(machine: dict, pmc: dict, spec: dict, optrace: dict, shape: dict) ->
         "decomposition_us": max(0.0, tot_p - phys),                      # intermediates through HBM, launch, grids
         "physical_floor_us": phys,
     }
+    # Compute angle: MFU (model FLOPs of the algorithm / (time x peak)) and HFU (FLOPs the MMAC
+    # units actually executed, incl. recompute and padding / (time x peak)); PaLM appendix B.
+    peak_theo = (machine["peaks"]["mmac_bf16"].get("theoretical") or machine["peaks"]["mmac_bf16"]["value"]) * 1e12
+    exec_flops = lambda ks: sum(k["T"]["mmac_impl"] * 1e-6 * M.mmac_bf16 for k in ks)
+    compute = None
+    fl = spec.get("flops")
+    if fl:
+        env2 = dict(env)
+        env2["fwd_model"] = _eval(fl["fwd_model"], env2)
+        model = env2["fwd_model"] + _eval(fl["bwd_model"], env2)
+        hw = exec_flops([k for r in rows for k in r["kernels"]])
+        s = tot_t * 1e-6
+        compute = {"model_GFLOP": model / 1e9, "executed_mmac_GFLOP": hw / 1e9,
+                   "T_model_compute_us": model / M.mmac_bf16 * 1e6,
+                   "MFU_vs_theoretical": model / (s * peak_theo) if s else 0.0,
+                   "MFU_vs_attainable": model / (s * M.mmac_bf16) if s else 0.0,
+                   "HFU_vs_theoretical": hw / (s * peak_theo) if s else 0.0,
+                   "peak_theoretical_TFLOPS": peak_theo / 1e12, "peak_attainable_TFLOPS": M.mmac_bf16 / 1e12,
+                   "note": fl.get("note", "")}
     for r in rows:
         k0 = max(r["kernels"], key=lambda k: k["t_us"])
         angles = {"hbm": k0["sol_mem_active"], "pipe": k0["sol_pipe_active"],
+                  "mmac_hfu": exec_flops(r["kernels"]) / (r["t_us"] * 1e-6 * peak_theo) if r["t_us"] else 0.0,
                   "vmem_issue": k0.get("sol_vmem_active", 0.0), "lds_wait": k0.get("lds_wait_share", 0.0),
                   "parallelism": k0["active_cus"] / M.cus}
         cp = r["critical_path"]
@@ -391,6 +411,7 @@ def analyze(machine: dict, pmc: dict, spec: dict, optrace: dict, shape: dict) ->
         "critical_path_min_us": cp_min_tot,
         "gap_decomposition": gaps,
         "strategy": _strategy(gaps, tot_t),
+        "compute": compute,
         "audit": audit,
         "priority": sorted(({"launcher": r["launcher"], "recoverable_us": r["recoverable_us"],
                              "share_of_total": r["recoverable_us"] / tot_t if tot_t else 0}

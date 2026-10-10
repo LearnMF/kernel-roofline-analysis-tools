@@ -43,6 +43,17 @@
     },
     "floor_share": 0.07291436768984605
   },
+  "compute": {
+    "model_GFLOP": 53.955526656,
+    "executed_mmac_GFLOP": 261.139464192,
+    "T_model_compute_us": 113.36266381485645,
+    "MFU_vs_theoretical": 0.026387724023706757,
+    "MFU_vs_attainable": 0.02725067309332257,
+    "HFU_vs_theoretical": 0.12771399965624958,
+    "peak_theoretical_TFLOPS": 491.52,
+    "peak_attainable_TFLOPS": 475.955,
+    "note": "MODEL FLOPs of the chunked KDA algorithm (chunk C=64, K=V=128), per chunk and head in MACs: intra-chunk Akk, Aqk, w = A(k beta g), u = A(v beta) -> 4 C^2 K; UT inverse C^3/3; recurrence v_new = u - w h, o_inter = q_g h, h += k_g^T v_new -> 3 C K V; o_intra = Aqk v_new -> C^2 V. Dense C x C blocks (the causal half is not discounted).  Backward = 2x forward (the usual MFU convention, PaLM appendix B); recompute and padding are NOT model FLOPs (they appear in HFU)."
+  },
   "audit": [],
   "priority": [
     {
@@ -214,6 +225,7 @@
       "ceiling_angles": {
         "hbm": 0.3721453787244526,
         "pipe": 0.8063439470064694,
+        "mmac_hfu": 0.2678410905563711,
         "vmem_issue": 0.326249875632203,
         "lds_wait": 0.006381063466135424,
         "parallelism": 1.0
@@ -299,6 +311,7 @@
       "ceiling_angles": {
         "hbm": 0.29545389020292695,
         "pipe": 0.36775469831849655,
+        "mmac_hfu": 0.08684188215345486,
         "vmem_issue": 0.5654522095305802,
         "lds_wait": 0.0013615188285996892,
         "parallelism": 0.6,
@@ -374,6 +387,7 @@
       "ceiling_angles": {
         "hbm": 0.9565179875215718,
         "pipe": 0.299959595959596,
+        "mmac_hfu": 0.0,
         "vmem_issue": 0.7784451230562905,
         "lds_wait": 0.0,
         "parallelism": 1.0
@@ -448,6 +462,7 @@
       "ceiling_angles": {
         "hbm": 0.6161266302395334,
         "pipe": 0.8988811188811189,
+        "mmac_hfu": 0.21818181818181823,
         "vmem_issue": 0.2979144394997887,
         "lds_wait": 9.824810606060606e-05,
         "parallelism": 1.0
@@ -530,6 +545,7 @@
       "ceiling_angles": {
         "hbm": 0.6638283442006909,
         "pipe": 0.4986819871578236,
+        "mmac_hfu": 0.09689760054072322,
         "vmem_issue": 0.3892089701083266,
         "lds_wait": 0.009737189506590064,
         "parallelism": 1.0
@@ -607,6 +623,7 @@
       "ceiling_angles": {
         "hbm": 0.11861197826338306,
         "pipe": 0.03935483870967742,
+        "mmac_hfu": 0.0,
         "vmem_issue": 0.0890879145126718,
         "lds_wait": 0.0,
         "parallelism": 1.0
@@ -679,6 +696,7 @@
       "ceiling_angles": {
         "hbm": 0.10361451865313746,
         "pipe": 0.10422535211267606,
+        "mmac_hfu": 0.0,
         "vmem_issue": 0.0781868310087577,
         "lds_wait": 0.0,
         "parallelism": 1.0
@@ -762,6 +780,7 @@
       "ceiling_angles": {
         "hbm": 0.3981913403627814,
         "pipe": 0.31574620527960284,
+        "mmac_hfu": 0.06445860802979783,
         "vmem_issue": 0.6055854498781699,
         "lds_wait": 0.004055301653469064,
         "parallelism": 0.6,
@@ -845,6 +864,7 @@
       "ceiling_angles": {
         "hbm": 0.4553944229133233,
         "pipe": 0.17027333193654806,
+        "mmac_hfu": 0.02327280991764885,
         "vmem_issue": 0.8597913826323084,
         "lds_wait": 0.0049183709222452255,
         "parallelism": 1.0
@@ -928,6 +948,7 @@
       "ceiling_angles": {
         "hbm": 0.3783082192569747,
         "pipe": 0.356287436808653,
+        "mmac_hfu": 0.0689496938076958,
         "vmem_issue": 0.8787418810109933,
         "lds_wait": 0.017034716592016958,
         "parallelism": 0.6,
@@ -1043,6 +1064,7 @@
       "ceiling_angles": {
         "hbm": 0.5007727830477672,
         "pipe": 0.345585664516289,
+        "mmac_hfu": 0.18063636914073264,
         "vmem_issue": 0.6656929013840892,
         "lds_wait": 0.011150716080811588,
         "parallelism": 1.0
@@ -1165,6 +1187,7 @@
       "ceiling_angles": {
         "hbm": 0.6441092732076339,
         "pipe": 0.5354009747452371,
+        "mmac_hfu": 0.05386275356063876,
         "vmem_issue": 0.634264946999834,
         "lds_wait": 0.00805787088317826,
         "parallelism": 1.0

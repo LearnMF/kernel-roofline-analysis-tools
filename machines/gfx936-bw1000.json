@@ -123,7 +123,10 @@
       },
       "n_configs": 8,
       "unit": "TFLOPS",
-      "ops_per_cu_per_clock": 3966.3
+      "ops_per_cu_per_clock": 3966.3,
+      "theoretical": 491.52,
+      "theoretical_note": "4096 FLOP/clk/CU (16x16x16 bf16 MMAC: 8192 FLOP per wave instruction, one per 8 clk per SIMD, 4 SIMDs) x 80 CUs x 1.5 GHz",
+      "pct_of_theoretical": 96.8
     },
     "mmac_f16": {
       "value": 480.294,

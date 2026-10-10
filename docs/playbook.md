@@ -20,7 +20,8 @@
 |---|---|---|---|
 | HBM 带宽 | 实测字节 / 可达带宽（按 grid 大小修正） | 1338 GB/s（理论值的 72.6%） | L0 `hbm_*`、`hbm_read_vs_ctas` |
 | 计算流水线 | `SQ_ACTIVE_INST_VALU` / (周期 × CU 数) | 0.97–1.00 | L0 `pmccal` |
-| MMAC | (ACTIVE − INSTS) × 8192 / 峰值 | 476 TFLOPS（bf16） | L0 `mmac_*` |
+| MMAC（HFU） | (ACTIVE − INSTS) × 8192 / (时间 × 峰值)，即实际执行的 FLOPs | 理论 491.5 / 可达 476 TFLOPS（bf16） | L0 `mmac_*` |
+| **MFU** | 算法的模型 FLOPs（op_spec 中的 `flops`；反向 = 2 × 前向）/ (时间 × 理论峰值) | — | PaLM 附录 B 的定义；KDA 为 2.6%，不是计算受限 |
 | **向量访存发射（TA）** | `Σ TA_TA_BUSY` / (GRBM × CU 数) | **0.92** | L0 `vmem_issue` 加 PMC（模型 v2 新增） |
 | 存储的发射成本 | 每条指令覆盖的字节范围，约每 512 B 27 周期 | — | L0 `vmem_store` |
 | LDS | 冲突率，以及 `SQ_WAIT_INST_LDS` 所占比例（判断冲突是否在关键路径上） | — | P-1 |

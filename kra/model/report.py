@@ -28,6 +28,17 @@ def to_markdown(res: dict, title: str | None = None) -> str:
                  f"{res.get('critical_path_min_us', 0):,.0f} µs")
     if res.get("audit"):
         L += ["", "**Audit** (bound violated — check calibration / model):"] + [f"- {a}" for a in res["audit"]]
+    c = res.get("compute")
+    if c:
+        L += ["", "## Compute angle (MFU / HFU)", "",
+              f"- model FLOPs (algorithm, fwd + bwd = 3x fwd): **{c['model_GFLOP']:,.1f} GFLOP** → compute floor "
+              f"{c['T_model_compute_us']:,.0f} µs at the attainable {c['peak_attainable_TFLOPS']:,.0f} TFLOPS",
+              f"- **MFU {c['MFU_vs_theoretical']:.1%}** of the theoretical {c['peak_theoretical_TFLOPS']:,.0f} TFLOPS "
+              f"({c['MFU_vs_attainable']:.1%} of attainable)",
+              f"- HFU (MMAC FLOPs actually executed, incl. recompute / padding: {c['executed_mmac_GFLOP']:,.1f} GFLOP): "
+              f"{c['HFU_vs_theoretical']:.1%}",
+              "- reading: a low MFU with high HBM / VMEM-issue / pipe utilization means the operator is NOT "
+              "compute-bound; MFU is then a reporting number, not an optimization target"]
     g, st = res.get("gap_decomposition"), res.get("strategy")
     if g and st:
         t = tot["t_us"]
@@ -42,12 +53,12 @@ def to_markdown(res: dict, title: str | None = None) -> str:
               f"| execution inefficiency (stalls on the work done) | {g['execution_inefficiency_us']:,.0f} | "
               f"{g['execution_inefficiency_us'] / t:.0%} | local tuning (waits, scheduling, occupancy) |",
               "", f"**Largest tier: {st['largest'].replace('_us', '')} → {st['advice']}.**"]
-        L += ["", "| launcher | binding angle | HBM | pipe | VMEM issue | LDS wait | chain | CUs busy | verdict | next direction |",
-              "|---|---|---:|---:|---:|---:|---:|---:|---|---|"]
+        L += ["", "| launcher | binding angle | HBM | pipe | MMAC (HFU) | VMEM issue | LDS wait | chain | CUs busy | verdict | next direction |",
+              "|---|---|---:|---:|---:|---:|---:|---:|---:|---|---|"]
         for r in res["rows"]:
             a = r.get("ceiling_angles") or {}
             L.append(f"| {r['launcher']} | {r.get('binding_angle', '-')} | {a.get('hbm', 0):.0%} | {a.get('pipe', 0):.0%} | "
-                     f"{a.get('vmem_issue', 0):.0%} | {a.get('lds_wait', 0):.0%} | "
+                     f"{a.get('mmac_hfu', 0):.1%} | {a.get('vmem_issue', 0):.0%} | {a.get('lds_wait', 0):.0%} | "
                      f"{('%.0f%%' % (100 * a['chain'])) if 'chain' in a else '—'} | {a.get('parallelism', 0):.0%} | "
                      f"{r['verdict']} | {r.get('next_direction', '')} |")
     L += ["",
