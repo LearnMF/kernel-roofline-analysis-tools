@@ -132,7 +132,6 @@ def analyze_cta(perf: str, dispatch: int, asm_path: str, symbol: str, xcompute: 
     cta = [r for r in rows if r["SE"] == se and r["CU"] == cu and abs(int(r["Start"]) - t0) < 2000]
     dur = min(int(r["End"]) for r in cta) - t0
     insns, hot = static_body(Path(asm_path).read_text(), symbol)
-    loop = max(hot, key=lambda ab: ab[1] - ab[0])
     span = None
     waves = []
     for r in cta:
@@ -149,7 +148,12 @@ def analyze_cta(perf: str, dispatch: int, asm_path: str, symbol: str, xcompute: 
         dyn = dynamic_stream(f, r["WF ID"])
         if len(dyn) < 50:
             continue
-        res = attribute(insns, loop, dyn)
+        # waves of one CTA may run different instances of the loop (e.g. s4b's switch on the
+        # wave's row block): use the hot loop this wave's stream aligns to best
+        cands = [attribute(insns, lp, dyn) for lp in hot]
+        res = max(cands, key=lambda c: (c["steps"], c["stall_mapped_frac"]))
+        if res["steps"] < 2:
+            continue
         cat = defaultdict(float)
         for x in res["rows"]:
             cat[group_of(x["op"])] += x["stall_per_step"]
