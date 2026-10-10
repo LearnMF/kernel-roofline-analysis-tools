@@ -95,6 +95,41 @@ def load_use_slack(body: list[str]) -> list[dict]:
     return sites
 
 
+def conditional_vmem(body: list[str]) -> dict:
+    """D.waitcnt_conservative (validation, post-L16 v8o4 PC analysis): vector-memory ops inside
+    UNIFORM branches of the hot loop (runtime-optional outputs/inputs, e.g. `if (p.HbN)`).
+    The compiler's waitcnt pass must assume the path that skips them, so the vmcnt(N) it emits
+    for an older load also forces the YOUNGER, actually-issued loads to land whenever the
+    branch is taken -- an exposed wait that no data dependency requires (v8o4 forward: one
+    GEMM1 wait = 15.7% of the step).  Remedy: make the options compile-time (template)."""
+    insns, labels, branches = [], {}, []
+    for ln in body:
+        if (m := LABEL.match(ln)):
+            labels[m.group(1)] = len(insns)
+            continue
+        if (m := INSN.match(ln)):
+            if (b := BRANCH.match(ln)):
+                branches.append((len(insns), b.group(1), ln.split()[0]))
+            insns.append(ln.strip())
+    mm = lambda a, b: sum(1 for s in insns[a:b + 1] if s.startswith("v_mmac"))
+    loops = [(labels[t], i) for i, t, _ in branches if t in labels and labels[t] <= i and mm(labels[t], i)]
+    hot = [ab for ab in loops if not any(c != ab and ab[0] <= c[0] and c[1] <= ab[1] for c in loops)]
+    regions = []
+    for i, t, op in branches:
+        if t not in labels or labels[t] <= i or "exec" in op:      # forward, uniform (scc/vcc) branches
+            continue
+        if not any(a <= i <= b for a, b in hot):
+            continue
+        j = labels[t]
+        vm = [s.split()[0] for s in insns[i + 1:j] if s.startswith(("global_", "buffer_"))]
+        if vm:
+            regions.append({"branch": insns[i], "skipped_vmem": len(vm),
+                            "loads": sum("load" in v for v in vm), "stores": sum("store" in v for v in vm)})
+    waits = sum(1 for a, b in hot for s in insns[a:b + 1] if s.startswith("s_waitcnt") and "vmcnt" in s)
+    return {"hot_loops": len(hot), "vmcnt_waits_in_hot_loop": waits, "conditional_vmem_regions": regions,
+            "conditional_vmem_ops": sum(r["skipped_vmem"] for r in regions)}
+
+
 def scan(asm_path: str | Path, symbol: str) -> dict:
     body = kernel_body(Path(asm_path).read_text(), symbol)
     r = mathlib_guard(body)

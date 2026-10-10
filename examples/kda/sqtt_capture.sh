@@ -9,12 +9,13 @@
 set -euo pipefail
 TREE=$1; TAG=$2; T=$3; H=$4; KERNELS=$5; GPU=${6:-0}
 C=${XPROF_CONTAINER:-glm_bw7_xprof2}
+BENCH=${BENCH:-bn_sqtt}      # bn_sqtt (all kernels) | rec_sqtt (recurrence kernels, production argument sets)
 KRA=${KRA:-/public/home/tanbo/kra}
 OUT=/public/home/tanbo/kra_sqtt/$TAG; mkdir -p "$OUT"
 W=/tmp/kra_sqtt_$TAG
 docker exec "$C" rm -rf "$W"; docker exec "$C" mkdir -p "$W"
 docker cp "$TREE/csrc/g2" "$C:$W/g2"
-docker cp "$KRA/examples/kda/bn_sqtt.hip" "$C:$W/g2/bn_sqtt.hip"
+docker cp "$KRA/examples/kda/$BENCH.hip" "$C:$W/g2/bn_sqtt.hip"
 docker exec "$C" bash -lc "cd $W/g2 && /opt/dtk/bin/hipcc -O3 -std=c++17 --offload-arch=gfx936 -I. \
   -DHIP_ENABLE_WARP_SYNC_BUILTINS=1 bn_sqtt.hip -o $W/bn_sqtt 2>&1 | grep -E ' error' || true"
 # dispatch numbering: list all dispatches of a plain 2-rep run (no profiling sections)
