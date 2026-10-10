@@ -49,5 +49,15 @@ for k in a:
     ma, mb = st.median(a[k]), st.median(b[k]); ta += ma; tb += mb
     sa, sb = (max(a[k]) - min(a[k])) / ma, (max(b[k]) - min(b[k])) / mb
     print(f"{k:34s} {ma:9.1f} {mb:9.1f} {ma/mb:7.4f}  {sa:8.2%} {sb:8.2%}  {len(a[k])}/{len(b[k])}")
-print(f"{'TOTAL (sum of medians)':34s} {ta:9.1f} {tb:9.1f} {ta/tb:7.4f}")
+# Kernels on ONE side only (a fusion removed / added a launch): their time belongs in the
+# operator total -- the common-kernel sum alone would hide a removed kernel's saving.
+oa = {k: st.median(v) for k, v in a.items() if k not in b}
+ob = {k: st.median(v) for k, v in b.items() if k not in a}
+for k, v in oa.items():
+    print(f"{k:34s} {v:9.1f} {'—':>9s}   (A only)")
+for k, v in ob.items():
+    print(f"{k:34s} {'—':>9s} {v:9.1f}   (B only)")
+print(f"{'TOTAL common kernels':34s} {ta:9.1f} {tb:9.1f} {ta/tb:7.4f}")
+TA, TB = ta + sum(oa.values()), tb + sum(ob.values())
+print(f"{'TOTAL (sum of medians)':34s} {TA:9.1f} {TB:9.1f} {TA/TB:7.4f}   (all kernels of each side)")
 EOF
