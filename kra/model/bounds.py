@@ -93,12 +93,16 @@ def kernel_metrics(k: dict, M: Machine, th: dict) -> dict:
     bw_par = M.bw_for(k["ctas"])
     slots, insts = k["valu_slots"], k["valu_insts"]
     mmac_est = max(0.0, slots - insts)
+    ta = k.get("ta_busy", 0.0) or 0.0
     T = {
         "mem_impl": (rd + wr) / M.bw * 1e6,
         "par_mem_impl": (rd + wr) / bw_par * 1e6,
         "pipe": slots / (M.cus * M.clk) * 1e6,
         "par_pipe": slots / (active * M.clk) * 1e6,
         "mmac_impl": mmac_est * 8192 / M.mmac_bf16 * 1e6,
+        # vector-memory (TA) issue: TA-busy cycles of the measured instruction stream spread
+        # over the CUs that run it (calibrated: microbench vmem_issue saturates at ~0.92)
+        "par_vmem": ta / (active * M.clk) * 1e6,
         "launch": M.launch_us,
     }
     # Utilization denominators use the faster of the two replays (t_us = min): replays of
@@ -107,12 +111,15 @@ def kernel_metrics(k: dict, M: Machine, th: dict) -> dict:
     cyc = t * M.clk if t else k["cycles"]
     sol_pipe = slots / (cyc * M.cus) if cyc else 0.0
     sol_mem = T["mem_impl"] / k["t_us"] if k["t_us"] else 0.0
+    gcyc = k.get("cycles") or cyc               # TA_TA_BUSY shares the GRBM counter domain
     m = {
         "t_us": k["t_us"], "ctas": k["ctas"], "block": k["block"], "active_cus": active,
         "hbm_GBps": (rd + wr) / t / 1e9 if t else 0.0, "hbm_rd_MB": rd / 1e6, "hbm_wr_MB": wr / 1e6,
         "sol_pipe": sol_pipe, "sol_mem": sol_mem,
         "sol_pipe_active": slots / (cyc * active) if cyc else 0.0,
         "sol_mem_active": T["par_mem_impl"] / k["t_us"] if k["t_us"] else 0.0,
+        "sol_vmem": ta / (gcyc * M.cus) if gcyc else 0.0,
+        "sol_vmem_active": ta / (gcyc * active) if gcyc else 0.0,
         "mmac_slot_share": 2 * mmac_est / slots if slots else 0.0,
         "lds_conflict_ratio": k["lds_bank_conflict_cycles"] / (cyc * M.cus) if cyc else 0.0,
         # SQ_WAIT_INST_LDS: wave-cycles (units of 4) waiting to issue LDS instructions, per
@@ -128,15 +135,20 @@ def kernel_metrics(k: dict, M: Machine, th: dict) -> dict:
 def classify(m: dict, serial: bool, th: dict, cus: int) -> dict:
     lo, hi = th["kernel.sol_low"], th["kernel.sol_high"]
     b_lo, b_hi = th["kernel.balanced_band"]
-    sp, sm = m["sol_pipe"], m["sol_mem"]
-    reasons = [f"pipe {sp:.0%}, HBM {sm:.0%} of attainable"]
-    if max(sp, sm) >= lo:
-        if sp >= sm:
+    # Throughput is judged per ACTIVE CU (a 48-CTA grid on 80 CUs can still saturate the
+    # pipes of the CUs it runs on; the idle CUs are reported as C.parallelism separately).
+    sp, sm, sv = m["sol_pipe_active"], m["sol_mem_active"], m.get("sol_vmem_active", 0.0)
+    reasons = [f"per active CU: pipe {sp:.0%}, HBM {sm:.0%}, VMEM issue {sv:.0%} of attainable"]
+    if max(sp, sm, sv) >= lo:
+        top = max((sp, "pipe"), (sm, "mem"), (sv, "vmem"))[1]
+        if top == "pipe":
             cls = "B.compute.mmac" if m["mmac_slot_share"] >= 0.5 else "B.compute.valu"
-        else:
+        elif top == "mem":
             cls = "B.memory.hbm"
-        sub = []
-        level = "near-limit" if max(sp, sm) >= hi else "throughput"
+        else:
+            cls = "B.memory.vmem_issue"
+        sub = ["C.parallelism"] if m["ctas"] and m["ctas"] < cus else []
+        level = "near-limit" if max(sp, sm, sv) >= hi else "throughput"
     elif b_lo <= sp < b_hi and b_lo <= sm < b_hi:
         cls, sub, level = "E.balanced", [], "balanced"
     else:
@@ -216,6 +228,32 @@ VERDICT_TEXT = {
 }
 
 
+def _direction(r: dict, angles: dict, th: dict) -> str:
+    """Next-step direction for one launcher from its verdict and binding angle."""
+    v, top = r["verdict"], max(((x, a) for a, x in angles.items() if a != "parallelism"), default=(0, "-"))
+    util, ang = top
+    if v == "at_ceiling":
+        return "at the floor of this decomposition: only fusion/algorithm changes help"
+    if util >= th["kernel.sol_high"]:
+        return f"{ang} saturated ({util:.0%}): reduce the work on it (bytes / instructions / wider accesses), not its latency"
+    if util >= th["kernel.sol_low"]:
+        return f"{ang}-throughput bound ({util:.0%}): fewer {ang} operations or better {ang} efficiency"
+    if angles["parallelism"] < 0.75:
+        return f"latency + parallelism ({angles['parallelism']:.0%} of CUs busy): exposed waits (L3 pcmap) or more parallel work"
+    return "latency bound: locate exposed waits with L3 pcmap (load-use slack, conservative waitcnt, barriers)"
+
+
+def _strategy(g: dict, t: float) -> dict:
+    """Which tier the remaining time is in -> local tuning vs work reduction vs redesign."""
+    parts = {"execution_inefficiency_us": "local tuning (stalls, waits, scheduling)",
+             "excess_work_us": "work reduction inside launchers (redundant bytes / instructions)",
+             "decomposition_us": "redesign the decomposition (fusion, fewer HBM round trips, more parallel grids)"}
+    order = sorted(parts, key=lambda k: -g[k])
+    return {"largest": order[0], "advice": parts[order[0]],
+            "shares": {k: g[k] / t if t else 0.0 for k in parts},
+            "floor_share": g["physical_floor_us"] / t if t else 0.0}
+
+
 def fusion_floor(calls: list[dict], groups: dict, M: "Machine") -> dict | None:
     """Per phase (op_spec group 'phase'), bytes of tensors crossing the phase boundary:
     inputs not produced inside the phase + outputs not consumed later inside the phase.
@@ -269,7 +307,8 @@ def analyze(machine: dict, pmc: dict, spec: dict, optrace: dict, shape: dict) ->
             km["classification"] = classify(km, bool(serial), th, M.cus)
             kms.append(km)
         t = sum(k["t_us"] for k in kms)
-        T_impl = sum(max(k["T"]["par_mem_impl"], k["T"]["par_pipe"], k["T"]["mmac_impl"], k["T"]["launch"])
+        T_impl = sum(max(k["T"]["par_mem_impl"], k["T"]["par_pipe"], k["T"]["mmac_impl"],
+                         k["T"]["par_vmem"] / th.get("kernel.vmem_sat", 0.92), k["T"]["launch"])
                      for k in kms)
         comp = {"launch": M.launch_us * len(kms)}
         if e["call"]:
@@ -314,6 +353,30 @@ def analyze(machine: dict, pmc: dict, spec: dict, optrace: dict, shape: dict) ->
     tot_p = sum(r["T_lower_prior_us"] for r in rows)
     tot_i = sum(r["T_lower_impl_us"] for r in rows)
     ff = fusion_floor(optrace["calls"], groups, M)
+    # Local-vs-global: the operator's time split against three nested floors.
+    #   physical   : boundary tensors only + dependency-only chains (any decomposition)
+    #   decomposition (prior): this launcher split at attainable rates
+    #   implementation: the work these kernels actually do, at attainable rates
+    cp_min_tot = sum(r["critical_path"].get("T_cp_min", 0.0) for r in rows)
+    phys = max(sum(v["T_us"] for v in ff.values()) if ff else 0.0, cp_min_tot)
+    impl_c = sum(max(r["T_lower_impl_us"], r["T_lower_prior_us"]) for r in rows)
+    gaps = {
+        "execution_inefficiency_us": max(0.0, tot_t - impl_c),          # stalls/latency on the work done
+        "excess_work_us": max(0.0, impl_c - tot_p),                      # bytes/insts beyond the interface minimum
+        "decomposition_us": max(0.0, tot_p - phys),                      # intermediates through HBM, launch, grids
+        "physical_floor_us": phys,
+    }
+    for r in rows:
+        k0 = max(r["kernels"], key=lambda k: k["t_us"])
+        angles = {"hbm": k0["sol_mem_active"], "pipe": k0["sol_pipe_active"],
+                  "vmem_issue": k0.get("sol_vmem_active", 0.0), "lds_wait": k0.get("lds_wait_share", 0.0),
+                  "parallelism": k0["active_cus"] / M.cus}
+        cp = r["critical_path"]
+        if cp.get("T_cp_impl"):
+            angles["chain"] = cp["T_cp_impl"] / r["t_us"]
+        r["ceiling_angles"] = angles
+        r["binding_angle"] = max(((v, a) for a, v in angles.items() if a not in ("parallelism",)), default=(0, "-"))[1]
+        r["next_direction"] = _direction(r, angles, th)
     audit = [f"{r['launcher']}: measured {r['t_us']:.1f} us < prior bound {r['T_lower_prior_us']:.1f} us"
              for r in rows if r["verdict"] == "bound_violated"]
     return {
@@ -325,7 +388,9 @@ def analyze(machine: dict, pmc: dict, spec: dict, optrace: dict, shape: dict) ->
                    "attainment_impl": tot_i / tot_t if tot_t else None,
                    "headroom_x": tot_t / tot_p if tot_p else None},
         "fusion_floor": ff,
-        "critical_path_min_us": sum(r["critical_path"].get("T_cp_min", 0.0) for r in rows),
+        "critical_path_min_us": cp_min_tot,
+        "gap_decomposition": gaps,
+        "strategy": _strategy(gaps, tot_t),
         "audit": audit,
         "priority": sorted(({"launcher": r["launcher"], "recoverable_us": r["recoverable_us"],
                              "share_of_total": r["recoverable_us"] / tot_t if tot_t else 0}

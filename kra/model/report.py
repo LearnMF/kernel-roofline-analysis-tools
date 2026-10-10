@@ -28,6 +28,28 @@ def to_markdown(res: dict, title: str | None = None) -> str:
                  f"{res.get('critical_path_min_us', 0):,.0f} µs")
     if res.get("audit"):
         L += ["", "**Audit** (bound violated — check calibration / model):"] + [f"- {a}" for a in res["audit"]]
+    g, st = res.get("gap_decomposition"), res.get("strategy")
+    if g and st:
+        t = tot["t_us"]
+        L += ["", "## Ceiling verdict: where the operator's time is (local vs global)", "",
+              "| tier | µs | share | what removes it |", "|---|---:|---:|---|",
+              f"| physical floor (boundary tensors / dependency chains, any decomposition) | "
+              f"{g['physical_floor_us']:,.0f} | {g['physical_floor_us'] / t:.0%} | nothing (hardware) |",
+              f"| decomposition cost (this launcher split vs the physical floor) | {g['decomposition_us']:,.0f} | "
+              f"{g['decomposition_us'] / t:.0%} | fusion / fewer HBM round trips / more parallel grids |",
+              f"| excess work (measured bytes+instructions vs the interface minimum) | {g['excess_work_us']:,.0f} | "
+              f"{g['excess_work_us'] / t:.0%} | layout / redundancy removal inside launchers |",
+              f"| execution inefficiency (stalls on the work done) | {g['execution_inefficiency_us']:,.0f} | "
+              f"{g['execution_inefficiency_us'] / t:.0%} | local tuning (waits, scheduling, occupancy) |",
+              "", f"**Largest tier: {st['largest'].replace('_us', '')} → {st['advice']}.**"]
+        L += ["", "| launcher | binding angle | HBM | pipe | VMEM issue | LDS wait | chain | CUs busy | verdict | next direction |",
+              "|---|---|---:|---:|---:|---:|---:|---:|---|---|"]
+        for r in res["rows"]:
+            a = r.get("ceiling_angles") or {}
+            L.append(f"| {r['launcher']} | {r.get('binding_angle', '-')} | {a.get('hbm', 0):.0%} | {a.get('pipe', 0):.0%} | "
+                     f"{a.get('vmem_issue', 0):.0%} | {a.get('lds_wait', 0):.0%} | "
+                     f"{('%.0f%%' % (100 * a['chain'])) if 'chain' in a else '—'} | {a.get('parallelism', 0):.0%} | "
+                     f"{r['verdict']} | {r.get('next_direction', '')} |")
     L += ["",
          "## Per launcher", "",
          "| launcher | kernels | t µs | class | pipe / HBM SOL | T_mem_min | T_par_mem_min | T_cp_min / impl | "

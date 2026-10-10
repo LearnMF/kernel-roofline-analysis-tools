@@ -11,7 +11,11 @@ Counter semantics were calibrated on gfx936 with kernels of exactly known work
     reaches 0.97-1.00 at the measured MMAC / packed-FMA / exp2 peaks.
   * ACTIVE - INSTS = extra slots of multi-slot instructions = MMAC count when the
     kernel has no transcendentals (an upper bound otherwise).
-  * TA_TA_BUSY has no usable normalization here (exceeds GRBM cycles) -> not used.
+  * TA_TA_BUSY: 16 instances (one texture-addresser per 5 CUs on the 80-CU part); the SUM
+    over instances / (GRBM_GUI_ACTIVE * CUs) is the vector-memory (TA) issue utilization:
+    0.91-0.93 on the saturated `microbench vmem_issue`, equal to hipprof's derived "L1 cache
+    unit is active" (calibrated 2026-10-10).  This is the pipe the KDA recurrences were bound
+    by (validation P-7/L16), invisible to the HBM and VALU SOLs.
 The read and write presets come from two separate runs; rows are joined by order.
 """
 from __future__ import annotations
@@ -81,6 +85,8 @@ def load(read_csv: str | Path, write_csv: str | Path | None = None) -> list[dict
             "lds_insts": a.get("SQ_INSTS_LDS", 0.0),
             "lds_bank_conflict_cycles": a.get("SQ_LDS_BANK_CONFLICT", 0.0),
             "lds_wait": a.get("SQ_WAIT_INST_LDS", 0.0),
+            "ta_busy": a.get("TA_TA_BUSY", 0.0),          # summed over instances (see header)
+            "ta_data_stall": a.get("TCP_TCP_TA_DATA_STALL_CYCLES", 0.0),
         })
     return recs
 

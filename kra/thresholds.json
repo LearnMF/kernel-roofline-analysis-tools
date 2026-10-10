@@ -89,6 +89,12 @@
       "source": "validation P-1 (KDA wu, gfx936): conflict 19.6% with LDS-wait share 3.6% gave only 1.4% when removed",
       "hcu_calibrated": true,
       "meaning": "D.lds_conflict is reported as critical only if SQ_WAIT_INST_LDS share of SIMD cycles >= value"
+    },
+    "kernel.vmem_sat": {
+      "value": 0.92,
+      "source": "L0 microbench vmem_issue under PMC (2026-10-10): sum TA_TA_BUSY / (GRBM*CUs) = 0.91-0.93 at saturation",
+      "hcu_calibrated": true,
+      "meaning": "attainable vector-memory (TA) issue utilization; implementation bound = TA-busy time / value"
     }
   }
 }
