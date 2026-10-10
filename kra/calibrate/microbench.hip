@@ -431,6 +431,53 @@ static void bench_vmem_issue() {
     CK(hipFree(b));
 }
 
+// Per-CU vector-memory STORE issue cost by access pattern (validation P-8: a layout change that
+// halved the consumers' load instructions cost the producers up to 3%, because their 8 B /
+// 2 B stores into the paired layout touch twice the cache lines per instruction).  Each lane
+// stores sizeof(T) bytes at element (lane * stride) of a per-wave 4 KB window that stays
+// L2-resident; reported per wave-level store instruction.
+template <typename T, int STRIDE>
+__global__ void LB512 k_vmem_store(T* __restrict__ p, int iters) {
+    const int l = threadIdx.x & 63, w = threadIdx.x >> 6;
+    T* base = p + ((size_t)blockIdx.x * 8 + w) * (4096 / sizeof(T));
+    constexpr int N = 4096 / sizeof(T);
+    T v{};
+    for (int it = 0; it < iters; ++it) {
+        // the window offset rotates with `it` (runtime-dependent addresses: no store is dead)
+        const int rot = (it * 64 * STRIDE * 3) & (N - 1);
+        #pragma unroll
+        for (int u = 0; u < 8; ++u) base[(rot + l * STRIDE + u * 64 * STRIDE) & (N - 1)] = v;
+        reinterpret_cast<char*>(&v)[0] += 1;
+    }
+}
+
+template <typename T, int STRIDE>
+static void vmem_store_one(const char* pat, T* buf) {
+    const int iters = 1024, block = 512;
+    auto t = time_ms([&] { hipLaunchKernelGGL((k_vmem_store<T, STRIDE>), g_cus, block, 0, 0, buf, iters); }, 2, 7);
+    CK(hipGetLastError());
+    const double cyc = vmin(t) * 1e-3 * g_prop.clockRate * 1e3;
+    const double winst = (double)block / g_prop.warpSize * iters * 8;
+    const int span = 64 * STRIDE * (int)sizeof(T);
+    printf("{\"bench\":\"vmem_store\",\"config\":{\"pattern\":\"%s\",\"bytes\":%zu,\"lane_stride_bytes\":%zu,"
+           "\"bytes_spanned_per_inst\":%d},\"ms_min\":%.4f,\"clk_per_wave_inst\":%.2f,\"bytes_per_cu_per_clk\":%.2f}\n",
+           pat, sizeof(T), STRIDE * sizeof(T), span, vmin(t), cyc / winst,
+           winst * g_prop.warpSize * sizeof(T) / cyc);
+    fflush(stdout);
+}
+
+static void bench_vmem_store() {
+    void* b;
+    const size_t bytes = (size_t)g_cus * 8 * 4096;
+    CK(hipMalloc(&b, bytes));
+    vmem_store_one<v4f, 1>("dwordx4_contiguous", (v4f*)b);
+    vmem_store_one<v2f, 1>("dwordx2_contiguous", (v2f*)b);
+    vmem_store_one<v2f, 2>("dwordx2_half_line", (v2f*)b);       // 8 B every 16 B (paired layout, 8 B store)
+    vmem_store_one<short, 4>("short_stride8B", (short*)b);       // B-form scalar scatter (plain layout)
+    vmem_store_one<short, 8>("short_stride16B", (short*)b);      // the same scatter in the paired layout
+    CK(hipFree(b));
+}
+
 // Attainable HBM read bandwidth when only `n` CTAs run (one per CU, 512 threads,
 // 4 loads in flight per thread): the bandwidth a small-grid kernel can draw at best.
 static void bench_hbm_ctas() {
@@ -761,6 +808,7 @@ int main(int argc, char** argv) {
     if (want("hbm")) bench_hbm();
     if (want("hbm_ctas")) bench_hbm_ctas();
     if (want("vmem_issue")) bench_vmem_issue();
+    if (want("vmem_store")) bench_vmem_store();
     if (want("l2")) bench_l2();
     if (want("lds")) bench_lds();
     if (want("compute")) bench_compute();

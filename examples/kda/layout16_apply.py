@@ -166,45 +166,88 @@ for sig in ("g2_dhu_w8b_kernel(BwdNParams p)", "g2_dhu_v8b_kernel(BwdNParams p)"
 edit_in(ENG, "g2_dhu_v8b4_kernel(BwdNParams p)", [(*KA8, 1), (*qw("kb"), 1)])
 
 # ---------------------------------------------------------------- python layout code
+# Pairing is a property of the TENSOR, not of the layout form: the same A/B/C-form functions
+# and converter modes also build dOT, dVn, Vn (read unpaired).  So the form functions stay plain
+# and the pairing is applied explicitly where one of the eight paired tensors is built.
 if not kernels_only:
     NAT = root / "hip_kda/ops/g2_native.py"
-    t = NAT.read_text()
-    assert "def pair16" not in t
-    t = t.replace('''def _perm(x: torch.Tensor, shape, dims) -> torch.Tensor:
+    edit(NAT, [('''def _perm(x: torch.Tensor, shape, dims) -> torch.Tensor:
     return x.reshape(shape).permute(*dims).contiguous()''', '''def _perm(x: torch.Tensor, shape, dims) -> torch.Tensor:
     return x.reshape(shape).permute(*dims).contiguous()
 
 
 def pair16(x: torch.Tensor) -> torch.Tensor:
-    """kra L16 paired native layout (csrc/g2/g2_common.h nat16): inside every 512-element group
-    the two 256-element sub-blocks are interleaved per lane (256s + 4l + e -> 8l + 4s + e)."""
-    return x.reshape(-1, 2, 64, 4).transpose(1, 2).contiguous().reshape(x.shape)''', 1)
-    for fn in ("to_wn", "to_kn", "to_un", "to_qga", "to_aqka"):
-        k0 = t.index(f"def {fn}(")
-        k1 = t.index("    return _perm(", k0)
-        k2 = t.index("\n", k1)
-        line = t[k1:k2]
-        t = t[:k1] + line.replace("return _perm(", "return pair16(_perm(", 1) + ")" + t[k2:]
-    NAT.write_text(t)
+    """kra L16 paired native layout (csrc/g2/g2_common.h nat16) of a plain native tensor: inside
+    every 512-element group the two 256-element sub-blocks are interleaved per lane
+    (256s + 4l + e -> 8l + 4s + e).  Applies to Wn Wb Un Kn KgA Qn QgA AqkA only."""
+    return x.reshape(-1, 2, 64, 4).transpose(1, 2).contiguous().reshape(x.shape)
+
+
+def unpair16(x: torch.Tensor) -> torch.Tensor:
+    """Inverse of :func:`pair16`."""
+    return x.reshape(-1, 64, 2, 4).transpose(1, 2).contiguous().reshape(x.shape)''', 1)])
 
     OPS = root / "hip_kda/ops/g2_ops.py"
     edit(OPS, [
+        ('''def convert2(x, mode2, heads, chunks, g=None, T=0):''',
+         '''def convert2(x, mode2, heads, chunks, g=None, T=0, pair16=False):''', 1),
         ('''    return _ext().convert2(x.contiguous(), (g if g is not None else x).contiguous(),
                            int(mode2), like, int(heads), int(chunks))''',
          '''    out = _ext().convert2(x.contiguous(), (g if g is not None else x).contiguous(),
                           int(mode2), like, int(heads), int(chunks))
-    return gn.pair16(out) if mode2 in _L16_MODE2 else out''', 1),
+    # kra L16: pair16=True when the output is one of the paired tensors (Wn Wb Un Kn KgA Qn QgA AqkA)
+    return gn.pair16(out) if pair16 else out''', 1),
+        ('''def convert(x: torch.Tensor, mode: int, like: torch.Tensor, heads: int, chunks: int) -> torch.Tensor:''',
+         '''def convert(x: torch.Tensor, mode: int, like: torch.Tensor, heads: int, chunks: int,
+            pair16: bool = False) -> torch.Tensor:''', 1),
         ('''    return _ext().convert(x.contiguous(), int(mode), like.contiguous(), int(heads), int(chunks))''',
          '''    out = _ext().convert(x.contiguous(), int(mode), like.contiguous(), int(heads), int(chunks))
-    return gn.pair16(out) if mode in _L16_MODE else out''', 1),
-        ('''def convert2(x, mode2, heads, chunks, g=None, T=0):''',
-         '''# kra L16: modes whose native output is read by the recurrence kernels in the paired layout
-# (g2_common.h nat16); the converter kernels write the plain layout and the pairing is applied here.
-_L16_MODE2 = {Mode2.WN, Mode2.KGA, Mode2.KN, Mode2.QN, Mode2.UN, Mode2.QGA, Mode2.AQKA,
-              Mode2.QGB, Mode2.KGA2, Mode2.KGB2}
-_L16_MODE = {Mode.ToWn, Mode.ToKgA, Mode.ToKn, Mode.ToQn, Mode.ToUn}
-
-
-def convert2(x, mode2, heads, chunks, g=None, T=0):''', 1),
+    return gn.pair16(out) if pair16 else out''', 1),
+        ('''    return (gn.to_wn(w_row, H), gn.to_kn(kg_row, H), gn.to_un(u_row, H), gn.to_gn(g_row, H))''',
+         '''    return (gn.pair16(gn.to_wn(w_row, H)), gn.pair16(gn.to_kn(kg_row, H)),
+            gn.pair16(gn.to_un(u_row, H)), gn.to_gn(g_row, H))''', 1),
+        ('''    return (gn.to_wn(kg_row, H), gn.to_kn(qg_row, H), gn.to_kn(w_row, H),
+            gn.to_kn(do_row, H), gn.to_un(dv_row, H), gn.to_gn(g_row, H))''',
+         '''    return (gn.pair16(gn.to_wn(kg_row, H)), gn.pair16(gn.to_kn(qg_row, H)), gn.pair16(gn.to_kn(w_row, H)),
+            gn.to_kn(do_row, H), gn.to_un(dv_row, H), gn.to_gn(g_row, H))''', 1),
     ])
+    edit(root / "hip_kda/ops/k3_g2.py", [(f"{v} = g2_ops.convert2({a}, g2_ops.Mode2.{m}, H, NT{x})",
+                                          f"{v} = g2_ops.convert2({a}, g2_ops.Mode2.{m}, H, NT{x}, pair16=True)", 1)
+                                         for v, a, m, x in (("Wn", "w", "WN", ""), ("Kn", "kg", "KN", ""),
+                                                            ("Un", "u", "UN", ""), ("QgA", "qn", "QGA", ", g=g"),
+                                                            ("AqkA", "Aqk", "AQKA", ""))])
+    T = root / "tests/g2"
+    edit(T / "test_wu_gate.py", [(
+        '''    ours = {"Wn": Wn, "Wb": Wb, "Un": Un,''',
+        '''    ours = {"Wn": gn.unpair16(Wn), "Wb": gn.unpair16(Wb), "Un": gn.unpair16(Un),   # kra L16''', 1)])
+    edit(T / "test_s0_bitexact.py", [
+        ('''    return gn.to_wn(w, H), gn.to_kn(kg, H), gn.to_un(u, H), gn.to_gn(gk, H)''',
+         '''    return (gn.pair16(gn.to_wn(w, H)), gn.pair16(gn.to_kn(kg, H)), gn.pair16(gn.to_un(u, H)),
+            gn.to_gn(gk, H))                                   # kra L16: P1 reads paired''', 1),
+        ('''    KgA = gn.to_wn(kg, H)
+    Qn = gn.to_kn(qg, H)
+    Wb = gn.to_kn(w, H)''', '''    KgA = gn.pair16(gn.to_wn(kg, H))                       # kra L16: P2 reads paired
+    Qn = gn.pair16(gn.to_kn(qg, H))
+    Wb = gn.pair16(gn.to_kn(w, H))''', 1)])
+    edit(T / "test_fi_gate.py", [
+        ('''        "Wn": (Wn, cv2(w, M2.WN, H, NT)),
+        "Kn": (Kn, cv2(kg, M2.KN, H, NT)),''',
+         '''        "Wn": (Wn, cv2(w, M2.WN, H, NT, pair16=True)),        # kra L16
+        "Kn": (Kn, cv2(kg, M2.KN, H, NT, pair16=True)),''', 1)])
+    t = (T / "test_fi_gate.py").read_text()
+    for o, n in (('cv2(u, M2.UN, H, NT)', 'cv2(u, M2.UN, H, NT, pair16=True)'),
+                 ('cv2(q, M2.QGA, H, NT, g=g)', 'cv2(q, M2.QGA, H, NT, g=g, pair16=True)')):
+        assert t.count(o) == 1, ("fi_gate", o, t.count(o))
+        t = t.replace(o, n)
+    o = '''                            .to(torch.bfloat16), M2.AQKA, H, NT)),'''
+    assert t.count(o) == 1, ("fi_gate AqkA", t.count(o))
+    t = t.replace(o, '''                            .to(torch.bfloat16), M2.AQKA, H, NT, pair16=True)),''')
+    (T / "test_fi_gate.py").write_text(t)
+    edit(T / "test_fi2_gate.py", [(
+        '''    fla = {"Wn": cv2(w, M2.WN, H, NT), "Kn": cv2(kg, M2.KN, H, NT), "Un": cv2(u, M2.UN, H, NT),
+           "QgA": cv2(q, M2.QGA, H, NT, g=g), "AqkA": cv2(Aqk_m.to(torch.bfloat16), M2.AQKA, H, NT),''',
+        '''    fla = {"Wn": cv2(w, M2.WN, H, NT, pair16=True), "Kn": cv2(kg, M2.KN, H, NT, pair16=True),
+           "Un": cv2(u, M2.UN, H, NT, pair16=True),           # kra L16: paired natives
+           "QgA": cv2(q, M2.QGA, H, NT, g=g, pair16=True),
+           "AqkA": cv2(Aqk_m.to(torch.bfloat16), M2.AQKA, H, NT, pair16=True),''', 1)])
 print("L16 APPLIED")

@@ -28,6 +28,9 @@ p.add_argument("--sync", action="store_true")
 p.add_argument("--time", action="store_true", help="print unprofiled per-iteration ms")
 p.add_argument("--optrace", default=None,
                help="write launcher interface capture (kra.opspec.capture) of the last iteration here")
+p.add_argument("--keep-state", action="store_true",
+               help="g2 arm under a reentrant checkpoint (Megatron's form): the forward re-runs inside "
+                    "the backward and keeps its state, so wu skips the P1 emits and fwd_h_bn is not called")
 a = p.parse_args()
 
 # kda_op_bench_tp.py defines the inputs and fwd()/bwd() closures for each arm before
@@ -36,6 +39,28 @@ sys.argv = ["x", str(a.T), str(a.H), a.arm, "1"]
 src = open(f"{a.tree}/tests/megatron/kda_op_bench_tp.py").read().split("res, live = {}, []")[0]
 g = {}
 exec(compile(src, "kda_op_bench_tp", "exec"), g)
+if a.keep_state:
+    assert a.arm == "g2", "--keep-state is the G2 route's checkpoint mode"
+    from torch.utils.checkpoint import checkpoint
+    from hip_kda.fla import chunk_kda
+    _L = g["LEAVES"]
+    _kw = dict(scale=None, output_final_state=False, use_qk_l2norm_in_kernel=True, use_gate_in_kernel=True,
+               use_beta_sigmoid_in_kernel=False, safe_gate=True, lower_bound=-5.0,
+               cu_seqlens=g["CU"], cu_seqlens_cpu=g["CU_CPU"])
+    _names = list(_L)
+
+    def _f(*xs):
+        t = dict(zip(_names, xs))
+        return chunk_kda(t["q"], t["k"], t["v"], t["g"], t["beta"], A_log=t["A_log"], dt_bias=t["dt_bias"],
+                         **_kw)[0]
+
+    def _fwd(arm):
+        return checkpoint(_f, *_L.values(), use_reentrant=True)
+
+    def _bwd(o):
+        o.backward(g["D_O"])
+
+    g["fwd"], g["bwd"] = _fwd, _bwd
 
 for _ in range(a.warmup):
     o = g["fwd"](a.arm)

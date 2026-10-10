@@ -232,6 +232,12 @@ def summarize(rows: list[dict]) -> dict:
     if vm:
         peaks["vmem_issue"] = {"unit": "per CU", "by_width": vm,
                                "note": "one CTA per CU, 8 independent loads in flight per thread"}
+    vs = {r["config"]["pattern"]: {"clk_per_wave_inst": r["clk_per_wave_inst"],
+                                   "bytes_spanned_per_inst": r["config"]["bytes_spanned_per_inst"]}
+          for r in rows if r.get("bench") == "vmem_store"}
+    if vs:
+        peaks["vmem_store"] = {"unit": "per CU", "by_pattern": vs,
+                               "note": "one CTA (8 waves) per CU, L2-resident 4 KB window per wave"}
     return {
         "device": dev,
         "peaks": peaks,
