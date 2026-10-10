@@ -344,6 +344,35 @@ P-9 已经说明，“去掉保守等待”的结果取决于读之后的发射�
 
 **保留条件**：快 ≥ 2%，否则回退到通用实例。
 
+## P-13 反向融合第 1 步：去掉 l2n_apply，由消费者重算（登记于 2026-10-10，修改之前）
+
+**依据**：
+- `bwd_fusion_eval.md` 中的方案 A；
+- l2n_apply 的计算是逐元素的 `bf_rne(bf2f(x) × rstd[token·H + head])`（`g2_wy.cuh:1303`）；
+- 它的 kernel 时间就是它的流量（HBM 96%），8K/H12 约 79 µs；
+- 在生产路径上，qn/kn 只在四处被读：
+  - wu 的 3 处：phase 1 的 k、qg_of 的 q、phase 3 的 k；
+  - s4b 每个 kt 步的 kk、qq（s4a 不读 qn/kn）；
+  - bwd_tail 的 l2norm 反向中的 y。
+
+**改动**：
+- 这四个消费者改为读原始 q/k，加上 forward 已保存的 q_rstd/k_rstd，在读入后用与 l2n_apply 完全相同的表达式重算；
+- s4b 用编译期参数 `L2R` 控制，每个 lane 的 rstd 在 kt 循环外只读一次，循环里不会多出条件分支中的访存（规则 R8）；
+- 新增 extern "C" 入口 `g2_wu2`、`g2_wy_s4_split2`、`g2_bwd_tail2`，原来的入口保持不变（传 nullptr），flash-train 的 runner 不受影响；
+- Python 端只在生产路径（S4=1、P4=3、HIP 或 T5 尾部）启用；`KDA_G2_L2R=0` 恢复原来的 l2n_apply。
+
+**预测**：
+
+| 指标 | 预测 |
+|---|---|
+| 逐位一致 | 13 组全部一致 |
+| l2n_apply | 不再 launch，省下 8K/H12 约 79 µs、8K/H48 约 4 倍 |
+| 消费者的额外开销 | wu、tail、s4b 各增加 ≤ 1%（每个元素多一次乘法和舍入；它们都不受 VALU 限制，s4b 的 VALU 利用率是 35%） |
+| 算子总时间 | **快 1.4–1.9%**（8K/H12 和 8K/H48，普通形态和 keep-state 都是） |
+| 资源 | s4b 的 VGPR 已经是 256，**不允许出现 scratch 溢出**，否则视为失败 |
+
+**证伪条件**：算子总收益 < 1%，或者 s4b 慢 > 1%。
+
 ## 其余目标
 
 wy_s4_split、v8o/dhu、prep_a 要先完成 L3（SQTT 子类型）和计算下限，届时在本文件追加登记，然后再修改代码。
