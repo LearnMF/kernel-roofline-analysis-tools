@@ -4,7 +4,7 @@ Kernel 瓶颈分类与性能上限判定工具，首个目标平台为海光 HCU
 
 它要回答的问题：一个算子（可能由多个 kernel 组成）在某个具体 shape 下，时间花在哪里？每个 kernel 属于哪类瓶颈？离硬件上限还有多远？下一步该改什么？如果已经到顶，依据是什么？
 
-设计说明见 [docs/design.md](docs/design.md)，测量口径见 [docs/methodology.md](docs/methodology.md)，瓶颈分类法见 [kra/taxonomy.json](kra/taxonomy.json)，判定阈值及其来源见 [kra/thresholds.json](kra/thresholds.json)。
+**操作流程（每轮怎么判断上限、怎么选方向、规则库与预测记分）见 [docs/playbook.md](docs/playbook.md)**；设计说明见 [docs/design.md](docs/design.md)，测量口径见 [docs/methodology.md](docs/methodology.md)，瓶颈分类法见 [kra/taxonomy.json](kra/taxonomy.json)，判定阈值及其来源见 [kra/thresholds.json](kra/thresholds.json)。
 
 ## 状态
 

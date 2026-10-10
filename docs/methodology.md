@@ -140,6 +140,36 @@ python -m kra pmc --out OUT --marker spin_kernel -- <app>   # 两次运行：--p
   - 其余：中等空间。
 - **可回收时间** = 实测 − 先验下限，按此排序就是优化优先级（Amdahl 定律）。
 
+### 4.1 模型 v2（2026-10-10）
+
+- **新增资源：向量访存发射（TA）**。
+  - `TA_TA_BUSY` 共有 16 个实例，每个实例对应 5 个 CU；
+  - 把所有实例求和后除以 (GRBM × CU 数)，就是 TA 利用率。L0 的 `vmem_issue` 达到饱和时，这个值是 0.91–0.93，与 hipprof 给出的“L1 cache unit is active”一致；
+  - 实现下限中计入 `TA 忙碌时间 / 0.92`（阈值 `kernel.vmem_sat`）。
+- **吞吐判断改为按正在工作的 CU 计算**。CTA 数少于 CU 数的 kernel，同时标记 `C.parallelism`。
+- **四层时间分解**：物理下限、拆分代价、多余工作、执行效率损失，以及每个 launcher 的多维度判定和下一步方向。用法见 `playbook.md` 第 1、2 节。
+- **回看验证**：用 v2 重新分析 R5 的原始数据，v8o、dhu、dav、s4 在 v1 中被判为 `C/latency`，在 v2 中都被识别为向量访存发射受限（63–87%），指出的方向正是后来实测有效的 L16。
+
+## 4.2 新增的 L0 原语（每个 CU）
+
+| 原语 | 结果 |
+|---|---|
+| `vmem_issue`（读，数据在 cache 中） | `dword` 8.3/10.0 周期，`dwordx2` 16.1/16.2 周期，`dwordx4` 18.4/22.8 周期（L1/L2） |
+| `vmem_store`（写） | 成本正比于每条指令覆盖的字节范围：512 B 时 27 周期，1 KB 时 54 周期；2 B 标量步长 8 B 时 32 周期，步长 16 B 时 60 周期 |
+
+## 4.3 L3 逐指令分析（`python -m kra.sqtt.pcmap`）
+
+- **输入**：XProf 采到的 `.perf`、dispatch 编号，以及用 `-gline-tables-only` 编译的 ISA（已核对与生产版 codegen 完全相同）。
+- **方法**：
+  - XCompute CLI 的 `pipeline` 段加上 `--sqtt-location`，可以导出单个 wave 的完整发射流；
+  - 每一步的动态 opcode 序列与静态 hot loop 对齐（对每个 wave 选对齐得最好的那个循环实例），再把气泡归到具体指令上；
+  - 紧跟在 `s_waitcnt`/`s_barrier` 之后的气泡，记为在这两条指令上的等待；其余气泡记为下一条指令的发射停顿；
+  - 对一个 CTA 的所有 wave 都做一遍，挑出关键 wave（barrier 等待最少的那个，CTA 的步长由它决定）。
+- **静态规则**（`kra/isa/scan.py`）：
+  - `mathlib_guard`：带保护的数学函数展开；
+  - `load_use_slack`：hot loop 中读完不久就要等待的位置；
+  - `conditional_vmem`：hot loop 中位于运行时可选分支里的访存，会让 waitcnt 过于保守。
+
 ## 5. 阈值
 
 所有判定阈值在 [`kra/thresholds.json`](../kra/thresholds.json)，每项标注来源（NV Triage Guide、KernelPro、AutoKernel、团队约定）以及 `hcu_calibrated`。目前除噪声门槛外都尚未经 HCU 校准，KDA 是第一个校准样本。

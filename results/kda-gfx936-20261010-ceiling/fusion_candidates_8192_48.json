@@ -1,0 +1,132 @@
+{
+ "intermediate_traffic_MB": 6808.928256,
+ "intermediate_traffic_us": 5084.325161290323,
+ "pairs": [
+  {
+   "producer": "wy_s4_split",
+   "consumer": "bwd_tail",
+   "MB": 1207.959552,
+   "tensors": 3,
+   "saved_us": 902.0008602150538
+  },
+  {
+   "producer": "fwd_h_bn",
+   "consumer": "wy_s4_split",
+   "MB": 704.643072,
+   "tensors": 3,
+   "saved_us": 526.1671684587814
+  },
+  {
+   "producer": "wu",
+   "consumer": "dhu_bn",
+   "MB": 603.979776,
+   "tensors": 4,
+   "saved_us": 451.0004301075269
+  },
+  {
+   "producer": "fwd_prep",
+   "consumer": "fwd_h_o",
+   "MB": 504.889344,
+   "tensors": 6,
+   "saved_us": 377.00817204301075
+  },
+  {
+   "producer": "wu",
+   "consumer": "wy_s4_split",
+   "MB": 402.653184,
+   "tensors": 2,
+   "saved_us": 300.6669534050179
+  },
+  {
+   "producer": "dhu_bn",
+   "consumer": "wy_s4_split",
+   "MB": 402.653184,
+   "tensors": 1,
+   "saved_us": 300.6669534050179
+  },
+  {
+   "producer": "fwd_prep",
+   "consumer": "wy_s4_split",
+   "MB": 352.321536,
+   "tensors": 4,
+   "saved_us": 263.0835842293907
+  },
+  {
+   "producer": "fwd_prep",
+   "consumer": "wu",
+   "MB": 251.65824,
+   "tensors": 3,
+   "saved_us": 187.9168458781362
+  },
+  {
+   "producer": "fwd_prep",
+   "consumer": "bwd_tail",
+   "MB": 206.045184,
+   "tensors": 5,
+   "saved_us": 153.856917562724
+  },
+  {
+   "producer": "head_gate",
+   "consumer": "wy_s4_split",
+   "MB": 201.326592,
+   "tensors": 1,
+   "saved_us": 150.33347670250896
+  },
+  {
+   "producer": "head_gate",
+   "consumer": "wu",
+   "MB": 201.326592,
+   "tensors": 1,
+   "saved_us": 150.33347670250896
+  },
+  {
+   "producer": "wu",
+   "consumer": "fwd_h_bn",
+   "MB": 201.326592,
+   "tensors": 2,
+   "saved_us": 150.33347670250896
+  },
+  {
+   "producer": "dav",
+   "consumer": "wy_s4_split",
+   "MB": 201.326592,
+   "tensors": 1,
+   "saved_us": 150.33347670250896
+  },
+  {
+   "producer": "fwd_prep",
+   "consumer": "fwd_h_bn",
+   "MB": 100.663296,
+   "tensors": 1,
+   "saved_us": 75.16673835125448
+  },
+  {
+   "producer": "fwd_prep",
+   "consumer": "dhu_bn",
+   "MB": 100.663296,
+   "tensors": 1,
+   "saved_us": 75.16673835125448
+  },
+  {
+   "producer": "fwd_prep",
+   "consumer": "dav",
+   "MB": 100.663296,
+   "tensors": 1,
+   "saved_us": 75.16673835125448
+  },
+  {
+   "producer": "fwd_h_bn",
+   "consumer": "dav",
+   "MB": 100.663296,
+   "tensors": 1,
+   "saved_us": 75.16673835125448
+  },
+  {
+   "producer": "fwd_prep",
+   "consumer": "l2n_apply",
+   "MB": 3.145728,
+   "tensors": 2,
+   "saved_us": 2.3489605734767025
+  }
+ ]
+}
