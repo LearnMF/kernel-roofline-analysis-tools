@@ -72,18 +72,17 @@
 
 这里只算省下的流量，因此是**上限**。能否真正实现，取决于片上容量、重算成本和占用率。
 
-8K/H12 下，中间张量经过 HBM 共 **1703 MB，折合 1272 µs（占算子的 31%）**，与上面的“拆分代价”层（1455 µs）吻合。排名前列的候选：
+8K/H12 下，中间张量经过 HBM 共 **1905 MB，折合 1422 µs（占算子的 34%）**。张量的生产者和读者按“版本”配对：caching allocator 会复用地址，所以一次读属于这个地址在它之前的最后一次写。排名前列的候选：
 
 | 生产者 → 消费者 | 省下的流量 | 折合时间（8K/H12） | 8K/H48 |
 |---|---:|---:|---:|
-| wy_s4_split → bwd_tail（dq/dk/dg 的 fp32 部分和） | 303 MB | **226 µs** | 902 µs |
-| fwd_h_bn → wy_s4_split（bN(h)、Vn、aN(v)） | 176 MB | 132 µs | 526 µs |
-| wu → dhu_bn（KgA、Qn、Wb 等） | 151 MB | 113 µs | 451 µs |
-| fwd_prep → fwd_h_o（Wn、Kn、Un、QgA、AqkA、Gn） | 127 MB | 95 µs | 377 µs |
-| wu → wy_s4_split | 101 MB | 75 µs | 301 µs |
-| dhu_bn → wy_s4_split | 101 MB | 75 µs | 301 µs |
+| wy_s4_split → bwd_tail（dq/dk/dg 的 fp32 部分和） | 303 MB | **226 µs** | 904 µs |
+| fwd_prep → fwd_h_o（前向的 5 个中间张量加 Gn） | 228 MB | 170 µs | 681 µs |
+| wu → fwd_h_bn / wu → dhu_bn | 各 151 MB | 各 113 µs | 各 451 µs |
+| fwd_h_bn → wy / dhu_bn → wy | 各 151 MB | 各 113 µs | 各 451 µs |
+| dav → wy / dav → dhu | 各 101 MB | 各 75 µs | 各 301 µs |
 
-结构性方案按这个排名评估，再逐个用 op_spec 估算融合后的下限，并考虑 LDS 和寄存器容量。第一名（s4b → bwd_tail）的流量来自 fp32 的 dq/dk/dg。也可以不融合，而是让 s4b 直接产出 tail 所需的结果，或者降低中间结果的精度。后者会改变数值，需要 owner 同意。
+各方案的可行性见 **[bwd_fusion_eval.md](bwd_fusion_eval.md)**，包括依赖图是否凸、片上容量和数值三方面。
 
 ## 对“局部最优还是全局最优”的回答
 

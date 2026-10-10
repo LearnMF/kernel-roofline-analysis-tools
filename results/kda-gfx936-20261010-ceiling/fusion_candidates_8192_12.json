@@ -1,132 +1,228 @@
 {
- "intermediate_traffic_MB": 1703.411712,
- "intermediate_traffic_us": 1271.9621505376344,
+ "intermediate_traffic_MB": 1904.738304,
+ "intermediate_traffic_us": 1422.2956272401434,
  "pairs": [
   {
    "producer": "wy_s4_split",
    "consumer": "bwd_tail",
    "MB": 302.77632,
    "tensors": 4,
-   "saved_us": 226.0874551971326
+   "saved_us": 226.0874551971326,
+   "what": [
+    "float32[1, 8192, 12, 128]",
+    "float32[1, 8192, 12, 128]",
+    "float32[1, 8192, 12, 128]",
+    "float32[1, 8192, 12]"
+   ]
   },
   {
-   "producer": "fwd_h_bn",
-   "consumer": "wy_s4_split",
-   "MB": 176.160768,
+   "producer": "fwd_prep",
+   "consumer": "fwd_h_o",
+   "MB": 228.06528,
+   "tensors": 6,
+   "saved_us": 170.29964157706092,
+   "what": [
+    "bfloat16[1, 12, 128, 4, 8, 4, 16, 4]",
+    "bfloat16[1, 12, 128, 8, 4, 4, 16, 4]",
+    "bfloat16[1, 12, 128, 4, 8, 4, 16, 4]",
+    "bfloat16[1, 12, 128, 4, 8, 4, 16, 4]",
+    "bfloat16[1, 12, 128, 4, 4, 4, 16, 4]",
+    "float32[1, 12, 128, 8, 4, 4]"
+   ]
+  },
+  {
+   "producer": "wu",
+   "consumer": "fwd_h_bn",
+   "MB": 150.994944,
    "tensors": 3,
-   "saved_us": 131.54179211469534
+   "saved_us": 112.75010752688172,
+   "what": [
+    "bfloat16[1, 12, 128, 4, 8, 4, 16, 4]",
+    "bfloat16[1, 12, 128, 4, 8, 4, 16, 4]",
+    "bfloat16[1, 12, 128, 8, 4, 4, 16, 4]"
+   ]
   },
   {
    "producer": "wu",
    "consumer": "dhu_bn",
    "MB": 150.994944,
-   "tensors": 4,
-   "saved_us": 112.75010752688172
+   "tensors": 3,
+   "saved_us": 112.75010752688172,
+   "what": [
+    "bfloat16[1, 12, 128, 8, 4, 4, 16, 4]",
+    "bfloat16[1, 12, 128, 4, 8, 4, 16, 4]",
+    "bfloat16[1, 12, 128, 8, 4, 4, 16, 4]"
+   ]
   },
   {
-   "producer": "fwd_prep",
-   "consumer": "fwd_h_o",
-   "MB": 127.401984,
-   "tensors": 6,
-   "saved_us": 95.13290322580646
-  },
-  {
-   "producer": "wu",
+   "producer": "fwd_h_bn",
    "consumer": "wy_s4_split",
-   "MB": 100.663296,
+   "MB": 150.994944,
    "tensors": 2,
-   "saved_us": 75.16673835125448
+   "saved_us": 112.75010752688172,
+   "what": [
+    "bfloat16[1, 128, 12, 8, 8, 4, 16, 4]",
+    "bfloat16[1, 128, 12, 4, 8, 4, 16, 4]"
+   ]
   },
   {
    "producer": "dhu_bn",
    "consumer": "wy_s4_split",
-   "MB": 100.663296,
-   "tensors": 1,
-   "saved_us": 75.16673835125448
-  },
-  {
-   "producer": "fwd_prep",
-   "consumer": "wy_s4_split",
-   "MB": 88.080384,
-   "tensors": 4,
-   "saved_us": 65.77089605734767
-  },
-  {
-   "producer": "fwd_prep",
-   "consumer": "wu",
-   "MB": 62.91456,
-   "tensors": 3,
-   "saved_us": 46.97921146953405
-  },
-  {
-   "producer": "fwd_prep",
-   "consumer": "bwd_tail",
-   "MB": 51.11808,
-   "tensors": 4,
-   "saved_us": 38.17060931899642
-  },
-  {
-   "producer": "head_gate",
-   "consumer": "wy_s4_split",
-   "MB": 50.331648,
-   "tensors": 1,
-   "saved_us": 37.58336917562724
-  },
-  {
-   "producer": "head_gate",
-   "consumer": "wu",
-   "MB": 50.331648,
-   "tensors": 1,
-   "saved_us": 37.58336917562724
+   "MB": 150.994944,
+   "tensors": 2,
+   "saved_us": 112.75010752688172,
+   "what": [
+    "bfloat16[1, 128, 12, 8, 8, 4, 16, 4]",
+    "bfloat16[1, 128, 12, 4, 8, 4, 16, 4]"
+   ]
   },
   {
    "producer": "wu",
-   "consumer": "fwd_h_bn",
-   "MB": 50.331648,
+   "consumer": "wy_s4_split",
+   "MB": 100.663296,
    "tensors": 2,
-   "saved_us": 37.58336917562724
+   "saved_us": 75.16673835125448,
+   "what": [
+    "bfloat16[1, 128, 12, 4, 8, 4, 16, 4]",
+    "bfloat16[1, 128, 12, 4, 8, 4, 16, 4]"
+   ]
   },
   {
    "producer": "dav",
    "consumer": "wy_s4_split",
+   "MB": 100.663296,
+   "tensors": 2,
+   "saved_us": 75.16673835125448,
+   "what": [
+    "float32[1, 8192, 12, 64]",
+    "bfloat16[1, 128, 12, 4, 8, 4, 16, 4]"
+   ]
+  },
+  {
+   "producer": "dav",
+   "consumer": "dhu_bn",
+   "MB": 100.663296,
+   "tensors": 2,
+   "saved_us": 75.16673835125448,
+   "what": [
+    "bfloat16[1, 12, 128, 4, 8, 4, 16, 4]",
+    "bfloat16[1, 12, 128, 8, 4, 4, 16, 4]"
+   ]
+  },
+  {
+   "producer": "l2n_apply",
+   "consumer": "wu",
+   "MB": 50.331648,
+   "tensors": 2,
+   "saved_us": 37.58336917562724,
+   "what": [
+    "bfloat16[1, 8192, 12, 128] (+other readers)",
+    "bfloat16[1, 8192, 12, 128] (+other readers)"
+   ]
+  },
+  {
+   "producer": "l2n_apply",
+   "consumer": "wy_s4_split",
+   "MB": 50.331648,
+   "tensors": 2,
+   "saved_us": 37.58336917562724,
+   "what": [
+    "bfloat16[1, 8192, 12, 128] (+other readers)",
+    "bfloat16[1, 8192, 12, 128] (+other readers)"
+   ]
+  },
+  {
+   "producer": "l2n_apply",
+   "consumer": "bwd_tail",
+   "MB": 50.331648,
+   "tensors": 2,
+   "saved_us": 37.58336917562724,
+   "what": [
+    "bfloat16[1, 8192, 12, 128] (+other readers)",
+    "bfloat16[1, 8192, 12, 128] (+other readers)"
+   ]
+  },
+  {
+   "producer": "head_gate",
+   "consumer": "wu",
    "MB": 50.331648,
    "tensors": 1,
-   "saved_us": 37.58336917562724
+   "saved_us": 37.58336917562724,
+   "what": [
+    "float32[1, 8192, 12, 128] (+other readers)"
+   ]
   },
   {
-   "producer": "fwd_prep",
-   "consumer": "fwd_h_bn",
-   "MB": 25.165824,
+   "producer": "head_gate",
+   "consumer": "wy_s4_split",
+   "MB": 50.331648,
    "tensors": 1,
-   "saved_us": 18.79168458781362
-  },
-  {
-   "producer": "fwd_prep",
-   "consumer": "dhu_bn",
-   "MB": 25.165824,
-   "tensors": 1,
-   "saved_us": 18.79168458781362
-  },
-  {
-   "producer": "fwd_prep",
-   "consumer": "dav",
-   "MB": 25.165824,
-   "tensors": 1,
-   "saved_us": 18.79168458781362
+   "saved_us": 37.58336917562724,
+   "what": [
+    "float32[1, 8192, 12, 128] (+other readers)"
+   ]
   },
   {
    "producer": "fwd_h_bn",
    "consumer": "dav",
+   "MB": 50.331648,
+   "tensors": 1,
+   "saved_us": 37.58336917562724,
+   "what": [
+    "bfloat16[1, 12, 128, 4, 8, 4, 16, 4]"
+   ]
+  },
+  {
+   "producer": "fwd_prep",
+   "consumer": "dav",
    "MB": 25.165824,
    "tensors": 1,
-   "saved_us": 18.79168458781362
+   "saved_us": 18.79168458781362,
+   "what": [
+    "bfloat16[1, 8192, 12, 64]"
+   ]
+  },
+  {
+   "producer": "fwd_prep",
+   "consumer": "wu",
+   "MB": 12.582912,
+   "tensors": 1,
+   "saved_us": 9.39584229390681,
+   "what": [
+    "bfloat16[1, 8192, 12, 64] (+other readers)"
+   ]
+  },
+  {
+   "producer": "fwd_prep",
+   "consumer": "wy_s4_split",
+   "MB": 12.582912,
+   "tensors": 1,
+   "saved_us": 9.39584229390681,
+   "what": [
+    "bfloat16[1, 8192, 12, 64] (+other readers)"
+   ]
   },
   {
    "producer": "fwd_prep",
    "consumer": "l2n_apply",
    "MB": 0.786432,
    "tensors": 2,
-   "saved_us": 0.5872401433691756
+   "saved_us": 0.5872401433691756,
+   "what": [
+    "float32[1, 8192, 12] (+other readers)",
+    "float32[1, 8192, 12] (+other readers)"
+   ]
+  },
+  {
+   "producer": "fwd_prep",
+   "consumer": "bwd_tail",
+   "MB": 0.786432,
+   "tensors": 2,
+   "saved_us": 0.5872401433691756,
+   "what": [
+    "float32[1, 8192, 12] (+other readers)",
+    "float32[1, 8192, 12] (+other readers)"
+   ]
   }
  ]
 }
