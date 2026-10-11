@@ -1,0 +1,36 @@
+1 SE trace file(s), 76 complete waves; wave-cycles 2442732
+  issue              362424   14.8%
+  waitcnt           1378912   56.4%
+  barrier            120884    4.9%
+  issue_delay        580512   23.8%
+
+wait sites (top 12): % of wave-cycles, cycles, count, site = wait <- prev <- prev2
+    7.3%      178304  x  152  s_waitcnt vmcnt(0)   <- s_andn2_b64 vcc, exec, s[16:17]   <- v_add_lshl_u32 v8, v3, v7, 1
+    6.0%      147688  x  152  s_waitcnt vmcnt(0)   <- s_andn2_b64 vcc, exec, s[16:17]   <- global_load_dwordx2 v[1:2], v[1:2], off
+    4.5%      110184  x   95  s_waitcnt vmcnt(0)   <- s_or_b64 exec, exec, s[6:7]   <- global_load_ushort v40, v[42:43], off
+    4.5%      109192  x   76  s_waitcnt vmcnt(7) lgkmcnt(6)   <- v_lshlrev_b32_e32 v2, 2, v2   <- v_cmp_ge_u32_e32 vcc, v70, v1
+    4.2%      102776  x   76  s_waitcnt vmcnt(0)   <- s_mov_b32 s2, 0x5040100   <- s_or_b64 exec, exec, s[6:7]
+    3.7%       89608  x   76  s_waitcnt vmcnt(0) lgkmcnt(0)   <- s_cmp_eq_u64 s[12:13], 0   <- s_cselect_b64 s[0:1], -1, 0
+    3.6%       87940  x  228  s_barrier   <- OTHER_MSG   <- s_waitcnt lgkmcnt(0)
+    3.6%       86764  x   76  s_waitcnt vmcnt(0)   <- s_cmp_eq_u64 s[24:25], 0   <- s_cselect_b64 s[16:17], -1, 0
+    3.5%       85224  x   76  s_waitcnt vmcnt(0)   <- v_lshlrev_b32_e32 v6, 6, v0   <- s_andn2_b64 vcc, exec, s[16:17]
+    2.9%       70176  x   76  s_waitcnt vmcnt(0)   <- s_andn2_b64 vcc, exec, s[16:17]   <- v_add_lshl_u32 v7, v3, v6, 1
+    2.7%       65204  x   76  s_waitcnt vmcnt(0)   <- s_andn2_b64 vcc, exec, s[16:17]   <- v_add_lshl_u32 v5, v3, v7, 1
+    2.6%       63036  x   76  s_waitcnt vmcnt(7)   <- v_add_lshl_u32 v21, v21, v25, 1   <- v_add_lshl_u32 v28, v27, v26, 1
+
+wait charged to the drained memory instructions (top 12):
+   25.9%        633360  x   608  [vm] global_load_dwordx2 v[1:2], v[1:2], off
+    2.6%         63036  x    76  [vm] global_load_dwordx2 v[5:6], v[5:6], off
+    2.2%         54596  x    76  [vm] global_load_dwordx2 v[50:51], v[4:5], off
+    2.2%         54596  x    76  [lgkm] ds_read2_b64 v[4:7], v2 offset1:4
+    2.2%         54364  x    76  [vm] global_load_dwordx2 v[62:63], v[4:5], off offset:128
+    2.2%         53240  x   171  [vm] global_load_ushort v39, v[39:40], off
+    2.2%         53240  x   171  [vm] global_load_ushort v38, v[40:41], off
+    1.8%         44804  x   152  [vm] global_store_dwordx4 v[9:10], v[1:4], off
+    1.8%         44804  x   152  [vm] global_store_dwordx4 v[1:2], v[5:8], off
+    1.1%         27546  x    95  [vm] global_load_ushort v41, v[41:42], off
+    1.1%         27546  x    95  [vm] global_load_ushort v40, v[42:43], off
+    1.1%         25694  x    76  [vm] global_load_ushort v40, v[40:41], off
+
+issue delay outside waits, by type: {'FLAT_RD': '9.5%', 'OTHER_MSG': '4.2%', 'LDS': '2.5%', 'FLAT_WR': '2.0%', 'VALU_32': '1.8%', 'VALU_64': '1.4%', 'SALU_32': '1.4%', 'MMOP_FP16': '0.3%'}
+issued instructions by type: {'VALU_32': 28462, 'VALU_64': 19912, 'LDS': 9728, 'IMMED': 7600, 'SALU_32': 7524, 'MMOP_FP16': 4864, 'FLAT_RD': 2584, 'FLAT_WR': 1216, 'NEXT': 1064, 'JUMP': 1064, 'OTHER_MSG': 456, 'SMEM_RD': 380, 'SALU_64': 228}
