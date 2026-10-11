@@ -1,7 +1,9 @@
 """Per-part ablation of g2_wu phase 1 ("fill1") on the CURRENT baseline (rule R19); timing only --
 outputs are wrong on purpose.     python3 wu_ablate.py <tree root> <variant>
 variants: noKgB (scattered kgB emit), noKgA (scattered KgA emit), noKbT (kbT LDS staging),
-          noG (the fp32 g loads -> constants), noK (the k loads -> constants)"""
+          noG (the fp32 g loads -> constants), noK (the k loads -> constants),
+          noWb (W's B-form copy: LDS tile round + emit), noKn (Kn tile round + emit),
+          noQn (Qn emit), noUn (Un emit)  -- round 10"""
 import sys
 from pathlib import Path
 
@@ -38,6 +40,16 @@ elif var == "noK":
                                                  : v4bh{0, 0, 0, 0};"""
     j = t.index(old, i)
     t = t[:j] + "            const v4bh kv = v4bh{(short)j, (short)vq, 1, (short)so};   // ABLATION" + t[j + len(old):]
+elif var == "noWb":
+    sub("        mmac_phase(p.Wn, p.Wb, nullptr, 2);", "        mmac_phase(p.Wn, nullptr, nullptr, 2);   // ABLATION")
+elif var == "noKn":
+    sub("            if (p.Kn != nullptr) {                          // null: keep-state backward",
+        "            if (p.Kn != nullptr && p.stop == 99) {          // ABLATION")
+elif var == "noQn":
+    sub("            wu_emit16(p.Qn + nblk, tile, tid);              // kra L16: linear 16B pair emit",
+        "            if (p.stop == 99) wu_emit16(p.Qn + nblk, tile, tid);   // ABLATION")
+elif var == "noUn":
+    sub("        mmac_phase(nullptr, nullptr, p.Un, 5);", "        mmac_phase(nullptr, nullptr, p.stop == 99 ? p.Un : nullptr, 5);   // ABLATION")
 else:
     raise SystemExit(f"unknown variant {var}")
 P.write_text(t)

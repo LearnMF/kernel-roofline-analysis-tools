@@ -48,6 +48,15 @@ sys.argv = ["x", str(a.T), str(a.H), a.arm, "1"]
 src = open(f"{a.tree}/tests/megatron/kda_op_bench_tp.py").read().split("res, live = {}, []")[0]
 g = {}
 exec(compile(src, "kda_op_bench_tp", "exec"), g)
+# KRA_VARLEN: packed variable-length batch (the varlen kernel instances; flash-train and packed-
+# document training run them).  "auto" = chunk-misaligned documents [0, 1000, 3037, 5000, T];
+# otherwise a comma list of boundaries ending at T.
+_vl = os.environ.get("KRA_VARLEN")
+if _vl:
+    _b = [0, 1000, 3037, 5000, a.T] if _vl == "auto" else [int(x) for x in _vl.split(",")]
+    assert _b[0] == 0 and _b[-1] == a.T and all(x < y for x, y in zip(_b, _b[1:])), _b
+    g["CU"] = torch.tensor(_b, dtype=torch.int32, device="cuda")
+    g["CU_CPU"] = g["CU"].cpu()
 if a.keep_state:
     assert a.arm == "g2", "--keep-state is the G2 route's checkpoint mode"
     from torch.utils.checkpoint import checkpoint
