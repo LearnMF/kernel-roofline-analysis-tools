@@ -35,6 +35,15 @@ a = p.parse_args()
 
 # kda_op_bench_tp.py defines the inputs and fwd()/bwd() closures for each arm before
 # its own timing loop starts at "res, live = {}, []".
+# Placement jitter (rule R20): a per-process dummy allocation shifts every later tensor's
+# address, so the A and B sides of an A/B sample the SAME distribution of HBM placements
+# instead of one fixed placement per tree (a removed/added allocation otherwise moves all
+# other tensors and biases bandwidth-bound kernels by a few %).  KRA_JITTER_SEED=<round>.
+import os  # noqa: E402
+_jit = os.environ.get("KRA_JITTER_SEED")
+if _jit:
+    _jit_mb = (int(_jit) * 7919 + 13) % 29 * 8 + 1
+    _jitter_buf = torch.empty(_jit_mb * 2**20, dtype=torch.uint8, device="cuda")
 sys.argv = ["x", str(a.T), str(a.H), a.arm, "1"]
 src = open(f"{a.tree}/tests/megatron/kda_op_bench_tp.py").read().split("res, live = {}, []")[0]
 g = {}
