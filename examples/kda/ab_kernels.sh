@@ -12,6 +12,7 @@ KRA=${KRA:-$(cd "$(dirname "$0")/../.." && pwd)}
 KS=${KEEP_STATE:+--keep-state}
 PP_PRE=${PP_PRE:-/opt/kda_env}; PP_POST=${PP_POST:-/opt/kda_env/takeover}   # bw52: xplat/bwenv, stage_g2_bw7/takeover
 mkdir -p "$OUT"; tag="${T}_${H}${KS:+_ks}"
+rm -f "$OUT"/[AB]_${tag}_r*.*   # stale traces of an interrupted run make hipprof skip the export
 trace() {  # tree label round
   KRA_JITTER_SEED=${JITTER:+$3} PYTHONPATH=$PP_PRE:$1:$PP_POST hipprof --hip-trace --output-type 0 \
     -o "$OUT/${2}_${tag}_r$3" python3 "$KRA/examples/kda/kda_iter.py" --tree "$1" --T "$T" --H "$H" \

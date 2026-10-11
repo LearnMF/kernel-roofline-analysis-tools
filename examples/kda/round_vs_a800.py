@@ -1,4 +1,4 @@
-"""Per-round A800 comparison table (T = 8K/16K/32K x TP = 1/2/4/8): ours (BW, this round) vs the
+"""Per-round A800 comparison table (T = 8K/16K/32K/64K x TP = 1/2/4/8): ours (BW, this round) vs the
 A800 FLA 0.5.2 measurement (default and fastest = disable_recompute), ratios "A800 time / ours"
 (> 1 = ours faster), wall and device views, plus the change vs a previous round if given.
 
@@ -18,7 +18,7 @@ ap.add_argument("--prev-dev", default=None)
 ap.add_argument("--title", default="this round")
 ap.add_argument("--md", default=None)
 a = ap.parse_args()
-SHAPES = [(T, H) for T in (8192, 16384, 32768) for H in (96, 48, 24, 12)]
+SHAPES = [(T, H) for T in (8192, 16384, 32768, 65536) for H in (96, 48, 24, 12)]
 TP = {96: 1, 48: 2, 24: 4, 12: 8}
 
 
@@ -39,17 +39,23 @@ def load_dev(p):
     return {(int(k.split("x")[0]), int(k.split("x")[1])): v["g2"]["device_fb_ms"] for k, v in d.items() if "g2" in v}
 
 
+def load_spread(p):
+    d = json.load(open(p))
+    return {(int(k.split("x")[0]), int(k.split("x")[1])): v["g2"]["spread"] for k, v in d.items() if "g2" in v}
+
+
 nv = load_wall(a.nv)
 w = load_wall(a.wall)
 dv = load_dev(a.dev)
 pw = load_wall(a.prev_wall) if a.prev_wall else {}
 pd = load_dev(a.prev_dev) if a.prev_dev else {}
+sp = load_spread(a.dev)
 L = [f"## {a.title}: ours (BW) vs A800 FLA 0.5.2 -- ratio = A800 time / ours (> 1 = ours faster)", ""]
 for view in ("device", "wall"):
     L += [f"### {view} time (ms, one fwd+bwd)", "",
           "| T | TP (heads/card) | A800 FLA default | A800 FLA fastest | ours | A800 default / ours | A800 fastest / ours |"
-          + (" ours prev -> now |" if (pd if view == 'device' else pw) else ""),
-          "|---|---|---:|---:|---:|---:|---:|" + ("---:|" if (pd if view == 'device' else pw) else "")]
+          + (" ours prev -> now |" if (pd if view == 'device' else pw) else "") + (" spread |" if view == "device" else ""),
+          "|---|---|---:|---:|---:|---:|---:|" + ("---:|" if (pd if view == 'device' else pw) else "") + ("---:|" if view == "device" else "")]
     wins_d = wins_f = 0
     for T, H in SHAPES:
         if view == "device":
@@ -67,8 +73,10 @@ for view in ("device", "wall"):
         row = f"| {T // 1024}K | TP{TP[H]} ({H}) | {ad:.2f} | {af:.2f} | {ours:.2f} | {b(rd)} | {b(rf)} |"
         if prev:
             row += f" {prev:.2f} -> {ours:.2f} ({prev / ours:.3f}x) |"
+        if view == "device" and (T, H) in sp:
+            row += f" {100 * sp[(T, H)]:.1f}% |"
         L.append(row)
-    L += ["", f"ours faster than A800 FLA default on {wins_d}/12 shapes, than the fastest config on {wins_f}/12.", ""]
+    L += ["", f"ours faster than A800 FLA default on {wins_d}/{len(SHAPES)} shapes, than the fastest config on {wins_f}/{len(SHAPES)}.", ""]
 out = "\n".join(L)
 print(out)
 if a.md:
