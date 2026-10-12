@@ -1,0 +1,72 @@
+== 8192 12 x
+Current Python version 3.10 is below the recommended 3.11 version. It is recommended to upgrade to Python 3.11 or higher for the best experience.
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+  o        BITWISE
+  dq       BITWISE
+  dk       BITWISE
+  dv       BITWISE
+  dg       max|d| 6.104e-05  max|ref| 1.631e-01  rel 3.74e-04  mean|d|/mean|ref| 6.16e-07  diff 126761/12582912
+  dbeta    BITWISE
+  dA_log   max|d| 6.557e-07  max|ref| 8.668e-01  rel 7.56e-07  mean|d|/mean|ref| 7.34e-07  diff 12/12
+  ddt_bias max|d| 9.766e-04  max|ref| 1.227e+00  rel 7.96e-04  mean|d|/mean|ref| 1.72e-05  diff 18/1536
+== 8192 12 extreme
+Current Python version 3.10 is below the recommended 3.11 version. It is recommended to upgrade to Python 3.11 or higher for the best experience.
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+  o        BITWISE
+  dq       BITWISE
+  dk       BITWISE
+  dv       BITWISE
+  dg       BITWISE
+  dbeta    BITWISE
+  dA_log   BITWISE
+  ddt_bias BITWISE
+== 16384 48 x
+Current Python version 3.10 is below the recommended 3.11 version. It is recommended to upgrade to Python 3.11 or higher for the best experience.
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+  o        BITWISE
+  dq       BITWISE
+  dk       BITWISE
+  dv       BITWISE
+  dg       max|d| 1.221e-04  max|ref| 2.119e-01  rel 5.76e-04  mean|d|/mean|ref| 6.14e-07  diff 1051685/100663296
+  dbeta    BITWISE
+  dA_log   max|d| 4.768e-06  max|ref| 2.315e+00  rel 2.06e-06  mean|d|/mean|ref| 9.25e-07  diff 47/48
+  ddt_bias max|d| 3.906e-03  max|ref| 1.750e+00  rel 2.23e-03  mean|d|/mean|ref| 1.46e-05  diff 56/6144
+== 8192 12 cu
+Current Python version 3.10 is below the recommended 3.11 version. It is recommended to upgrade to Python 3.11 or higher for the best experience.
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+  o        BITWISE
+  dq       BITWISE
+  dk       BITWISE
+  dv       BITWISE
+  dg       max|d| 1.221e-04  max|ref| 1.631e-01  rel 7.49e-04  mean|d|/mean|ref| 6.43e-07  diff 131965/12582912
+  dbeta    BITWISE
+  dA_log   max|d| 7.451e-07  max|ref| 8.685e-01  rel 8.58e-07  mean|d|/mean|ref| 6.29e-07  diff 11/12
+  ddt_bias max|d| 4.883e-04  max|ref| 1.227e+00  rel 3.98e-04  mean|d|/mean|ref| 9.73e-06  diff 14/1536
