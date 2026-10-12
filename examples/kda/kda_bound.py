@@ -112,6 +112,16 @@ def lstep_floor_bw():
     return max(lat, issue) / 1.5e9
 
 
+# measured on BW1000 (bound_microbench.hip, the v8o4 dependency structure with no global memory,
+# one CTA per CU): forward step (state + o) 1.23 us, state-only step (recompute / dh) 1.00 us.
+# NV: no microbenchmark yet -- FLA's measured kernel per step (H20 fwd_h 1.72 us incl. loads) is an
+# upper estimate, the same-structure floor is taken as ~0.8x the BW floor (range reported).
+LSTEP = {"BW1000": (1.23e-6, 1.00e-6), "H20": (0.9e-6, 0.8e-6), "A800": (1.0e-6, 0.85e-6)}
+# attainable MMAC for KDA's tile patterns (bound_microbench k_mmac_tile, >= 2 waves / SIMD):
+# one operand register-resident 436-452 TF (0.92-0.95 of peak), both from LDS 231-237 TF (0.49)
+MMAC_EFF = {"BW1000": 0.92, "H20": 0.9, "A800": 0.9}
+
+
 def bounds(mname, T, H, policy="P1", lstep=None):
     m = MACHINES[mname]
     mac, valu, sfu, rb, wb, passes = inventory(policy)
@@ -121,18 +131,19 @@ def bounds(mname, T, H, policy="P1", lstep=None):
     tr = sum(sfu.values()) * N
     rbytes, wbytes = sum(rb.values()) * N, sum(wb.values()) * N
     t_mem = rbytes / m["hbm_r"] + wbytes / m["hbm_w"]
-    t_mmac = flops / m["mmac"]
+    t_mmac = flops / (m["mmac"] * MMAC_EFF[mname])
     # half of the elementwise lane-ops are packable fp32 pairs (fma/mul/add) where the ISA has packed math
     t_valu = (lane * (0.5 / m["valu_pk"] + 0.5)) / m["valu_lane"] + tr / m["sfu"]
     nt = T // C
-    if lstep is None:
-        lstep = lstep_floor_bw() if mname == "BW1000" else 0.6e-6
-    t_chain = passes * nt * lstep
+    lf, lb = LSTEP[mname]
+    if lstep is not None:
+        lf = lb = lstep
+    t_chain = nt * (lf + (passes - 1) * lb)      # forward pass (with o) + state-only passes
     terms = dict(mem=t_mem, mmac=t_mmac, valu=t_valu, chain=t_chain)
     thr = max(t_mem, t_mmac, t_valu)
     return dict(terms=terms, bound=max(thr, t_chain), bracket=thr + t_chain,
                 binding=max(terms, key=terms.get), flops=flops, bytes=rbytes + wbytes,
-                lane=lane, sfu=tr, nt=nt, lstep=lstep)
+                lane=lane, sfu=tr, nt=nt, lstep=lf)
 
 
 MEASURED = {   # device time (ms) of fwd+bwd, same 16-shape protocol (round tracker / op16)
@@ -160,7 +171,8 @@ def main():
     print(f"| HBM write B | {wb['fwd']:.0f} | {wb['bwd']:.0f} | | {sum(wb.values()):.0f} |")
     print(f"| sequential passes | | | | {passes} |")
     ls = a.lstep_us * 1e-6 if a.lstep_us else None
-    print(f"\nBW recurrence step floor (analytic): {lstep_floor_bw()*1e6:.2f} us"
+    print(f"\nrecurrence step (us, fwd / state-only): BW {LSTEP['BW1000'][0]*1e6:.2f} / {LSTEP['BW1000'][1]*1e6:.2f} measured; "
+          f"analytic floor was {lstep_floor_bw()*1e6:.2f} (a model omission); NV estimates H20 {LSTEP['H20'][0]*1e6:.2f}, A800 {LSTEP['A800'][0]*1e6:.2f}"
           + (f"; using {a.lstep_us} us" if ls else "") + "\n")
     print("## Bounds (ms) and measured\n")
     print("| T | TP | machine | mem | mmac | valu+sfu | chain | **bound (overlap)** | bracket (+chain) | binding | measured | measured / bound |")
