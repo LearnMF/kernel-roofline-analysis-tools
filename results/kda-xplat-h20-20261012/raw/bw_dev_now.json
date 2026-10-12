@@ -1,0 +1,114 @@
+{
+ "16384x12": {
+  "g2": {
+   "device_fb_ms": 6.746,
+   "procs": 5,
+   "spread": 0.0042
+  }
+ },
+ "16384x24": {
+  "g2": {
+   "device_fb_ms": 13.087,
+   "procs": 5,
+   "spread": 0.0068
+  }
+ },
+ "16384x48": {
+  "g2": {
+   "device_fb_ms": 26.428,
+   "procs": 5,
+   "spread": 0.0023
+  }
+ },
+ "16384x96": {
+  "g2": {
+   "device_fb_ms": 53.971,
+   "procs": 5,
+   "spread": 0.0216
+  }
+ },
+ "32768x12": {
+  "g2": {
+   "device_fb_ms": 12.943,
+   "procs": 5,
+   "spread": 0.0056
+  }
+ },
+ "32768x24": {
+  "g2": {
+   "device_fb_ms": 25.63,
+   "procs": 5,
+   "spread": 0.0015
+  }
+ },
+ "32768x48": {
+  "g2": {
+   "device_fb_ms": 50.134,
+   "procs": 5,
+   "spread": 0.0195
+  }
+ },
+ "32768x96": {
+  "g2": {
+   "device_fb_ms": 102.994,
+   "procs": 5,
+   "spread": 0.0244
+  }
+ },
+ "65536x12": {
+  "g2": {
+   "device_fb_ms": 24.375,
+   "procs": 5,
+   "spread": 0.0061
+  }
+ },
+ "65536x24": {
+  "g2": {
+   "device_fb_ms": 48.364,
+   "procs": 5,
+   "spread": 0.0285
+  }
+ },
+ "65536x48": {
+  "g2": {
+   "device_fb_ms": 98.372,
+   "procs": 5,
+   "spread": 0.0185
+  }
+ },
+ "65536x96": {
+  "g2": {
+   "device_fb_ms": 218.022,
+   "procs": 5,
+   "spread": 0.0114
+  }
+ },
+ "8192x12": {
+  "g2": {
+   "device_fb_ms": 3.584,
+   "procs": 5,
+   "spread": 0.0073
+  }
+ },
+ "8192x24": {
+  "g2": {
+   "device_fb_ms": 6.776,
+   "procs": 5,
+   "spread": 0.0022
+  }
+ },
+ "8192x48": {
+  "g2": {
+   "device_fb_ms": 13.408,
+   "procs": 5,
+   "spread": 0.0039
+  }
+ },
+ "8192x96": {
+  "g2": {
+   "device_fb_ms": 26.77,
+   "procs": 5,
+   "spread": 0.0073
+  }
+ }
+}
