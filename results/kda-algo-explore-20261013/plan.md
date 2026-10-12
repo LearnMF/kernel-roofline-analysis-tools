@@ -42,3 +42,34 @@
 1. **F2 的微基准**：在 gfx936 上测 ds_read 转置分片读取（每条指令的周期数、bank 冲突），据此判断“消费方转置”是否划算，再选第一个张量（Wb 或 dOT）做原型。
 2. **F8 的推导**：写出“子块递推”形式下前向、反向的完整计算图和中间张量清单，用模型估算，再决定是否做数值原型（先用 PyTorch 参考实现对 FP64 验证）。
 3. F3a、F4 作为小项穿插进行。
+
+---
+
+## 5. 公开资料调研（2026-10-13）
+
+| 项目 | 平台 | 覆盖 | 关键设计 | 能否迁移到 gfx936 |
+|---|---|---|---|---|
+| [MoonshotAI/FlashKDA](https://github.com/moonshotai/FlashKDA)（含 v1 设计说明） | SM90+，CUTLASS | **只有前向**（推理），FLA 在 inference_mode 下自动调用 | **chunk 取 16**：lower_bound=−5 时，16 步内 exp(cumsum g) 在 bf16 范围内，不需要块内重缩放；16×16 求逆直接前代。**拆成两个 kernel**：K1 按 token 并行做门控、l2n、衰减、L/Mqk 和求逆；K2 按 head 并行做递推和输出。早期试过单一融合 kernel，因为递推并行度低，反而慢 15% 以上。状态在片上存 bf16，更新用 fp32 FMA。sigmoid 用 tanh.approx，exp 用 ex2.approx。用 MOVM_T 在寄存器堆内转置 | 拆两个 kernel 的结论和我们一致（R：前向融合不划算）。chunk 16 只适合前向：训练要按 chunk 落盘 h/dh，chunk 16 时每 token 的状态字节变成 4 倍，所以不适合我们的训练反向。近似 exp/sigmoid 属于 B 类数值改动。gfx936 没有 MOVM_T |
+| [NVlabs/kda](https://github.com/NVlabs/kda)（Kernel Design Agents） | B200/B300 | 前向三套（CuTe、TIRx、PTX，比 FlashKDA 快 2.5–3.6 倍）；**反向一套（TIRx 持久化 megakernel，B200）** | 前向：host 调度器把（序列，head）的递推链打包到各 SM 上，长序列在 kernel 内以 FP32 交接状态，切给多个 CTA。反向：输入是 FLA chunk_kda_bwd 的预备张量，一次 launch 完成全部反向，按“152 个 CTA / 768 条链”的静态计划调度。累积衰减表始终保持 FP32，精度明显好于 FlashKDA | 依赖 Blackwell 的大容量片上存储（228 KB SMEM + 256 KB TMEM / SM）和 TMA，无法直接移植。可借鉴的是**持久化静态调度**：递推链和按 chunk 并行的工作放在同一个 kernel 里按 CU 分配角色，避开 P-41 的 CU 共享争用和各 kernel 尾部的 wave 量化，见 F9 |
+| [sgl-project/cuLA](https://github.com/sgl-project/cuLA) | SM90 / SM10X，手写 CUDA | KDA 前向：Hopper 融合版平均比 FLA v0.4.2 快 1.52 倍，Blackwell 模块化版平均快 1.45 倍；**反向优化仍在路线图上** | 路线图包括：用多项式近似 exp（同 FA4）缓解 exp 瓶颈、加大 chunk、SM10X 上用 2-CTA | 多项式 exp：gfx936 上 v_exp_f32 是四分之一速率，按 packed fma 估算，每个元素约 3 个发射槽、原来是 4 个，收益小且属于 B 类 |
+| [Int21-AI/KDA-H100 / B200](https://github.com/Int21-AI/KDA-H100) | H100 / B200，CUDA + PTX | **只有前向** | TMA、mbarrier、ldmatrix、cp.async，近似 exp/rcp/rsqrt | 硬件特性不同，无法迁移 |
+| FLA 自身（0.5.x） | Triton 为主 | 训练前向 + 反向 | 已有 `chunk_kda_bwd_kernel_wy_dqkg_fused`（相当于我们的 s4 两个 kernel 合一）、`inter_solve_fused`（块间 Akk + solve_tril 合并）、按 token 并行的块内 kernel。0.5.0 起支持多后端：KDA 有 **tilelang** 后端，推理时走 flash_kda | 我们在 H20 上测的基线是 FLA 0.5.2 的 Triton 路径，当时没有装 tilelang。**目标可能变动**：H20 装上 tilelang 后，FLA 默认路径可能更快，需要复测 |
+
+**结论**：
+- 公开的大幅加速几乎都是 Hopper/Blackwell 上的**前向或推理**，依靠大容量共享内存、TMA 和 warp specialization 获得。
+- 训练反向仍以 FLA 的多 kernel 结构为主；唯一的融合反向是 B200 上的 TIRx megakernel。
+- 没有现成的“算法级技巧”能直接改变 gfx936 上的结论。
+
+**新增候选 F9：持久化反向 megakernel（静态调度）**
+
+| 项 | 内容 |
+|---|---|
+| 做法 | 一次 launch 完成反向。每个 CU 一个常驻 CTA，按静态计划执行任务：递推链（fwd_h_bn、dhu）固定放在一部分 CU 上，按 chunk 并行的任务（wu、dav、s4a、s4b、收尾）由所有 CU 领取，依靠显存里的标志位处理依赖 |
+| 去掉什么 | 各 kernel 尾部的 wave 量化（P-49 已证明这在 TP2 下显著，例如 64K/48 的 L2 颠簸）、kernel 启动间隙，以及“递推期间其他 CU 空闲”的时间 |
+| 代价 | 工程量大，依赖标志位同步；必须避免 P-41 那种递推与并行任务共用 CU 的争用 |
+| 估算 | 收益上界约等于“递推链 + 尾部浪费”：TP8 约 10–20%，TP2 约 3–6%，需要先做调度模拟 |
+
+**F8 的容量复核**：
+- 块内改成 16×16 分块求解后，与 T 相关的矩阵变小。
+- 但 s4a 与 s4b 融合时，LDS 的大头是 dwT（128×64 bf16，16 KB）、块内表格（13 KB）和 h/dh 暂存，这三项都不随 T 的形式缩小。
+- 所以 **F8 解决不了 F6 的 LDS 容量问题**，收益只剩 T 反向部分的 VALU 和延迟，约 2–4%。**降级**。
