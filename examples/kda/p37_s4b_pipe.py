@@ -41,8 +41,17 @@ __device__ __forceinline__ void s4bp_ld(g2_v4i srd, unsigned voff, const void* l
     asm volatile("s_mov_b32 m0, %0\n\tbuffer_load_dwordx4 %1, %2, 0 offen offset:0 lds"
                  :: "s"(m0), "v"(voff), "s"(srd) : "memory", "m0");
 }
-__device__ __forceinline__ void s4bp_st(g2_v4i srd, unsigned voff, f4 v) {
-    asm volatile("buffer_store_dwordx4 %0, %1, %2, 0 offen offset:0" :: "v"(v), "v"(voff), "s"(srd) : "memory");
+// The three fp32 stores of a kt in ONE asm statement, closed by s_waitcnt expcnt(0): a 128-bit
+// buffer store reads its data VGPRs asynchronously (tracked by EXP_CNT on gfx9) and the compiler
+// only guards that hazard for its own stores -- with separate asm stores it reused oq's registers
+// before the store had read them (P-37b: dq corrupted, dk/dg intact).
+__device__ __forceinline__ void s4bp_st3(g2_v4i rdq, g2_v4i rdk, g2_v4i rdg, unsigned voff,
+                                         f4 a, f4 b, f4 c) {
+    asm volatile("buffer_store_dwordx4 %0, %3, %4, 0 offen offset:0\n\t"
+                 "buffer_store_dwordx4 %1, %3, %5, 0 offen offset:0\n\t"
+                 "buffer_store_dwordx4 %2, %3, %6, 0 offen offset:0\n\t"
+                 "s_waitcnt expcnt(0)"
+                 :: "v"(a), "v"(b), "v"(c), "v"(voff), "s"(rdq), "s"(rdk), "s"(rdg) : "memory");
 }
 // vmcnt waits go through the builtin (NOT inline asm) so the compiler's waitcnt pass sees them:
 // with an asm wait it still believed the prologue loads were outstanding and re-inserted
@@ -338,9 +347,7 @@ __device__ __forceinline__ void s4bp_tail(const WyS4BParams& p, S4BPSmem& sm, co
         }
         dbacc += (dbp[0] + dbp[1]) + (dbp[2] + dbp[3]);
         const unsigned so = rok ? (unsigned)((ro + 16 * kt) * 4) : kS4bpOOB;
-        s4bp_st(io.rdq, so, oq);
-        s4bp_st(io.rdk, so, ok);
-        s4bp_st(io.rdg, so, og);
+        s4bp_st3(io.rdq, io.rdk, io.rdg, so, oq, ok, og);
         // stage kt+1 must be complete before the barrier publishes it.  Ops this wave issued after
         // stage kt+1's group: [stores kt-1 (3)] + [stage kt+2 (NA) if issued] + [stores kt (3)].
         if (kt == 0) s4bp_vmcnt<3 + NA>();

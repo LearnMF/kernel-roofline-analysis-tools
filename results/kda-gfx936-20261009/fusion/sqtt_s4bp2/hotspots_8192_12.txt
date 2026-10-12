@@ -1,0 +1,40 @@
+4 SE trace file(s), 308 complete waves; wave-cycles 22518948
+  issue             8161092   36.2%
+  waitcnt           5994796   26.6%
+  barrier           2662976   11.8%
+  issue_delay       5700084   25.3%
+
+wait sites (top 14): % of wave-cycles, cycles, count, site = wait <- prev <- prev2
+   11.8%     2662976  x 5544  s_barrier   <- OTHER_MSG   <- s_waitcnt lgkmcnt(0)
+    4.1%      922564  x  462  s_waitcnt vmcnt(1)   <- s_mov_b32 s44, 0   <- s_cbranch_execz 5
+    1.9%      427516  x   77  s_waitcnt vmcnt(0)   <- v_ashrrev_i32_e32 v2, 31, v1   <- s_add_u32 s22, s38, s0
+    1.5%      332072  x   77  s_waitcnt vmcnt(0)   <- v_ashrrev_i32_e32 v2, 31, v1   <- s_add_u32 s11, s38, s0
+    1.2%      269608  x  308  s_waitcnt vmcnt(3)   <- v_lshl_or_b32 v4, v22, 7, v19   <- v_lshl_or_b32 v3, v21, 7, v19
+    1.0%      215924  x  231  s_waitcnt vmcnt(1)   <- s_mov_b32 s38, 0   <- s_cbranch_execz 5
+    0.9%      194968  x  308  s_waitcnt vmcnt(0)   <- v_add_f32_e32 v0, v3, v4   <- s_waitcnt lgkmcnt(0)
+    0.5%      115740  x   77  s_waitcnt vmcnt(0)   <- s_mov_b32 s37, 0xffff0000   <- v_cmp_eq_u32_e64 s[8:9], 0, v58
+    0.5%      115356  x   77  s_waitcnt vmcnt(0)   <- s_mov_b32 s37, 0xffff0000   <- v_cmp_eq_u32_e64 s[8:9], 0, v54
+    0.5%      114724  x  462  s_waitcnt vmcnt(3)   <- s_cbranch_scc1 1   <- s_cmp_eq_u32 s17, 0
+    0.5%      114248  x   77  s_waitcnt vmcnt(0)   <- s_mov_b32 s37, 0xffff0000   <- v_cmp_eq_u32_e64 s[8:9], 0, v50
+    0.5%      104512  x   77  s_waitcnt vmcnt(0)   <- s_mov_b32 s20, 0xffff0000   <- v_mov_b32_e32 v65, s11
+    0.4%      100512  x  154  s_waitcnt vmcnt(1)   <- v_mov_b32_e32 v32, 0   <- s_mov_b32 s44, 0
+    0.3%       77752  x 2156  s_waitcnt lgkmcnt(0)   <- s_cbranch_execz 5   <- s_xor_b64 s[10:11], exec, s[10:11]
+
+wait charged to the drained memory instructions (top 14):
+    1.2%        269608  x   308  [vm] global_load_dwordx2 v[9:10], v[3:4], off
+    0.8%        189376  x    77  [vm] global_load_dword v3, v[3:4], off offset:64
+    0.5%        106361  x   462  [vm] buffer_load_dwordx4 v1, s[64:67], 0 offen lds
+    0.4%         95932  x   308  [vm] global_load_dword v89, v[17:18], off
+    0.4%         95932  x   308  [vm] global_load_dword v176, v[17:18], off
+    0.4%         94204  x    77  [vm] global_load_dword v7, v[7:8], off offset:128
+    0.4%         88912  x    77  [vm] global_load_dword v4, v[23:24], off offset:64
+    0.4%         87480  x  2156  [lgkm] ds_read_b64 v[163:164], v163
+    0.4%         85503  x   154  [vm] buffer_load_dwordx4 v1, s[52:55], 0 offen lds
+    0.3%         71748  x    77  [vm] global_load_dwordx2 v[54:55], v[49:50], off offset:512
+    0.3%         59776  x    77  [vm] global_load_dwordx2 v[50:51], v[45:46], off offset:512
+    0.2%         53181  x   231  [vm] buffer_load_dwordx4 v2, s[68:71], 0 offen lds
+    0.2%         53181  x   231  [vm] buffer_load_dwordx4 v3, s[56:59], 0 offen lds
+    0.2%         53181  x   231  [vm] buffer_load_dwordx4 v3, s[60:63], 0 offen lds
+
+issue delay outside waits, by type: {'LDS': '5.8%', 'FLAT_RD': '4.0%', 'VMEM_RD': '3.1%', 'VALU_32': '3.1%', 'VMEM_WR': '2.7%', 'VALU_64': '2.4%', 'SALU_32': '1.5%', 'MMOP_FP16': '0.7%'}
+issued instructions by type: {'VALU_32': 499114, 'VALU_64': 374374, 'LDS': 171248, 'IMMED': 118272, 'SALU_32': 116116, 'MMOP_FP16': 49280, 'MMOP_FP64_FP32': 49280, 'SALU_64': 21021, 'NEXT': 19789, 'FLAT_RD': 15169, 'VMEM_RD': 11165, 'VMEM_WR': 7469, 'OTHER_MSG': 5852, 'JUMP': 5082, 'SMEM_RD': 1848, 'FLAT_WR': 308}
