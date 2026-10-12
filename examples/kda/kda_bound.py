@@ -139,8 +139,14 @@ def bounds(mname, T, H, policy="P1", lstep=None):
     if lstep is not None:
         lf = lb = lstep
     t_chain = nt * (lf + (passes - 1) * lb)      # forward pass (with o) + state-only passes
-    terms = dict(mem=t_mem, mmac=t_mmac, valu=t_valu, chain=t_chain)
-    thr = max(t_mem, t_mmac, t_valu)
+    # VMEM issue (TA), ta_microbench.hip on BW: row-contiguous 16 B/lane loads 21 CU-cycles per 1 KB
+    # instruction (HBM working set), contiguous stores 56 per 1 KB; fragment patterns (16 rows x 32-64 B)
+    # cost 64-169 per instruction.  The irreducible bytes moved with the best patterns:
+    t_ta = 0.0
+    if mname == "BW1000":
+        t_ta = (rbytes / 1024 * 21 + wbytes / 1024 * 56) / (m["cus"] * m["clk"])
+    terms = dict(mem=t_mem, mmac=t_mmac, valu=t_valu, chain=t_chain, ta=t_ta)
+    thr = max(t_mem, t_mmac, t_valu, t_ta)
     return dict(terms=terms, bound=max(thr, t_chain), bracket=thr + t_chain,
                 binding=max(terms, key=terms.get), flops=flops, bytes=rbytes + wbytes,
                 lane=lane, sfu=tr, nt=nt, lstep=lf)
@@ -175,8 +181,8 @@ def main():
           f"analytic floor was {lstep_floor_bw()*1e6:.2f} (a model omission); NV estimates H20 {LSTEP['H20'][0]*1e6:.2f}, A800 {LSTEP['A800'][0]*1e6:.2f}"
           + (f"; using {a.lstep_us} us" if ls else "") + "\n")
     print("## Bounds (ms) and measured\n")
-    print("| T | TP | machine | mem | mmac | valu+sfu | chain | **bound (overlap)** | bracket (+chain) | binding | measured | measured / bound |")
-    print("|---|---|---|---:|---:|---:|---:|---:|---:|---|---:|---:|")
+    print("| T | TP | machine | mem | mmac | valu+sfu | chain | ta (best patterns) | **bound (overlap)** | bracket (+chain) | binding | measured | measured / bound |")
+    print("|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|---:|---:|")
     for T in (16384, 32768, 65536):
         for H in (48, 24, 12):
             for mn, key in (("BW1000", "ours"), ("H20", "FLA@H20"), ("A800", "FLA@A800")):
@@ -184,7 +190,7 @@ def main():
                 t = b["terms"]
                 meas = MEASURED[key][(T, H)]
                 print(f"| {T//1024}K | TP{96//H} | {mn} ({key}) | {t['mem']*1e3:.2f} | {t['mmac']*1e3:.2f} | {t['valu']*1e3:.2f} | "
-                      f"{t['chain']*1e3:.2f} | **{b['bound']*1e3:.2f}** | {b['bracket']*1e3:.2f} | {b['binding']} | {meas:.2f} | {meas/(b['bound']*1e3):.1f}x |")
+                      f"{t['chain']*1e3:.2f} | {t['ta']*1e3:.2f} | **{b['bound']*1e3:.2f}** | {b['bracket']*1e3:.2f} | {b['binding']} | {meas:.2f} | {meas/(b['bound']*1e3):.1f}x |")
 
 
 if __name__ == "__main__":

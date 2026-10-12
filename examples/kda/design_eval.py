@@ -39,9 +39,14 @@ K = {
     "bwd_tail":    dict(t=(708.6, 2749.9), b=3185, v=14325, kind="par"),
 }
 SHAPES = {(16384, 12): 0, (16384, 48): 1}
+# measured TA-busy time (us) per kernel = t x TA_TA_BUSY utilisation (PMC wl13); the TA saturates at
+# 0.91-0.93, so a kernel cannot run faster than ta / 0.92 without changing its VMEM instructions
+TA = {"fwd_prep_a": (258, 979), "fwd_prep_b": (302, 1336), "fwd_h_o": (299, 1281), "l2n_apply": (135, 581),
+      "head_gate": (53, 222), "wu": (282, 1215), "fwd_h_bn": (170, 1196), "dav": (187, 779),
+      "dhu": (351, 1494), "s4a": (301, 1770), "s4b": (924, 4322), "bwd_tail": (454, 1790)}
 
 
-def floor_us(k, T, H, kind=None, b=None, v=None):
+def floor_us(k, T, H, kind=None, b=None, v=None, ta=True):
     kind = kind or K[k]["kind"]
     b = K[k]["b"] if b is None else b
     v = K[k]["v"] if v is None else v
@@ -54,7 +59,10 @@ def floor_us(k, T, H, kind=None, b=None, v=None):
         lat_f, lat_s = STEP["lat"] if ctas <= 80 else STEP["thr"]
         step = (lat_f if kind == "rec_fwd" else lat_s) * 1.15
         t = max(t, (T // 64) * step)
-    return t * 1e6
+    t *= 1e6
+    if ta and k in TA and b == K[k]["b"] and v == K[k]["v"]:       # same VMEM instructions as today
+        t = max(t, TA[k][SHAPES[(T, H)]] / 0.92)
+    return t
 
 
 def main():
@@ -68,12 +76,14 @@ def main():
             f = floor_us(k, T, H)
             N_ = T * H
             tm = K[k]["b"] * N_ / (ETA_MEM * HBM); tv = K[k]["v"] * N_ / (ETA_VALU * VALU)
-            bind = "chain" if K[k]["kind"].startswith("rec") and f > max(tm, tv) * 1e6 + 1 else ("mem" if tm >= tv else "valu")
+            tav = TA[k][si] / 0.92
+            bind = ("TA" if tav >= f - 1 and tav > max(tm, tv) * 1e6 else
+                    "chain" if K[k]["kind"].startswith("rec") and f > max(tm, tv) * 1e6 + 1 else ("mem" if tm >= tv else "valu"))
             print(f"| {k} | {K[k]['t'][si]:.0f} | {f:.0f} | {K[k]['t'][si] / f:.2f} | {bind} |")
         # designs
         rec = ["fwd_h_o", "fwd_h_bn", "dhu"]
         removed_b4 = ["s4a", "s4b", "bwd_tail", "head_gate", "l2n_apply"]
-        t_R = sum(floor_us(k, T, H) for k in rec)
+        t_R = sum(floor_us(k, T, H, ta=False) for k in rec)
         t_rec_now = sum(K[k]["t"][si] for k in rec)
         b4_v = sum(K[k]["v"] for k in removed_b4) / 2
         t_B4 = floor_us("s4b", T, H, kind="par", b=3100 + 1030, v=b4_v)
