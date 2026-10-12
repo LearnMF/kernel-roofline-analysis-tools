@@ -12,6 +12,13 @@ import json
 import math
 import statistics as st
 
+
+def comb(n, k):   # math.comb needs Python 3.8; bw47's host python is older
+    r = 1
+    for j in range(1, k + 1):
+        r = r * (n - k + j) // j
+    return r
+
 ap = argparse.ArgumentParser()
 ap.add_argument("jsonl")
 ap.add_argument("--eps", type=float, default=0.01)
@@ -48,7 +55,7 @@ for n in names or []:
     xs = ratio[n]
     gm = math.exp(sum(math.log(x) for x in xs) / len(xs))
     N, k = len(xs), worse[n]
-    p_one = sum(math.comb(N, i) for i in range(k, N + 1)) / 2 ** N   # P(>= k worse | no difference)
+    p_one = sum(comb(N, i) for i in range(k, N + 1)) / 2 ** N   # P(>= k worse | no difference)
     good = gm <= 1 + a.eps and p_one >= 0.05
     ok &= good
     print(f"   {n:9s} geo-mean {gm:.4f}  range [{min(xs):.3f},{max(xs):.3f}]  worse {k}/{N}  one-sided p {p_one:.3f}  {'ok' if good else 'FAIL'}")
