@@ -1,0 +1,63 @@
+trace /tmp/fuse/optrace_r11_8192_96.json  meta {'T': 8192, 'H': 96, 'arm': 'g2', 'tree': '/public/home/tanbo/g2_opt'}
+launcher interface traffic total         17682.3 MB
+  external inputs, first read (min)        1016.1 MB   (all reads of them: 2441.2 MB)
+  operator outputs written (min)           1009.8 MB
+  intermediates written                    6357.5 MB   (31 tensors)
+  intermediates read                       7873.8 MB
+  => irreducible (fully fused) traffic     2025.9 MB ; current / irreducible = 8.73x
+  intensity: current   24.1 FLOP/B ; fully fused  210.1 FLOP/B
+
+intermediate tensors by round-trip bytes (write + all reads):
+    1208.0 MB  w  402.7     head_gate -> wu,wy_s4_split                           float32   [1, 8192, 96, 128]
+     805.3 MB  w  201.3     l2n_apply -> wu,wy_s4_split,bwd_tail                  bfloat16  [1, 8192, 96, 128]
+     805.3 MB  w  201.3     l2n_apply -> wu,wy_s4_split,bwd_tail                  bfloat16  [1, 8192, 96, 128]
+     805.3 MB  w  402.7      fwd_h_bn -> wy_s4_split                              bfloat16  [1, 128, 96, 8, 8, 4, 16, 4]
+     805.3 MB  w  402.7        dhu_bn -> wy_s4_split                              bfloat16  [1, 128, 96, 8, 8, 4, 16, 4]
+     805.3 MB  w  402.7   wy_s4_split -> bwd_tail                                 float32   [1, 8192, 96, 128]
+     805.3 MB  w  402.7   wy_s4_split -> bwd_tail                                 float32   [1, 8192, 96, 128]
+     805.3 MB  w  402.7   wy_s4_split -> bwd_tail                                 float32   [1, 8192, 96, 128]
+     604.0 MB  w  201.3      fwd_h_bn -> dav,wy_s4_split                          bfloat16  [1, 96, 128, 4, 8, 4, 16, 4]
+     402.7 MB  w  201.3      fwd_prep -> fwd_h_o                                  bfloat16  [1, 96, 128, 4, 8, 4, 16, 4]
+     402.7 MB  w  201.3      fwd_prep -> fwd_h_o                                  bfloat16  [1, 96, 128, 8, 4, 4, 16, 4]
+     402.7 MB  w  201.3      fwd_prep -> fwd_h_o                                  bfloat16  [1, 96, 128, 4, 8, 4, 16, 4]
+     402.7 MB  w  201.3      fwd_prep -> fwd_h_o                                  bfloat16  [1, 96, 128, 4, 8, 4, 16, 4]
+     402.7 MB  w  201.3            wu -> fwd_h_bn                                 bfloat16  [1, 96, 128, 4, 8, 4, 16, 4]
+     402.7 MB  w  201.3            wu -> dhu_bn                                   bfloat16  [1, 96, 128, 8, 4, 4, 16, 4]
+     402.7 MB  w  201.3            wu -> fwd_h_bn                                 bfloat16  [1, 96, 128, 4, 8, 4, 16, 4]
+     402.7 MB  w  201.3            wu -> dhu_bn                                   bfloat16  [1, 96, 128, 4, 8, 4, 16, 4]
+     402.7 MB  w  201.3            wu -> fwd_h_bn                                 bfloat16  [1, 96, 128, 8, 4, 4, 16, 4]
+     402.7 MB  w  201.3            wu -> dhu_bn                                   bfloat16  [1, 96, 128, 8, 4, 4, 16, 4]
+     402.7 MB  w  201.3            wu -> wy_s4_split                              bfloat16  [1, 128, 96, 4, 8, 4, 16, 4]
+     402.7 MB  w  201.3           dav -> wy_s4_split                              float32   [1, 8192, 96, 64]
+     402.7 MB  w  201.3           dav -> dhu_bn                                   bfloat16  [1, 96, 128, 4, 8, 4, 16, 4]
+     402.7 MB  w  201.3           dav -> dhu_bn                                   bfloat16  [1, 96, 128, 8, 4, 4, 16, 4]
+     402.7 MB  w  201.3        dhu_bn -> wy_s4_split                              bfloat16  [1, 128, 96, 4, 8, 4, 16, 4]
+     302.0 MB  w  100.7      fwd_prep -> wu,wy_s4_split                           bfloat16  [1, 8192, 96, 64]
+     201.3 MB  w  100.7      fwd_prep -> fwd_h_o                                  bfloat16  [1, 96, 128, 4, 4, 4, 16, 4]
+     201.3 MB  w  100.7      fwd_prep -> dav                                      bfloat16  [1, 8192, 96, 64]
+      12.6 MB  w    6.3      fwd_prep -> fwd_h_o                                  float32   [1, 96, 128, 8, 4, 4]
+       9.4 MB  w    3.1      fwd_prep -> l2n_apply,bwd_tail                       float32   [1, 8192, 96]
+       9.4 MB  w    3.1      fwd_prep -> l2n_apply,bwd_tail                       float32   [1, 8192, 96]
+       6.3 MB  w    3.1   wy_s4_split -> bwd_tail                                 float32   [1, 8192, 96]
+
+external inputs (first read):
+     201.3 MB  read by 2x [fwd_prep,l2n_apply]  bfloat16 [1, 8192, 96, 128]
+     201.3 MB  read by 2x [fwd_prep,l2n_apply]  bfloat16 [1, 8192, 96, 128]
+     201.3 MB  read by 3x [fwd_prep,wu,wy_s4_split]  bfloat16 [1, 8192, 96, 128]
+     201.3 MB  read by 3x [bwd_tail,fwd_prep,head_gate]  bfloat16 [1, 8192, 96, 128]
+       0.0 MB  read by 3x [bwd_tail,fwd_prep,head_gate]  float32 [96]
+       0.0 MB  read by 3x [bwd_tail,fwd_prep,head_gate]  float32 [12288]
+       3.1 MB  read by 4x [bwd_tail,fwd_prep,wu,wy_s4_split]  float32 [1, 8192, 96]
+       6.3 MB  read by 2x [dhu_bn,fwd_h_bn]  float32 [1, 96, 128, 8, 4, 4]
+     201.3 MB  read by 2x [dav,wy_s4_split]  bfloat16 [1, 8192, 96, 128]
+       0.0 MB  read by 1x [wy_s4_split]  bfloat16 [0]
+
+operator outputs (never re-read):
+     201.3 MB       fwd_h_o  bfloat16 [1, 8192, 96, 128]
+     201.3 MB   wy_s4_split  bfloat16 [1, 8192, 96, 128]
+     201.3 MB      bwd_tail  bfloat16 [1, 8192, 96, 128]
+     201.3 MB      bwd_tail  bfloat16 [1, 8192, 96, 128]
+     201.3 MB      bwd_tail  bfloat16 [1, 8192, 96, 128]
+       0.0 MB      bwd_tail  float32 [96]
+       0.0 MB      bwd_tail  float32 [12288]
+       3.1 MB      bwd_tail  float32 [1, 8192, 96]
