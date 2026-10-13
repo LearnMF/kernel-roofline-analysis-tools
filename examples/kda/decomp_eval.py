@@ -37,6 +37,11 @@ LDS_CU, VGPR_SIMD, WAVES_CU = 65536, 768, 40
 CPI_VALU, CPI_TRANS = 8.0, 16.0            # cycles an added dependent VALU / transcendental adds to a CTA
 BETA_MEM = 0.5                             # share of a removed stream's latency that leaves the critical path
 E_PHYS = 1.10                              # attainable throughput efficiency of a latency-bound kernel's floors
+CPI_MMAC = 16.0                            # cycles an added dependent 16x16x16 MMAC adds to a CTA
+KAPPA_TA = 0.8                             # share of a CTA's added TA cycles on its latency (calibrated, P-20)
+# TA cost table (results/kda-bound-20261012, CU cycles per wave-level VMEM instruction, data in HBM)
+TA_RD = {"c1k": 21, "c512": 22, "r4x256": 43, "r16x64": 169, "r16x32": 85, "gather4": 229, "c256": 10}
+TA_WR = {"c1k": 56, "c512": 28, "r16x64": 67, "r16x32": 67}
 FLOORS = ("f_mem", "f_ta", "f_val", "f_lds", "f_cmp", "f_chain")
 
 
@@ -119,15 +124,20 @@ def cpi(k):
     return k.lam * CLK / max(k.nw, 1.0)
 
 
-def add_work(k, valu=0.0, trans=0.0, vmem=0.0, rd=0.0, wr=0.0, valu_slots_us=0.0, ta_us=0.0, note=""):
-    """per-WAVE added instructions (valu / transcendental / vmem) and whole-kernel added bytes / floors."""
+def add_work(k, valu=0.0, trans=0.0, vmem=0.0, rd=0.0, wr=0.0, valu_slots_us=0.0, ta_us=0.0, ta_cyc=0.0,
+             mmac=0.0, note=""):
+    """per-WAVE added instructions (valu / transcendental / vmem / mmac) and TA cycles (TA cost table x pattern),
+    whole-kernel added bytes / floors.  A wave's TA cycles reach its CTA's latency with KAPPA_TA (P-20)."""
     k2 = replace(k, f=dict(k.f), note=(k.note + " " + note).strip())
-    k2.lam = k.lam + (valu * CPI_VALU + trans * CPI_TRANS + vmem * cpi(k)) / CLK
+    k2.lam = k.lam + (valu * CPI_VALU + trans * CPI_TRANS + vmem * cpi(k) + mmac * CPI_MMAC
+                      + ta_cyc * k.waves * KAPPA_TA) / CLK
+    ta_us = ta_us + ta_cyc * k.waves * k.ctas / (CU * CLK * 0.92)
     k2.rd, k2.wr = k.rd + rd, k.wr + wr
     k2.f["f_mem"] = k2.rd / HBM_RD + k2.wr / HBM_WR
     k2.f["f_val"] = k.f["f_val"] + valu_slots_us
     k2.f["f_ta"] = k.f["f_ta"] + ta_us
-    k2.nw = k.nw + valu + trans + vmem
+    k2.f["f_cmp"] = k.f["f_cmp"] + mmac * k.waves * k.ctas * 8192 / (476e6 * 0.92)   # bf16 MMAC FLOP/us
+    k2.nw = k.nw + valu + trans + vmem + mmac
     return k2
 
 
@@ -248,6 +258,35 @@ def bt_p53(shape, meas):
                 detail=f"lam {k.lam:.0f} -> {k2.lam:.0f} us")
 
 
+def bt_p20(shape, meas):
+    """P-20 (validation/results.md): dav stops writing the aN_do copy (T*H*128 bf16, scattered 8 B stores);
+    s4b reads do row-major: same 8 ld8 per lane, pattern c512 -> r16x32 (+63 TA cycles each).
+    Kernel ratios dav, s4b (old / new); built backwards from today's cards (= the P-20 state)."""
+    ks = load(shape)
+    T, H = map(int, shape.split("_"))
+    dav, s4b = ks["dav#1"], ks["wy_s4b#1"]
+    cp = T * H * 128 * 2
+    dav_old = add_work(dav, wr=cp, vmem=4, ta_cyc=4 * TA_WR["r16x32"])
+    s4b_old = add_work(s4b, ta_cyc=-8 * (TA_RD["r16x32"] - TA_RD["c512"]))
+    return dict(name=f"P-20: drop aN_do, s4b reads do row-major ({shape}) dav/s4b", fmt="ratio",
+                pred=[dav_old.t() / dav.t(), s4b_old.t() / s4b.t()], meas=meas,
+                detail=f"dav {dav_old.t():.0f}->{dav.t():.0f}, s4b {s4b_old.t():.0f}->{s4b.t():.0f} us")
+
+
+def bt_p17(shape, meas):
+    """P-17: wu stops writing vB (T*H*128 bf16, scattered 8 B stores); s4a builds the operand on chip:
+    -32 native loads (c512) +32 LDS reads, +4 row-major v loads (r4x256) +16 LDS b16 writes + 1 barrier."""
+    ks = load(shape)
+    T, H = map(int, shape.split("_"))
+    wu, s4a = ks["wu#1"], ks["wy_s4a#1"]
+    cp = T * H * 128 * 2
+    wu_old = add_work(wu, wr=cp, vmem=4, ta_cyc=4 * TA_WR["r16x32"])
+    s4a_old = add_work(s4a, valu=-32 - 16 - 30, ta_cyc=32 * TA_RD["c512"] - 4 * TA_RD["r4x256"])
+    return dict(name=f"P-17: drop vB, s4a builds v on chip ({shape}) wu/s4a", fmt="ratio",
+                pred=[wu_old.t() / wu.t(), s4a_old.t() / s4a.t()], meas=meas,
+                detail=f"wu {wu_old.t():.0f}->{wu.t():.0f}, s4a {s4a_old.t():.0f}->{s4a.t():.0f} us")
+
+
 def bt_f6():
     """F6 (P-39): s4a and s4b in one kernel with both LDS working sets (30 KB + 32 KB) and s4b's 236 VGPR."""
     ks = load("16384_12")
@@ -299,6 +338,120 @@ def regimes():
     print("lat = latency/issue-bound (fusion adds latency, occupancy matters); thr = throughput-bound (floors bind)")
 
 
+# ------------------------------------------------------------------------------------------- candidates
+# s4b prologue per wave (averaged over the 4 waves, A = 0..3; g2_wy.cuh s4b_tail): aqA (A+1) f4 rows (r16x64),
+# aqB (4-A)x4 scalar gathers of dAqk (gather4), akB (4-A)x4 scalar gathers of s4a's dA, dak 4 f4 rows.
+S4B_AQA, S4B_AQB, S4B_AKB = 2.5, 10.0, 10.0
+ADDR_PER_GATHER = 3          # 64-bit address VALU per scalar gather (j * RA + row)
+
+
+def cand_f3a(ks, T, H):
+    """F3a: s4b recomputes dAqk = scale * do . Vn^T (causal) for its own 16 rows x 64 columns and the transposed
+    form, from the do fragments it already loads (ado) + Vn of the other 3 row blocks (24 ld8, c512);
+    48 MMAC per wave.  dav loses pass 1 (Vn staging loads, 32 MMAC, dA LDS staging, fp32 dAqk stores) and the
+    Vn read; nobody writes / reads dAqk.  VGPR: s4b at 236 + ~48 -> spill risk (B4b lesson)."""
+    dav, s4b = ks["dav#1"], ks["wy_s4b#1"]
+    vn, daq = T * H * 128 * 2, T * H * 64 * 4
+    dav2 = remove_bytes(dav, rd=vn, wr=daq)
+    dav2 = add_work(dav2, mmac=-32, vmem=-(8 + 8 + 4), valu=-(32 + 16 + 8), ta_cyc=-(8 * TA_RD["c512"] + 4 * TA_WR["c1k"]))
+    s4b2 = remove_bytes(s4b, rd=daq)
+    s4b2 = add_work(s4b2, mmac=48, vmem=24 - S4B_AQA - S4B_AQB, valu=16 - ADDR_PER_GATHER * S4B_AQB,
+                    ta_cyc=24 * TA_RD["c512"] - S4B_AQA * TA_RD["r16x64"] - S4B_AQB * TA_RD["gather4"],
+                    rd=0.0)
+    s4b2.vgpr = 256
+    return {"dav#1": dav2, "wy_s4b#1": s4b2}, "s4b VGPR 236+48 > 256: spill risk", "A (same MMAC order as dav)"
+
+
+def cand_tcopy(ks, T, H, which=("dav", "s4a")):
+    """L1/L2: the producers also write a TRANSPOSED fp32 copy (dav: dAqk^T from its LDS staging; s4a: dA^T, LDS
+    staging reused at the kernel end), so s4b reads aqB / akB as f4 rows (r16x64) instead of 4 B gathers."""
+    out = {}
+    cp = T * H * 64 * 4
+    s4b = ks["wy_s4b#1"]
+    n_g, n_r = 0.0, 0.0
+    if "dav" in which:
+        out["dav#1"] = add_work(ks["dav#1"], wr=cp, vmem=4, valu=16, ta_cyc=4 * TA_WR["c1k"])
+        n_g += S4B_AQB; n_r += S4B_AQB / 4
+    if "s4a" in which:
+        out["wy_s4a#1"] = add_work(ks["wy_s4a#1"], wr=cp, vmem=4, valu=16 + 1, ta_cyc=4 * TA_WR["c1k"])
+        n_g += S4B_AKB; n_r += S4B_AKB / 4
+    out["wy_s4b#1"] = add_work(s4b, rd=0.0, vmem=n_r - n_g, valu=-ADDR_PER_GATHER * n_g,
+                               ta_cyc=n_r * TA_RD["r16x64"] - n_g * TA_RD["gather4"])
+    return out, "LDS reuse in s4a assumed (else 46 KB -> 1 CTA/CU)", "A (layout only)"
+
+
+def cand_f2_wb(ks, T, H):
+    """F2 (representative): wu stops writing Wb (B form of W); dhu reads Wn and transposes through LDS each step
+    (+16 LDS writes, +16 LDS reads, +1 barrier per wave per step)."""
+    wu = ks["wu#1"]
+    d = ks.get("dhu_v8b#1") or ks.get("dhu_v8b4#1")
+    dn = "dhu_v8b#1" if "dhu_v8b#1" in ks else "dhu_v8b4#1"
+    NT = T // 64
+    cp = T * H * 128 * 2
+    wu2 = add_work(wu, wr=-cp, vmem=-4, ta_cyc=-4 * TA_WR["r16x32"])
+    d2 = add_work(d, valu=NT * (32 + 8))      # 32 LDS ops + barrier (~8 issue-equivalents) per step
+    return {"wu#1": wu2, dn: d2}, "", "A"
+
+
+def cand_gate_wu(ks, T, H):
+    """wu computes g itself from g_raw (bf16, 2 B instead of fp32 4 B) with a per-column sequential chunk scan
+    (64 dependent adds + sigmoid per element: exp + rcp); the gate kernel stays for s4 / to_gn."""
+    wu = ks["wu#1"]
+    wu2 = add_work(wu, rd=-T * H * 128 * 2, trans=2 * 32, valu=64 + 6 * 32)
+    return {"wu#1": wu2}, "", "A if the scan order equals the gate kernel's"
+
+
+def cand_dav_dhu(ks, T, H):
+    """dav's dv = A^T do (V-separable) inside the dh recurrence: per step per wave +8 MMAC, A^T fragments as
+    4 B gathers (32 per wave per step) + the do slab; dVn / dOT writes + reads go; dav keeps pass 1."""
+    dav = ks["dav#1"]
+    d = ks.get("dhu_v8b#1") or ks.get("dhu_v8b4#1")
+    dn = "dhu_v8b#1" if "dhu_v8b#1" in ks else "dhu_v8b4#1"
+    NT = T // 64
+    two = 2 * T * H * 128 * 2
+    dav2 = remove_bytes(dav, wr=two)
+    dav2 = add_work(dav2, mmac=-32, vmem=-12, valu=-40)
+    d2 = remove_bytes(d, rd=two)
+    d2 = add_work(d2, mmac=8 * NT, ta_cyc=32 * TA_RD["gather4"] * NT, vmem=32 * NT)
+    return {"dav#1": dav2, dn: d2}, "", "A"
+
+
+CANDS = [("F3a  s4b recomputes dAqk (dav pass 1 goes)", cand_f3a),
+         ("L1   dav writes dAqk^T; s4b aqB as rows", lambda ks, T, H: cand_tcopy(ks, T, H, ("dav",))),
+         ("L2   s4a writes dA^T; s4b akB as rows", lambda ks, T, H: cand_tcopy(ks, T, H, ("s4a",))),
+         ("L1+L2 both transposed copies", lambda ks, T, H: cand_tcopy(ks, T, H, ("dav", "s4a"))),
+         ("F2   drop Wb, dhu transposes Wn in LDS", cand_f2_wb),
+         ("G    wu computes g from g_raw", cand_gate_wu),
+         ("D    dav's dv inside the dh recurrence", cand_dav_dhu)]
+
+
+def candidates():
+    shapes = [f"{T}_{H}" for T in (8192, 16384, 32768, 65536) for H in (12, 24, 48, 96)]
+    print(f"{'candidate':42s} " + " ".join(f"{sh.replace('_', '/'):>8s}" for sh in shapes) + "   TP8   TP2   mean")
+    rows = []
+    for name, fn in CANDS:
+        cells, by_h = [], {12: [], 24: [], 48: [], 96: []}
+        note = cls = ""
+        for sh in shapes:
+            T, H = map(int, sh.split("_"))
+            ks = load(sh)
+            base = sum(k.t() for k in ks.values())
+            new_k, note, cls = fn(ks, T, H)
+            feas = all(k.feasible() for k in new_k.values())
+            new = base - sum(ks[n].t() for n in new_k) + sum(k.t() for k in new_k.values())
+            g = 100.0 * (base / new - 1.0)
+            cells.append(f"{g:+7.2f}%" if feas else "  infeas")
+            by_h[H].append(g)
+        m8, m2 = sum(by_h[12]) / 4, sum(by_h[48]) / 4
+        allg = [x for v in by_h.values() for x in v]
+        rows.append((name, cells, m8, m2, sum(allg) / len(allg), note, cls))
+        print(f"{name:42s} " + " ".join(f"{c:>8s}" for c in cells) + f" {m8:+5.2f} {m2:+5.2f} {sum(allg) / len(allg):+5.2f}")
+    print()
+    for name, _, _, _, _, note, cls in rows:
+        print(f"  {name:42s} class: {cls:30s} {note}")
+    print("(operator-level speedup %, positive = faster; model is conservative for copy removals, see backtest)")
+
+
 def backtest():
     rows = [bt_b4b(),
             bt_p13("8192_12", (1.002, 1.002)), bt_p13("8192_48", (1.005, 1.005)),
@@ -308,7 +461,11 @@ def backtest():
             bt_p49("65536_48", ((1.40, 1.40), (1.12, 1.12))), bt_p49("8192_96", ((0.90, 0.90), (0.68, 0.68))),
             bt_p53("8192_12", (1.018, 1.018)), bt_p53("16384_12", (1.012, 1.012)), bt_p53("32768_12", (1.010, 1.010)),
             bt_p53("8192_48", (1.020, 1.020)), bt_p53("16384_48", (1.018, 1.056)), bt_p53("8192_96", (1.025, 1.025)),
-            bt_p50_store()]
+            bt_p50_store(),
+            bt_p20("8192_12", ((1.148, 1.148), (0.983, 0.983))), bt_p20("16384_48", ((1.247, 1.247), (0.996, 0.996))),
+            bt_p20("8192_96", ((1.396, 1.396), (1.008, 1.008))),
+            bt_p17("8192_12", ((1.052, 1.052), (1.045, 1.045))), bt_p17("16384_48", ((1.081, 1.081), (1.055, 1.055))),
+            bt_p17("8192_96", ((1.208, 1.208), (1.033, 1.033)))]
     print(f"{'experiment':56s} {'pred':>13s} {'measured':>21s}  detail")
     for r in rows:
         m, p = r["meas"], r["pred"]
@@ -326,4 +483,4 @@ def backtest():
 
 
 if __name__ == "__main__":
-    {"backtest": backtest, "regimes": regimes}[sys.argv[1] if len(sys.argv) > 1 else "backtest"]()
+    {"backtest": backtest, "regimes": regimes, "candidates": candidates}[sys.argv[1] if len(sys.argv) > 1 else "backtest"]()

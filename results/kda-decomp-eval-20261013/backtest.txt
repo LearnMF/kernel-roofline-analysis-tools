@@ -17,4 +17,10 @@ P-53: fwd h-fragment reuse (8192_48) fwd#1                       1.000          
 P-53: fwd h-fragment reuse (16384_48) fwd#1                      1.000           1.018-1.056  lam 658 -> 647 us
 P-53: fwd h-fragment reuse (8192_96) fwd#1                       1.000                 1.025  lam 600 -> 595 us
 P-50 / keep-state: forward stores on the chain (16K/12) us     140 / 280             140 / 262  keep-h calibrates CPI_STORE_CHAIN; full keep-state checks it
+P-20: drop aN_do, s4b reads do row-major (8192_12) dav/s4b 1.130 / 0.984           1.15 / 0.98  dav 160->142, s4b 649->660 us
+P-20: drop aN_do, s4b reads do row-major (16384_48) dav/s4b 1.196 / 0.986           1.25 / 1.00  dav 1246->1041, s4b 5815->5898 us
+P-20: drop aN_do, s4b reads do row-major (8192_96) dav/s4b 1.196 / 0.989           1.40 / 1.01  dav 1303->1089, s4b 7565->7647 us
+P-17: drop vB, s4a builds v on chip (8192_12) wu/s4a     1.019 / 1.026           1.05 / 1.04  wu 338->332, s4a 287->280 us
+P-17: drop vB, s4a builds v on chip (16384_48) wu/s4a    1.085 / 1.020           1.08 / 1.05  wu 2747->2532, s4a 2852->2797 us
+P-17: drop vB, s4a builds v on chip (8192_96) wu/s4a     1.017 / 1.013           1.21 / 1.03  wu 2957->2909, s4a 4211->4156 us
 (ratios: >1 = the change is faster; B4b / P-51 / F6 are expected < 1)
