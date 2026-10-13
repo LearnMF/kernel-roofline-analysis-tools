@@ -1,0 +1,49 @@
+<h2>（四）第 12–13 轮：第一性原理下限、结构方向评估与端到端复测（2026-10-12 至 10-13）</h2>
+<p>前几轮都是在 FLA 的拆分方式里做局部优化，每项收益越来越小，却回答不了“离极限还有多远”。所以这两轮先按第一性原理建立整个前向加反向的下限模型，再按“先查模型漏项，再查实现开销”的顺序拆解差距，最后用模型去评估结构性的新方案。模型共有五项：访存、矩阵乘、VALU/超越函数、递推延迟链、VMEM 发射（TA）。每一项的参数都用微基准在 BW 上实测，工具和数据在 kernel-roofline-analysis-tools 的 kda_bound.py、design_eval.py 和 results/kda-bound-20261012。</p>
+<table>
+<colgroup><col width="110"/><col width="120"/><col width="120"/><col width="120"/><col width="100"/><col width="110"/><col width="110"/></colgroup>
+<thead><tr><th background-color="rgba(245,246,247,0.9)">形态</th><th background-color="rgba(245,246,247,0.9)">BW 下限（瓶颈项）</th><th background-color="rgba(245,246,247,0.9)">H20 下限（瓶颈项）</th><th background-color="rgba(245,246,247,0.9)">A800 下限</th><th background-color="rgba(245,246,247,0.9)">ours / 下限</th><th background-color="rgba(245,246,247,0.9)">FLA@H20 / 下限</th><th background-color="rgba(245,246,247,0.9)">FLA@A800 / 下限</th></tr></thead>
+<tbody>
+<tr><td>16K TP2</td><td>2.62 ms（访存）</td><td>3.18 ms（矩阵乘）</td><td>1.83 ms</td><td>10.1 倍</td><td>5.8 倍</td><td>14.4 倍</td></tr>
+<tr><td>16K TP8</td><td>0.83 ms（递推链）</td><td>0.80 ms（矩阵乘）</td><td>0.69 ms</td><td>8.2 倍</td><td>6.5 倍</td><td>10.8 倍</td></tr>
+<tr><td>64K TP8</td><td>3.31 ms（递推链）</td><td>3.18 ms（矩阵乘）</td><td>2.76 ms</td><td>7.4 倍</td><td>6.4 倍</td><td>10.6 倍</td></tr>
+</tbody>
+</table>
+<p>模型核实中修正了两处漏项。一是递推每步的实测延迟为 1.0–1.23 µs，原先解析估计的 0.40 µs 漏掉了 LDS 往返、barrier 和单 wave 时矩阵乘的依赖延迟。二是 VMEM 发射：同样多的字节，16 行 × 64 B 的分片访问在 TA 上的代价是行连续访问的 4–8 倍。差距的结构也随之清楚了：算法必需的字节只有 4.1 KB/token·head，现有拆分方式下各 kernel 之间的接口字节是 22.5 KB（5.45 倍），实际执行 26.7 KB（6.5 倍），多出来的大头来自拆分本身，而不是各 kernel 的执行效率。按“每个 kernel 都做到自身下限”计算现有拆分方式的天花板：16K/TP8 为 4.98 ms，相当于 H20 的 1.03；16K/TP2 为 21.1 ms，相当于 H20 的 0.87。也就是说，TP2 即使把执行效率做到极致也追不上 H20，必须减少实际执行的工作量。</p>
+<p>据此逐一评估了减少工作量的结构方向，结果如下。所有结论都有实测或模型核算作为依据，被证伪的方向也记录了原因。</p>
+<table>
+<colgroup><col width="190"/><col width="330"/><col width="200"/></colgroup>
+<thead><tr><th background-color="rgba(245,246,247,0.9)">方向</th><th background-color="rgba(245,246,247,0.9)">依据</th><th background-color="rgba(245,246,247,0.9)">结论</th></tr></thead>
+<tbody>
+<tr><td>前向按时间分段流水（Phase A）</td><td>逐位一致，但递推与准备同时驻留时，递推被拖慢约 2.2 倍，分段本身还多出约 0.4 ms</td><td>证伪（R35）</td></tr>
+<tr><td>s4a+s4b 融合（F6）</td><td>需要每个 CU 只放 1 个 CTA，s4a 那段的延迟全部暴露</td><td>证伪</td></tr>
+<tr><td>收尾融进 s4b（C2）</td><td>l2norm 反向必须分两遍做；LDS 已满；L2 只有 8 MB，读回时数据早已被挤出</td><td>不成立（容量核算）</td></tr>
+<tr><td>融合梯度 kernel（B4 / B4b）</td><td>8 个 wave、dq/dk 常驻寄存器的形态放不下（VGPR 约 300 或核心工作量多约 50%）；可行版 B4b-lite 数值通过（dq/dk 逐位一致），但比原路径慢 9–12%：收尾的逐元素运算（每元素约 35 条 VALU）挤进本已受发射限制的 s4b，关键路径拉长约 40%</td><td>止损（R36、R37）</td></tr>
+<tr><td>chunk 改为 128 / 16</td><td>递推单步微基准：chunk 128 时每步耗时变为 1.6–1.9 倍，串行一遍只快 4–20%，块内工作却翻倍；chunk 16（FlashKDA 的做法）只适合推理，训练反向的状态流量会变成 4 倍</td><td>不划算</td></tr>
+<tr><td>分段并行递推、矩阵值扫描</td><td>递推工作量翻倍，或每个 chunk 要读写 128×128 矩阵；TP8 下按吞吐算也慢于现状</td><td>模型排除</td></tr>
+<tr><td>持久化 / 并发调度（F9）</td><td>模拟（借用前向的争用系数）可省 10.8%；但实测反向的争用更重：递推与并行 kernel 同时驻留时，并行 kernel 只剩 0.45–0.47 的速度，即使数据无依赖也最多省约 2.7%</td><td>证伪（实测）</td></tr>
+<tr><td>统一布局（F2）</td><td>能由消费方经 LDS 转置读取的副本，已在 P-17/P-20/P-22 去掉；剩下的 Wb、Kn、dOT 都供按 V 切片的递推使用，改读另一种布局会变成分片访问，在片上转置又会加长关键路径</td><td>已被前几轮挖完</td></tr>
+<tr><td>fp32 中间结果改用 bf16/fp16 交接</td><td>对照 FP64 oracle（17 组配对）：dq/dk/dg 用 bf16 时，dt_bias 误差是生产版的 3.3 倍，也比 FLA 差 2.6 倍；fp16 或 dAqk 用 bf16 时比生产版差 0.1–8%（仍好于 FLA），而且这些 kernel 受指令发射限制，收益不到 1.5%</td><td>不做</td></tr>
+</tbody>
+</table>
+<p>同期合入的都是与生产版逐位一致的小项，19–22 组门禁全部通过，并已同步 bw52、bw7 和 flash-train。</p>
+<table>
+<colgroup><col width="80"/><col width="380"/><col width="260"/></colgroup>
+<thead><tr><th background-color="rgba(245,246,247,0.9)">改动</th><th background-color="rgba(245,246,247,0.9)">内容</th><th background-color="rgba(245,246,247,0.9)">结果</th></tr></thead>
+<tbody>
+<tr><td>P-43</td><td>s4a 暂存 A 块的循环展开，读取全部先发出</td><td>s4a 快 1.007–1.052 倍</td></tr>
+<tr><td>P-48</td><td>收尾 kernel 阶段 A 改为每个 lane 处理相邻两列，访存指令减半；每列的门控运算放在独立的基本块里，保证逐位一致</td><td>收尾 kernel 快 1.02–1.07 倍</td></tr>
+<tr><td>P-49</td><td>H ≥ 40 且序列 ≥ 32K 时，递推每个 CTA 处理 64 列，每步共享的 K 侧分块由 2 个 CTA 读取（原来是 4 个）</td><td>32K/TP2 算子快 0.85%，64K/TP2 快 3.4%（消除了 64K 下的 L2 颠簸）</td></tr>
+</tbody>
+</table>
+<p>10 月 13 日在 bw52 上按 10 月 10 日的同一脚本和配置复测了 Megatron K3 训练（L4 切片，4 卡，EP4）。BW 上 FLA 默认配置两次的结果只差 1.6% 以内，说明环境可比。A800 一列沿用 10 月 10 日的数据。</p>
+<table>
+<colgroup><col width="170"/><col width="110"/><col width="110"/><col width="110"/><col width="110"/><col width="110"/></colgroup>
+<thead><tr><th background-color="rgba(245,246,247,0.9)">每步 3 层 KDA kernel 时间（ms）</th><th background-color="rgba(245,246,247,0.9)">BW FLA 默认</th><th background-color="rgba(245,246,247,0.9)">ours 10-10</th><th background-color="rgba(245,246,247,0.9)">ours 10-13</th><th background-color="rgba(245,246,247,0.9)">A800 FLA 默认</th><th background-color="rgba(245,246,247,0.9)">A800 / ours</th></tr></thead>
+<tbody>
+<tr><td>8K，TP4，全层重算</td><td>21.92</td><td>14.28</td><td><b>12.30</b></td><td>13.13</td><td><b>1.07</b></td></tr>
+<tr><td>8K，TP4，不重算</td><td>17.89</td><td>11.87</td><td><b>9.72</b></td><td>10.90</td><td><b>1.12</b></td></tr>
+<tr><td>16K，TP4，全层重算</td><td>43.23</td><td>26.33</td><td><b>23.31</b></td><td>OOM</td><td>—</td></tr>
+</tbody>
+</table>
+<p>结论：实际训练中，ours 的 KDA kernel 时间比 10 月 10 日少 11.5–18%，是 BW 上 FLA 的 1.78–1.85 倍，已比 A800 FLA 默认配置少 7–12%（10 月 10 日时还多 8%）。对 H20，模型给出的现实可达水平是：TP8 约为 H20 的 0.92–1.0，TP2 约为 0.85–0.90。原因是 KDA 的算术强度约 120 FLOP/B（实际执行约 89），低于 BW 的屋顶线拐点（约 363 FLOP/B），却高于 H20 的拐点（约 38 FLOP/B）。所以 BW 落在自己最弱的带宽一侧，即使实现做到完美，也只能与 H20 持平。FlashAttention 和稀疏注意力这类算子的算术强度在数百到数千 FLOP/B，两边都受算力限制，BW 的屋顶线时间只有 H20 的 0.33。剩下的手段只有逐位一致的小项（递推每步指令瘦身，TP8 约 3–7%；dhu 写出加宽、前向准备的 scratch，各约 0.5–1%）。全部记录在 kernel-roofline-analysis-tools 的 results/kda-*-2026101x 目录。</p>
