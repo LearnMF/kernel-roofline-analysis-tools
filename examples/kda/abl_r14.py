@@ -16,6 +16,7 @@ variants:
   dhu_st16    dhu 4-wave: the two 8 B bN stores per K-block -> one 16 B store (contiguous, wrong layout)
   wu_noconf   g2_wu: every LDS scalar store (phase-1/2 fills, B-form tile, phase-3 tiles) to lane-consecutive
               per-(thread, element) slots -- bank-conflict-free, same instruction count, no dead stores
+  tail_nosum  bwd_tail: tid 0's sequential 512-term dA partial sum reduced to 2 terms
   prep_noR    prep_a's fp32 R scratch write + prep_b's R reads removed"""
 import sys
 from pathlib import Path
@@ -142,6 +143,12 @@ elif var == "wu_noconf":   # every LDS scalar store of g2_wu to lane-consecutive
         assert t.count(o) == c, (o[:60], t.count(o))
         t = t.replace(o, n)
     WU.write_text(t)
+elif var == "tail_nosum":   # bwd_tail: tid 0's sequential 512-term dA_part sum -> 2 terms (timing only)
+    TL = G2 / "g2_bwd_tail.cuh"
+    t = TL.read_text()
+    o = """            for (int k = 0; k < 8 * 64; ++k) s += sDA[k];"""
+    assert t.count(o) == 1
+    TL.write_text(t.replace(o, """            for (int k = 0; k < 2; ++k) s += sDA[k * (8 * 64 - 1)];   // ABLATION"""))
 elif var == "prep_noR":
     PR = G2 / "g2_fwd_prep.cuh"
     t = PR.read_text()
