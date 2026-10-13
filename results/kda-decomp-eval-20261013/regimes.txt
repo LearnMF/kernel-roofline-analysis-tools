@@ -1,0 +1,19 @@
+kernel               8192/12   8192/24   8192/48   8192/96  16384/12  16384/24  16384/48  16384/96  32768/12  32768/24  32768/48  32768/96  65536/12  65536/24  65536/48  65536/96
+fwd_prep_a#1           latR7    thrR13    thrR26    thrR52    thrR13    thrR26    thrR52   thrR103    thrR26    thrR52   thrR103   thrR205    thrR52   thrR103   thrR205   thrR410
+fwd_prep_b#1           thrR7    thrR13    thrR26    thrR52    thrR13    thrR26    thrR52   thrR103    thrR26    thrR52   thrR103   thrR205    thrR52   thrR103   thrR205   thrR410
+fwd_h_v8o4#1           latR1     thrR1     thrR1     thrR3     latR1     thrR1     thrR1     thrR3     latR1     thrR1         -         -     latR1     thrR1         -         -
+l2n_apply#1           thrR52   thrR103   thrR205   thrR410   thrR103   thrR205   thrR410   thrR820   thrR205   thrR410   thrR820  thrR1639   thrR410   thrR820  thrR1639  thrR3277
+gate#1                 thrR7    thrR13    thrR26    thrR52    thrR13    thrR26    thrR52   thrR103    thrR26    thrR52   thrR103   thrR205    thrR52   thrR103   thrR205   thrR410
+wu#1                  latR10    latR20    latR39    latR77    thrR20    thrR39    thrR77   latR154    thrR39    thrR77   latR154   latR308    thrR77   thrR154   thrR308   latR615
+fwd_h_v8o4#2           latR1     thrR1     thrR1     thrR3     latR1     thrR1     thrR1     thrR3     latR1     thrR1         -         -     latR1     thrR1         -         -
+dav#1                  latR7    thrR13    thrR26    thrR52    thrR13    thrR26    thrR52   thrR103    thrR26    thrR52   thrR103   thrR205    thrR52   thrR103   thrR205   thrR410
+dhu_v8b#1              thrR1         -         -     thrR5     thrR1         -         -     thrR5     thrR1         -         -     thrR5     thrR1         -         -     thrR5
+wy_s4a#1              latR10    latR20    latR39    latR77    latR20    latR39    latR77   latR154    latR39    latR77   latR154   latR308    latR77   latR154   latR308   latR615
+wy_s4b#1              latR10    latR20    latR39    latR77    latR20    latR39    latR77   latR154    latR39    latR77   latR154   latR308    latR77   latR154   latR308   latR615
+bwd_tail#1             thrR7    thrR13    thrR26    thrR52    thrR13    thrR26    thrR52   thrR103    thrR26    thrR52   thrR103   thrR205    thrR52   thrR103   thrR205   thrR410
+dhu_v8b4#1                 -     thrR1     latR3         -         -     thrR1     latR3         -         -     thrR1     latR3         -         -     thrR1     latR3         -
+exp2#1                 latR4     latR7    latR13    latR26     latR7    latR13    latR26    latR52    latR13    latR26    latR52   latR103    latR26    latR52   latR103   latR205
+bwd_tail_reduce#1      latR1     latR1     latR1     thrR1     latR1     latR1     latR1     thrR1     latR1     latR1     latR1     thrR1     latR1     latR1     latR1     thrR1
+fwd_h_v8o4w#1              -         -         -         -         -         -         -         -         -         -     latR1     thrR2         -         -     thrR1     thrR2
+fwd_h_v8o4w#2              -         -         -         -         -         -         -         -         -         -     thrR1     thrR2         -         -     thrR1     thrR2
+lat = latency/issue-bound (fusion adds latency, occupancy matters); thr = throughput-bound (floors bind)
