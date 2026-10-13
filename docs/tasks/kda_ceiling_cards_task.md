@@ -64,9 +64,16 @@ docker exec -it tanbo_mega_k3 bash
 
 ```bash
 export KDA_G2=1 KDA_SKIP_FLA_PRUNE=1 HIP_VISIBLE_DEVICES=<gpu>
-export PYTHONPATH=/public/home/tanbo/xplat/bwenv:<TREE>:/public/home/tanbo/codex_validation/stage_g2_bw7/takeover
+# /opt/kda_env 必须放在最前面，见下方说明
+export PYTHONPATH=/opt/kda_env:/public/home/tanbo/xplat/bwenv:<TREE>:/public/home/tanbo/codex_validation/stage_g2_bw7/takeover
 export PATH=/opt/dtk/bin:$PATH
 ```
+
+**已知坑：tanbo_mega_k3 里 `import fla` 会导致 g2 段错误**（上一个 agent 实测）。
+- **原因**：site-packages 里装的那份 fla（2025-09-29 安装），在 torch 之后导入时会崩在 `flash_attn.utils.sparse_utils`；即使绕过这一处，导入 `fla.ops.kda` 之后 g2 的前向也会段错误。`kda_op_bench_tp.py` 开头就有 `from fla.ops.kda import ...`，所以不加处理时 `kda_iter.py` 会直接崩。
+- **修法**：PYTHONPATH 以 `/opt/kda_env` 开头，让 `fla` 解析到源码树那一份，同时设 `KDA_SKIP_FLA_PRUNE=1`。参考 `examples/kda/hier_pmc/run_kda.sh` 的写法。
+- **自检**：先跑一次 `kda_iter.py --iters 1`，确认不崩再开始批量采集。
+- 远程命令的引号容易被多层转义打散。复杂的命令写成脚本文件，scp 过去再执行，不要用多层嵌套引号。
 
 - `/public/home/tanbo` 是共享 NFS，bw52 和 bw7 都能看到。但新写的文件在另一台机器上可能有几秒的缓存延迟。
 - kra 仓库有两份：
@@ -290,6 +297,7 @@ hipprof --sqtt --sqtt-type 1 --kernel-name <kernel 关键字> --output-type 0 -o
   - 可以重复运行，已有的原始数据跳过。
 - `isa_mix.py`：从冻结树生成 ISA，统计每个 kernel 主循环的指令构成和 MMAC 类型，输出 JSON。
 - `cards.py`：读取原始数据，加上 machine 文件、ISA 统计和解析字节，输出 `cards.json` 和 `cards.md`。
+- `plot_cards.py`：生成 7.3 规定的全部图。在 `examples/kda/hier_roofline.py` 的基础上**复制一份再扩展**，不要修改原文件。
 - `README.md`：一条命令重跑全部流程的说明。主 agent 以后每次合入新改动，都会用它重跑。
 
 ### 7.2 结果（`results/kda-ceiling-cards-20261013/`）
@@ -298,18 +306,118 @@ hipprof --sqtt --sqtt-type 1 --kernel-name <kernel 关键字> --output-type 0 -o
 - `calibration.md`：标定复核的结果。
 - `cards.json`：机器可读，字段名要有说明。
 - `cards.md`：中文报告，覆盖第 6 节全部 6 个角度；先给结论，再给表格；不确定的地方要明说。
+- `fig/`：7.3 规定的全部图。`cards.md` 里用相对路径把图嵌进去，图紧挨着对应的表。
 
-### 7.3 初稿
+### 7.3 图和表（硬性要求：格式与参考图、参考表一致）
 
-16K 的 4 个形态做完后，先提交一版 `cards.md` 初稿，并告知用户，方便主 agent 尽早参考。
+**参考图**：`results/gfx936-hier-roofline-20261013/gfx936_hier_roofline.png`，由 `examples/kda/hier_roofline.py` 生成。
+**参考表**：`results/gfx936-hier-roofline-20261013/README.md` 里的“每个 kernel 的实测利用率”和“逐 kernel 分层落点”两张表。
+用户最关心的就是这类图和表，必须**每个形态各出一份**，版式与参考图一致，只在下面规定的地方扩展或修正。
 
-### 7.4 验收标准
+#### 图 A：每个形态一张双栏图 `fig/roofline_<T>_<H>.png`（共 16 张）
+
+整体版式：matplotlib（Agg 后端），`figsize=(17, 7.5)`，左右两栏宽度比 1.35 : 1，`dpi=150`。
+
+**左栏：分层 roofline**（与参考图相同）
+
+- 坐标轴：双对数；x 轴为算术强度（FLOP/Byte），范围 0.1–2e4；y 轴为性能（TFLOPS），范围 0.5–900。
+- 访存屋顶（斜线）：
+  - LDS 15.24 TB/s，紫色实线；
+  - L2 6.10 TB/s，蓝色实线；
+  - HBM 1.34 TB/s，红色实线；
+  - HBM 理论值 1.84 TB/s，红色点线。
+- 算力屋顶（水平虚线）：
+  - bf16 MMAC 476，黑色；
+  - tf32 MMAC 237.7，灰色；
+  - fp32 MMAC（16×16×8）61，绿色；
+  - fp32 VALU FMA 29.7，橙色。
+
+  每条线右端都标出名称和数值。
+- 拐点：bf16 MMAC 和 fp32 MMAC 分别与 LDS / L2 / HBM 相交的点，画实心圆点并标出数值（参考图中为 31/78/355 和 4/10/46）。
+- 算子级的点：本形态 KDA 前向+反向，x = 模型 FLOPs ÷ Σ HBM 字节，y = 模型 FLOPs ÷ Σ kernel 时间，画实心方块，旁边标注“AI xx, yy TFLOPS”。
+- **每个有 MMAC 的 kernel 画三个点**，y 值相同，都是该 kernel 实际达到的 TFLOPS：
+  - ● 圆点，x = FLOPs ÷ HBM 字节；
+  - ▼ 倒三角，x = FLOPs ÷ L2 字节；
+  - ◆ 菱形，x = FLOPs ÷ LDS 字节。
+
+  三点之间用细横线相连（`lw=0.7, alpha=0.35`）。在圆点旁标注 `kernel名 (µs)`，字号 7。标签要手动错开，不能互相重叠。
+- 图例中写明三种点型各代表哪一层。
+- **相对参考图的两处修正**：
+  - kernel 的 FLOPs 一律用 ISA 统计的 MMAC 条数 × 每条的 FLOP 数（bf16 16×16×16 为 8192，fp32 16×16×8 为 4096），**不再用 (8I−A)/6 的拆分**，也不画“executed-MMAC 估计（上界）”那个空心点；
+  - 标题里写明形态、冻结树的设备代码指纹和数据日期。
+
+**右栏：每个 kernel 卡在哪个屋顶上**（在参考图基础上扩展）
+
+- 布局：每个 kernel 一组水平条形，按时间从大到小排列，纵轴标签写 `kernel (µs, 占比%)`。
+- 每组的条形，按固定颜色和顺序排列：
+  1. HBM 带宽 ÷ 可达值（红）
+  2. L2 带宽 ÷ 可达值（棕）
+  3. LDS 通道 ÷ 可达值（紫）
+  4. VMEM/TA 发射 ÷ 0.92（橄榄绿）
+  5. VALU 流水线槽位（橙）
+  6. MMAC ÷ 476（黑）
+  7. LDS 冲突周期占比（灰）
+  8. 递推 kernel 额外加一根：链下限 ÷ 实测时间（青）
+- 每组中主约束那根条形加粗边框，并在条形末端标注判定，如 `W: TA 0.78`。
+- 竖直参考线两条：0.85（见顶阈值，实线）、0.6（U 类阈值，点线）；x 轴范围 0–1.05。
+- 标题：`KDA G2 kernels, <T>/H<H>: which roof binds (measured PMC + ISA)`。
+
+#### 图 B：主约束矩阵热力图 `fig/binding_matrix.png`
+
+- 行为 kernel（含递推的两个实例），列为 16 个形态，按 TP8、TP4、TP2、TP1 分组，每组内按 8K→64K 排列。
+- 格子颜色表示主约束利用率（0–1，同一个色阶）；格子里的文字写主约束缩写和百分比，如 `TA 78%`、`链 0.91`、`VALU 89%`。
+- 已见顶的格子加粗边框。
+
+#### 图 C：缺口类型矩阵 `fig/gap_matrix.png`
+
+版式同图 B，格子内容改为缺口类型（U / W / C / S，可组合）和潜在收益 µs。颜色按缺口类型区分。
+
+#### 图 D：算子级缺口 `fig/op_gap.png`
+
+- 16 个形态并排，每个形态三根柱：实测总时间、现有拆分方式的下限（Σ 各 kernel 下限）、第一性原理下限。
+- 实测那根按 kernel 分段堆叠，颜色在所有图中保持一致。
+- 柱顶标注实现缺口和结构缺口各占的百分比。
+
+#### 表（每个形态一组，放在 `cards.md` 里对应的图 A 下面）
+
+**表 1：逐 kernel 分层落点**。列与参考表相同：
+
+| kernel | µs | GFLOP（ISA 精确） | LDS GB/s（AI） | L2 GB/s（AI） | HBM GB/s（AI） | L2 命中率 | LDS 冲突周期/指令 |
+
+**表 2：实测利用率与判定**。在参考表基础上扩展：
+
+| kernel | 时间 µs（占比） | HBM 流量 MB | HBM 带宽 ÷ 可达 | L2 ÷ 可达 | LDS ÷ 可达 | VMEM 发射 ÷ 饱和 | VALU 槽位 | MMAC ÷ 峰值 | 链比值 | 主约束 / 第二约束 | 执行量 ÷ 必需量 | 结论（缺口类型） | 潜在收益 µs |
+
+**表 3：主循环指令构成**（只列递推 kernel 和 s4a/s4b/dav/wu），每步或每轮的指令数：
+
+| kernel | 总数 | MMAC | VMEM 读/写 | LDS 读/写（其中 b16 写） | bf16 舍入 | 64 位地址运算 | 超越函数 | s_waitcnt | barrier |
+
+**汇总表**（放在 `cards.md` 开头）：
+- 图 B、图 C 对应的矩阵表（kernel × 16 形态）；
+- 机会前 10 名；
+- 算子级三栏表（与图 D 对应）。
+
+#### 通用要求
+
+- 所有数字都由 `cards.py` 从原始数据生成，不要手工填写。图和表来自同一份 `cards.json`，必须一致。
+- 数值保留到能区分差异即可：时间取整到 µs，利用率取两位小数，AI 取一位小数。
+- 不可靠或缺失的指标：图里用斜线填充或灰色表示，表里写“—”并加注原因。
+
+### 7.4 初稿
+
+16K 的 4 个形态做完后，先提交一版初稿，包括 `cards.md`、这 4 个形态的图 A，以及图 B、图 C 的 16K 部分，并告知用户，方便主 agent 尽早参考。
+
+### 7.5 验收标准
 
 - 每个形态各 kernel 设备时间之和，与独立的 hip-trace 总时间偏差在 ±3% 以内；
 - wu、bwd_tail、dav 的 HBM 字节与解析值偏差在 ±15% 以内，超出时要给出解释；
 - 前向递推、反向重算、dhu、s4a、s4b 的 MMAC 条数，ISA 推算值与 SQ_INSTS_MMOP 偏差在 ±5% 以内；
 - 16K/12 独立跑两次，各项利用率偏差在 ±3% 以内；
-- 每个 (kernel, 形态) 都有结论，或明确标为“不可判定”并写明原因。
+- 每个 (kernel, 形态) 都有结论，或明确标为“不可判定”并写明原因；
+- 7.3 规定的图和表齐全：16 张图 A、图 B、图 C、图 D，每个形态的表 1–3，以及开头的汇总表。左栏版式与参考图一致，即屋顶线、拐点、三种点型、标签不重叠；
+- 图中数值与 `cards.json` 抽查一致：随机抽 3 个形态 × 3 个 kernel 核对。
+
+**提交时只 add 自己新增的文件**（`git add <路径>`），不要用 `git add -A` 或 `git add .`。工作区里可能有其他人尚未提交的改动。
 
 完成后在本地 kra 仓库提交（不要 push），提交信息写清楚范围和主要结论，然后向用户汇报。
 
@@ -325,7 +433,9 @@ hipprof --sqtt --sqtt-type 1 --kernel-name <kernel 关键字> --output-type 0 -o
 - **两个同名的递推 kernel**：按出现顺序区分。另外 H≥40 且 NT≥512 时走宽版 `v8o4w`，16K/48 和 8K/96 的反向重算走 GE=false 实例，这些都要在表里注明。
 - **LDS 字节**：`SQ_LDS_IDX_ACTIVE×128B` 包含冲突重放，冲突越多，这个数虚高越多。
 - **GPU 被别人占用**：测之前确认空闲；测量过程中发现被占用的，整组重测。
-- **自定义计数器**：同一个 block 的计数器分多行写时，hipprof 会合并处理；一次能采的计数器数量有限，必要时分多次运行，参考 `hier_pmc/run_kda_m.sh` 的三次分组。
+- **自定义计数器**：同一个 block 的计数器分多行写时，hipprof 会合并处理；一次能采的计数器数量有限，必要时分多次运行，参考 `hier_pmc/run_kda.sh` 的四次分组（SQ 一组、TCC 一组、EA 读一组、EA 写一组）。
+- **`import fla` 段错误**：见 2.1，PYTHONPATH 必须以 `/opt/kda_env` 开头。
+- **自写探针的输入形状**：上一个 agent 自己写的探针，把 g 的形状写错了，导致前向崩溃。输入一律从 `kda_op_bench_tp.py` 的构造代码里取，不要自己拼。
 
 ---
 
