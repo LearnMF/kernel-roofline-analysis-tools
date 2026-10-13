@@ -13,6 +13,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("files", nargs="+")
 ap.add_argument("--kernel", required=True, help="substring of the mangled kernel symbol")
 ap.add_argument("--top", type=int, default=0)
+ap.add_argument("--whole", action="store_true", help="count the whole kernel, not only the hottest loop")
 a = ap.parse_args()
 
 CLASSES = [
@@ -24,7 +25,7 @@ CLASSES = [
 ]
 
 
-def loop_body(path, ksub):
+def loop_body(path, ksub, whole=False):
     lines = open(path).read().split("\n")
     start = next(i for i, ln in enumerate(lines) if re.match(r"^\S+:", ln) and ksub in ln and not ln.startswith("."))
     end = next(i for i in range(start + 1, len(lines)) if lines[i].strip().startswith("s_endpgm"))
@@ -39,6 +40,8 @@ def loop_body(path, ksub):
             span = (labels[m.group(1)], i)
             if best is None or span[1] - span[0] > best[1] - best[0]:
                 best = span
+    if whole:
+        best = (start, end)
     assert best, f"no loop in {ksub}"
     ins = []
     for ln in lines[best[0]:best[1] + 1]:
@@ -50,14 +53,14 @@ def loop_body(path, ksub):
 
 
 for f in a.files:
-    ins = loop_body(f, a.kernel)
+    ins = loop_body(f, a.kernel, a.whole)
     cls = collections.Counter()
     for op in ins:
         for name, rx in CLASSES:
             if re.match(rx, op):
                 cls[name] += 1
                 break
-    print(f"== {f}  [{a.kernel}]  loop instructions: {len(ins)}")
+    print(f"== {f}  [{a.kernel}]  {'kernel' if a.whole else 'loop'} instructions: {len(ins)}")
     print("   " + "  ".join(f"{k}={cls[k]}" for k, _ in CLASSES if cls[k]))
     if a.top:
         for op, n in collections.Counter(ins).most_common(a.top):

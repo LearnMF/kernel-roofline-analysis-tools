@@ -14,6 +14,8 @@ variants:
   rnd_trunc   narrow v8o4 + dhu (8-wave, 4-wave): bf16 RNE rounding (v_bfe + v_add3) -> truncation
   bn_wide     narrow v8o4 (MODE 4) + dhu: the bN emit's 4 scalar ds_read_u16 per quad -> one b64 read
   dhu_st16    dhu 4-wave: the two 8 B bN stores per K-block -> one 16 B store (contiguous, wrong layout)
+  wu_noconf   g2_wu: every LDS scalar store (phase-1/2 fills, B-form tile, phase-3 tiles) to lane-consecutive
+              per-(thread, element) slots -- bank-conflict-free, same instruction count, no dead stores
   prep_noR    prep_a's fp32 R scratch write + prep_b's R reads removed"""
 import sys
 from pathlib import Path
@@ -119,6 +121,27 @@ elif var == "dhu_st16":
                "                *const_cast<v4bh*>(reinterpret_cast<const v4bh*>(p.HbN + off)) = val;",
                "                if (vt == 0) pend = val;   // ABLATION: one 16 B store per K-block\n"
                "                else st16x2(const_cast<bf16*>(p.HbN) + (off - 256 - l * 4) + l * 8, pend, val);", 1)
+elif var == "wu_noconf":   # every LDS scalar store of g2_wu to lane-consecutive, per-(thread, element) distinct slots
+    WU = G2 / "g2_wu.cuh"
+    t = WU.read_text()
+    reps = [
+        ("""                slab[(size_t)sr * kPadJ2 + wu_slab_col(sr, j)] =
+                    bf_rne(bf2f(kv[dv]) * b * eg[dv]);""",
+         """                slab[(it * 4 + dv) * 256 + tid] =   // ABLATION
+                    bf_rne(bf2f(kv[dv]) * b * eg[dv]);""", 1),
+        ("""                slab[(size_t)(vq + dv) * kPadJ2 + wu_slab_col(vq + dv, j)] = bf_rne(bf2f(vv[dv]) * b);""",
+         """                slab[(it_ * 4 + dv) * 256 + tid] = bf_rne(bf2f(vv[dv]) * b);   // ABLATION""", 2),
+        ("""                    for (int e = 0; e < 4; ++e) tile[wu_tile_idx(ib + 4 * e)] = we8[vt][e];""",
+         """                    for (int e = 0; e < 4; ++e) tile[(vt * 4 + e) * 256 + tid + 0 * ib] = we8[vt][e];   // ABLATION""", 1),
+        ("""                        tile[wu_tile_idx(ibn_of(tt) + 4 * dv)] = kgr[it][dv];""",
+         """                        tile[(it * 4 + dv) * 256 + tid] = kgr[it][dv];   // ABLATION""", 1),
+        ("""                    for (int dv = 0; dv < 4; ++dv) tile[wu_tile_idx(ibn_of(tid + 256 * it) + 4 * dv)] = qst[it][dv];""",
+         """                    for (int dv = 0; dv < 4; ++dv) tile[(it * 4 + dv) * 256 + tid] = qst[it][dv];   // ABLATION""", 1),
+    ]
+    for o, n, c in reps:
+        assert t.count(o) == c, (o[:60], t.count(o))
+        t = t.replace(o, n)
+    WU.write_text(t)
 elif var == "prep_noR":
     PR = G2 / "g2_fwd_prep.cuh"
     t = PR.read_text()
