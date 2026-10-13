@@ -210,6 +210,79 @@ __global__ void __launch_bounds__(256) k_step128(int NT, float* out) {
     out[blockIdx.x * 256 + tid] = s_[0] + s_[1] + s_[2] + s_[3] + osum;
 }
 
+
+// chunk-32 variant: 2 row tiles; wave w owns GEMM1 / o tile (row r = w & 1, V-tile v = w >> 1),
+// GEMM2 contracts over 2 row tiles; h stays d x BV.
+constexpr int kPadT32 = 32 + 8;
+template <int O>
+__global__ void __launch_bounds__(256) k_step32(int NT, float* out) {
+    __shared__ __align__(16) bf16 hB[kBV * kPadK];
+    __shared__ __align__(16) bf16 vB[kBV * kPadT32];
+    const int tid = threadIdx.x, wv = tid >> 6, l = tid & 63, m = l & 15, q4 = l >> 4;
+    const int kb0 = wv, kb1 = wv + 4, r = wv & 1, vv = wv >> 1;
+    v4bh wf[8], kf0[2], kf1[2], qgf[8], aqf[2], uf;
+    #pragma unroll
+    for (int j = 0; j < 8; ++j) {
+        wf[j] = v4bh{(short)(0x2c00 + j), (short)(0x2c01 + r), (short)0x2c02, (short)(0x2c03 + l)};
+        qgf[j] = wf[j];
+    }
+    #pragma unroll
+    for (int j = 0; j < 2; ++j) {
+        kf0[j] = v4bh{(short)(0x2800 + j), (short)0x2801, (short)0x2802, (short)(0x2803 + m)}; kf1[j] = kf0[j];
+        aqf[j] = v4bh{(short)(0x2800 + j), (short)0x2801, (short)(0x2802 + r), (short)(0x2803 + m)};
+    }
+    uf = v4bh{(short)0x3c00, (short)0x3c00, (short)0x3c00, (short)0x3c00};
+    f4 ht0[2], ht1[2];
+    ht0[0] = f4{0.f, 0.f, 0.f, 0.f}; ht0[1] = ht0[0]; ht1[0] = ht0[0]; ht1[1] = ht0[0];
+    const f4 d0 = {0.999f, 0.998f, 0.997f, 0.996f};
+    auto write_h = [&](int kb, f4* ht) {
+        #pragma unroll
+        for (int vt = 0; vt < 2; ++vt)
+            #pragma unroll
+            for (int e = 0; e < 4; ++e)
+                reinterpret_cast<short*>(hB)[(16 * vt + m) * kPadK + 16 * kb + c_col(l, e)] = bf_rne(ht[vt][e]);
+    };
+    write_h(kb0, ht0); write_h(kb1, ht1);
+    float osum = 0.f;
+    for (int i = 0; i < NT; ++i) {
+        lds_barrier();
+        f4 acc = {0.f, 0.f, 0.f, 0.f}, oh = acc;
+        #pragma unroll
+        for (int kt = 0; kt < 8; ++kt) acc = mmac(wf[kt], ld8(hB + (16 * vv + m) * kPadK + 16 * kt + q4 * 4), acc);
+        #pragma unroll
+        for (int e = 0; e < 4; ++e) {
+            const float u0 = __uint_as_float(((uint32_t)(unsigned short)uf[e]) << 16);
+            reinterpret_cast<short*>(vB)[(16 * vv + c_col(l, e)) * kPadT32 + 16 * r + m] = bf_rne(u0 - acc[e]);
+        }
+        if (O) {
+            #pragma unroll
+            for (int kt = 0; kt < 8; ++kt) oh = mmac(qgf[kt], ld8(hB + (16 * vv + m) * kPadK + 16 * kt + q4 * 4), oh);
+        }
+        ht0[0] *= d0; ht0[1] *= d0; ht1[0] *= d0; ht1[1] *= d0;
+        lds_barrier();
+        if (O) {
+            f4 oa = {0.f, 0.f, 0.f, 0.f};
+            #pragma unroll
+            for (int st = 0; st < 2; ++st) oa = mmac(aqf[st], ld8(vB + (16 * vv + m) * kPadT32 + 16 * st + q4 * 4), oa);
+            osum += oh[0] * 0.088f + oa[0] + oh[3] + oa[3];
+        }
+        #pragma unroll
+        for (int vt = 0; vt < 2; ++vt) {
+            f4 upd = {0.f, 0.f, 0.f, 0.f}, upd1 = upd;
+            #pragma unroll
+            for (int rt = 0; rt < 2; ++rt) {
+                const v4bh va = ld8(vB + (16 * vt + m) * kPadT32 + 16 * rt + q4 * 4);
+                upd = mmac(va, kf0[rt], upd);
+                upd1 = mmac(va, kf1[rt], upd1);
+            }
+            ht0[vt] += upd; ht1[vt] += upd1;
+        }
+        write_h(kb0, ht0); write_h(kb1, ht1);
+    }
+    const f4 s_ = ht0[0] + ht1[1];
+    out[blockIdx.x * 256 + tid] = s_[0] + s_[1] + s_[2] + s_[3] + osum;
+}
+
 template <typename K>
 static float time_ms(K kern, int grid, int arg, float* out, int reps = 5) {
     hipEvent_t a, b; hipEventCreate(&a); hipEventCreate(&b);
@@ -236,6 +309,14 @@ int main() {
         const float t2 = time_ms(k_mmac_tile<2>, grid, iters, out);
         printf("mmac tile, %d CTA/CU: regs %.1f TF | A regs + B LDS %.1f TF | A,B LDS %.1f TF\n", ctas_per_cu,
                flop / t0 / 1e9, flop / t1 / 1e9, flop / t2 / 1e9);
+    }
+    for (int grid : {48, 192}) {
+        const int NT = 256;
+        const float a = time_ms(k_step<0>, grid, NT, out), b = time_ms(k_step<1>, grid, NT, out);
+        const float a2 = time_ms(k_step32<0>, grid, NT * 2, out), b2 = time_ms(k_step32<1>, grid, NT * 2, out);
+        printf("C=64 vs C=32, %3d CTAs, same T (NT=%d vs %d): state %.3f vs %.3f us/step (%.2fx per step, pass %.3f -> %.3f ms) | with o %.3f vs %.3f us/step (%.2fx, pass %.3f -> %.3f ms)\n",
+               grid, NT, NT * 2, a * 1e3 / NT, a2 * 1e3 / (NT * 2), (a2 / (NT * 2)) / (a / NT), a, a2,
+               b * 1e3 / NT, b2 * 1e3 / (NT * 2), (b2 / (NT * 2)) / (b / NT), b, b2);
     }
     for (int grid : {48, 192}) {
         const int NT = 256;
