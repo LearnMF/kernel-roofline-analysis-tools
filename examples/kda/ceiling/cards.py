@@ -29,6 +29,8 @@ L2_BW, LDS_BW = P["l2_read"]["value"] * 1e9, P["lds_read"]["value"] * 1e9
 MMAC_PK = P["mmac_bf16"]["value"] * 1e12 * 0.92          # attainable (GEMM1-style) 0.92
 VALU_PK = 80 * 1 * CLK                                  # 1 wave64 valu inst / CU / cycle
 TA_PK = 80 * CLK                                        # 1 issue slot / CU / cycle (upper)
+# ideal-TA cost per 1 KB beat (16 B/lane, contiguous): kda-bound TA table
+TA_RD_CYC, TA_WR_CYC, TA_EFF = 21.0, 56.0, 0.92
 
 # measured bound_microbench.hip k_step (us/step): {with-o, state-only} at 48 and 192 CTAs.
 # Idle-GPU numbers from results/kda-bound-20261012; a rerun under shared-GPU pressure
@@ -123,18 +125,27 @@ def card(shape: str) -> dict:
         floor = max(f_mem, f_cmp, f_issue, f_chain)
         binding = max((f_mem, "mem"), (f_cmp, "compute"), (f_issue, "issue"), (f_chain, "chain"))[1]
         # ---- required bytes (launcher interface, split by measured share for multi-kernel)
-        req = None
+        req = req_rd = req_wr = None
         for ln, mem in LAUNCHER_MEMBERS.items():
             if key in mem:
                 lb = launchers.get(ln)
                 if lb:
-                    tot = lb["in_bytes"] + lb["out_bytes"]
                     if len(mem) > 1:
-                        mb = (v["hbm_rd"] + v["hbm_wr"])
-                        share = mb / memb_meas[ln] if memb_meas[ln] else 1.0 / len(mem)
-                        req = tot * share
+                        msr = (v["hbm_rd"] + v["hbm_wr"])
+                        shr = msr / memb_meas[ln] if memb_meas[ln] else 1.0 / len(mem)
+                        req_rd, req_wr = lb["in_bytes"] * shr, lb["out_bytes"] * shr
                     else:
-                        req = tot
+                        req_rd, req_wr = lb["in_bytes"], lb["out_bytes"]
+                    req = req_rd + req_wr
+        # interface floor (F2): required bytes only -> BW term + ideal TA term + compute/chain
+        f_iface = 0.0
+        if req is not None:
+            f_bw = req_rd / HBW_R + req_wr / HBW_W
+            f_ta_ideal = (req_rd / 1024 * TA_RD_CYC + req_wr / 1024 * TA_WR_CYC) \
+                         / (80 * CLK * TA_EFF)
+            f_iface = max(f_bw, f_ta_ideal, f_cmp, f_chain)
+        ta_amp = f_ta / ((req_rd / 1024 * TA_RD_CYC + req_wr / 1024 * TA_WR_CYC)
+                         / (80 * CLK * TA_EFF)) if req else None
         # ---- occupancy (LDS cap, wave-slot cap, measured 3-waves/SIMD rule R38)
         lds_c, block = v["lds_c"], v["block"]
         waves = block // 64
@@ -165,6 +176,8 @@ def card(shape: str) -> dict:
             f_mem=f_mem * 1e6, f_cmp=f_cmp * 1e6, f_ta=f_ta * 1e6, f_val=f_val * 1e6,
             f_lds=f_lds * 1e6, f_chain=f_chain * 1e6, floor_us=floor * 1e6,
             binding=binding, gap=gap, req_bytes=req,
+            req_rd=req_rd, req_wr=req_wr,
+            f_iface_us=f_iface * 1e6, ta_amp=ta_amp,
             w_gap=(hbm / req if req else None),
             resident=resident, rounds=rounds)
     return dict(T=T, H=H, NT=NT, cards=cards, launchers=launchers)

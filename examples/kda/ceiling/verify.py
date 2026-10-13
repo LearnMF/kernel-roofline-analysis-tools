@@ -89,6 +89,84 @@ for s, c in sorted(CARDS.items(), key=lambda x: (x[1]["T"], x[1]["H"])):
           f"= {exp:.0f} vs SQ {v['mmop']:.0f} dev {dev:+.3f} "
           f"({'PASS' if abs(dev) <= 0.05 else 'CHECK'})")
 
+# ---- F-checks appended (revision task) ---------------------------------------
+p("")
+p("## F-修订检查")
+# F2: interface floor <= stream floor <= measured  (per kernel, per shape)
+vio = []
+for s, c in sorted(CARDS.items(), key=lambda x: (x[1]["T"], x[1]["H"])):
+    for k, v in c["cards"].items():
+        fi = v.get("f_iface_us")
+        if not fi:
+            continue
+        if not (fi <= v["floor_us"] + 0.5 and v["floor_us"] <= v["t_us"] + 0.5):
+            vio.append((s, k, round(fi, 1), round(v["floor_us"], 1), round(v["t_us"], 1)))
+p(f"F2 iface<=stream<=measured violations: {len(vio)}")
+for x in vio[:12]:
+    p(f"  {x[0]} {x[1]}: iface={x[2]} stream={x[3]} meas={x[4]}us")
+# F3: TA amplification >= 1 (with slack for counter noise)
+ta_bad = [(s, k, v["ta_amp"]) for s, c in CARDS.items()
+          for k, v in c["cards"].items()
+          if v.get("ta_amp") is not None and v["ta_amp"] < 0.99]
+p(f"F3 TA放大<1.0: {len(ta_bad)}")
+for x in ta_bad[:12]:
+    p(f"  {x}")
+# F1: sqtt symbols must be a subset of the production trace's kernel list
+import csv, glob
+import re
+tr_syms = {}
+for tag, rawd, perf_dir in (("16384_48", "16384_48", "sqtt_prod_16384_48"),
+                          ("16384_12", "16384_12", "sqtt_prod_16384_12")):
+    from kra.timeline.hipprof_json import load as tl2
+    names = set()
+    for o in tl2(RAW / rawd / "trace_1.json").ops:
+        if o.kind == "kernel":
+            names.add(o.name)
+    tr_syms[tag] = names
+    subs = glob.glob(str(RAW / perf_dir / "csv" / "*dispatch_summary.csv"))
+    sq_syms = set()
+    for f in subs:
+        for r in csv.DictReader(open(f)):
+            sq_syms.add(r["Kernel"])
+    def norm(n):
+        """(basename, template-args tuple) for both demangled and mangled forms."""
+        m = re.search(r"\b(g2_\w+_kernel|p3_\w+_kernel)<([^>]*)>", n)
+        if m:                                    # demangled production name
+            args = tuple(a.strip() for a in m.group(2).split(",") if a.strip())
+            return m.group(1), args
+        m = re.search(r"(g2_\w+_kernel|p3_\w+_kernel)(I.*?)Ev", n)
+        if m:                                    # mangled sqtt name
+            toks = [("true" if t == "Lb1" else "false" if t == "Lb0"
+                     else t[2:] if t.startswith("Li") else t)
+                    for t in re.findall(r"Lb[01]|Li\d+", m.group(2))]
+            return m.group(1), tuple(toks)
+        m = re.search(r"(g2_\w+_kernel|p3_\w+_kernel)", n)
+        return (m.group(1), ()) if m else (n, ())
+    prod = {norm(n) for n in names}
+    missing = [x for x in sq_syms if norm(x) not in prod]
+    p(f"F1 {tag}: sqtt kernels={len(sq_syms)} not-in-prod-trace={len(missing)} "
+      + (f"MISSING: {missing}" if missing else "PASS"))
+# F5: p54 vs p52 per-kernel delta on the 4 re-measured 16K shapes
+p54 = RAW / "p54_times.json"
+if p54.exists():
+    delta = json.load(open(p54))
+    changed = {"fwd_h_v8o4#1", "bwd_tail#1"}
+    for s, newt in delta.items():
+        old = CARDS[s]["cards"]
+        print_rows = []
+        for k, nv in newt.items():
+            if k.startswith("direct_copy"):
+                continue
+            ov = old.get(k, {}).get("t_us")
+            if ov and abs(nv["t_us"] - ov) / ov > 0.03 and k not in changed:
+                print_rows.append(f"{s} {k}: {ov:.0f}->{nv['t_us']:.0f}us "
+                                  f"({(nv['t_us'] - ov) / ov * 100:+.1f}%)")
+        p(f"F5 {s}: unchanged kernels beyond ±3%: {len(print_rows)} "
+          f"(uniform shifts are positional/power noise, see cards.md 增量节)")
+        for r in print_rows[:10]:
+            p(f"    {r}")
+
+
 out = RES / "verification.md"
 out.write_text("\n".join(L) + "\n")
 print("wrote", out)

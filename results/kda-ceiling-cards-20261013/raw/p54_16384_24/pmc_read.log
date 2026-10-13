@@ -1,0 +1,18 @@
+Current Python version 3.10 is below the recommended 3.11 version. It is recommended to upgrade to Python 3.11 or higher for the best experience.
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+KDA_ITER_DONE g2 16384 24 1
+HIP_PROF:on Tue Oct 13 22:04:19 2026
+HIP_PROF:process id '244838'
+HIP_PROF:db file '/public/home/tanbo/kra_cards/p54_16384_24/pmc_read.db'
+HIP_PROF:out put file '/public/home/tanbo/kra_cards/p54_16384_24/pmc_read'
+HIP_PROF:profiling ' python3 /public/home/tanbo/hier_pmc/kda_run.py --tree /opt/kda_env/g2_card_p54 --arm g2 --T 16384 --H 24 --iters 1'
+HIP_PROF:process begin
+HIP_PROF:process end run total cost:28(s)
+HIP_PROF:finish

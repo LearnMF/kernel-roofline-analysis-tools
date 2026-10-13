@@ -1,0 +1,1 @@
+fingerprint=90a91fdd5fdd tree=/opt/kda_env/g2_card_p54 (g2_r5 @P-53+P-54a)

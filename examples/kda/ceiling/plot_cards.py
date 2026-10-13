@@ -98,37 +98,77 @@ def figa(shape: str, c: dict, out: Path):
     ax.set_xlabel("Arithmetic intensity (FLOP / byte of that level)")
     ax.set_ylabel("Achieved performance (TFLOPS)")
     ax.set_title(f"Fig A-L — {T // 1024}K/H{H} hierarchical roofline "
-                 f"(kernel total {tot:.1f} ms; P-52 {M['id']})")
+                 f"(total {tot:.1f} ms; G2 fp 35b7bd3a8862; {M['id']}; 2026-10-13)")
     ax.grid(True, which="both", ls=":", lw=0.5)
     ax.legend(loc="lower right", fontsize=8)
 
-    # ---- right panel: measured utilization per kernel (active-CU normalized)
-    ks = sorted(c["cards"].items(), key=lambda x: x[1]["t_us"])
+    # ---- right panel: measured utilization per kernel (task 7.3 right column)
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from kda_bound import bounds as algo_bounds
+    ks = sorted(c["cards"].items(), key=lambda x: -x[1]["t_us"])
     names = [k.replace("#1", "") for k, _ in ks]
     ypos = np.arange(len(ks))
-    u_ta = [v["u_ta_act"] for _, v in ks]
-    u_vl = [v["u_valu_act"] for _, v in ks]
-    u_ld = [v["u_lds_act"] for _, v in ks]
-    u_mm = [v["u_mmop_act"] for _, v in ks]
-    u_hb = [(v["hbm_rd"] + v["hbm_wr"]) / max(1e-9, v["t_us"] * 1e-6) / 1.34e12
-            for _, v in ks]
-    w = 0.16
-    for i, (uu, lab, colr) in enumerate([(u_hb, "HBM", "tab:red"),
-                                       (u_ld, "LDS", "tab:purple"),
-                                       (u_ta, "TA issue", "tab:blue"),
-                                       (u_vl, "VALU", "tab:orange"),
-                                       (u_mm, "MMAC", "tab:green")]):
-        ax2.barh(ypos + (i - 2) * w, uu, height=w, color=colr, alpha=0.85, label=lab)
-    ax2.axvline(1.0, color="k", ls="--", lw=1)
-    ax2.set_yticks(ypos); ax2.set_yticklabels(names, fontsize=8)
-    ax2.set_xlim(0, 1.15)
-    ax2.set_xlabel("utilization (vs measured attainable, active-CU normalized)")
-    ax2.set_title("Fig A-R — measured utilization")
-    ax2.legend(fontsize=7, loc="lower right")
+    hbw = M["peaks"]["hbm_read"]["value"] * 1e9
+    l2w = M["peaks"]["l2_read"]["value"] * 1e9
+    ldsw = M["peaks"]["lds_read"]["value"] * 1e9
+    rows = []
+    for k, v in ks:
+        t = v["t_us"] * 1e-6
+        chan = lambda b: (b or 0) / t / 1e9                    # bytes -> GB/s
+        u_hb = (v["hbm_rd"] + v["hbm_wr"]) / t / hbw
+        u_l2 = v["tcc_req"] * 64 / t / l2w
+        u_ld = v["lds_idx"] * 16 / t / ldsw
+        u_cn = v["conf"] / (v["act"] * 1.5e9 * t) if v.get("conf") else 0.0
+        u_ch = (v["chain_active"] / (v["act"] * 1.5e9 * t)
+                if v.get("chain_active") and k.split("#")[0].startswith(("fwd_h", "dhu"))
+                else 0.0)
+        rows.append(dict(name=k.replace("#1", ""), u_hb=u_hb, u_l2=u_l2, u_ld=u_ld,
+                         u_ta=v["u_ta_act"], u_vl=v["u_valu_act"], u_mm=v["u_mmop_act"],
+                         u_cn=u_cn, u_ch=u_ch, primary=v["primary"]))
+    bars = [("u_hb", "HBM", "tab:red"), ("u_l2", "L2", "tab:cyan"),
+            ("u_ld", "LDS", "tab:purple"), ("u_ta", "TA", "tab:blue"),
+            ("u_vl", "VALU", "tab:orange"), ("u_mm", "MMAC", "tab:green"),
+            ("u_cn", "LDS冲突", "0.6"), ("u_ch", "chain", "tab:brown")]
+    w = 0.10
+    pri_map = {"mem": "u_hb", "lds": "u_ld", "ta": "u_ta", "valu": "u_vl",
+               "mmac": "u_mm", "mmop": "u_mm", "chain": "u_ch", "l2": "u_l2"}
+    for i, (f, lab, colr) in enumerate(bars):
+        vals = [r[f] for r in rows]
+        for j, (x0, vv) in enumerate(zip(ypos + (i - 3.5) * w, vals)):
+            if vv < 0.005:
+                continue
+            pri = pri_map.get(rows[j]["primary"]) == f
+            ax2.barh(x0, min(vv, 1.15), height=w, color=colr, alpha=0.85,
+                     edgecolor="k" if pri else "none", lw=2.2 if pri else 0,
+                     label=lab if j == 0 else None)
+            if pri:
+                ax2.text(min(vv, 1.12) + 0.01, x0, rows[j]["primary"],
+                         va="center", fontsize=6, fontweight="bold", color="0.3")
+    for ref in (0.85, 0.6):
+        ax2.axvline(ref, color="k", ls=":" if ref == 0.6 else "--", lw=0.9)
+    ax2.set_yticks(ypos)
+    ax2.set_yticklabels([f"{r['name']}  {v['t_us'] / 1e3:.1f}ms"
+                         for r, (k, v) in zip(rows, ks)], fontsize=7.5)
+    ax2.set_xlim(0, 1.3)
+    ax2.set_xlabel("measured utilization (channels: vs attainable; units: active-CU normalized)")
+    ax2.set_title("Fig A-R — per-kernel utilization")
+    ax2.legend(fontsize=6.5, loc="lower right", ncol=2)
     ax2.grid(axis="x", ls=":", lw=0.5)
+
+    # ---- left panel: operator-level square point
+    b = algo_bounds("BW1000", c["T"], c["H"])
+    hbm_tot = sum(v["hbm_rd"] + v["hbm_wr"] for v in c["cards"].values())
+    t_tot = sum(v["t_us"] for v in c["cards"].values())
+    ax.plot([b["flops"] / hbm_tot], [b["flops"] / (t_tot * 1e-6) / 1e12], "s",
+            color="tab:blue", ms=12, mfc="none", mew=2.5, zorder=10)
+    ax.annotate("operator", (b["flops"] / hbm_tot, b["flops"] / (t_tot * 1e-6) / 1e12),
+                textcoords="offset points", xytext=(8, -4), fontsize=9,
+                fontweight="bold", color="tab:blue")
+
     fig.tight_layout()
     fig.savefig(out, dpi=150)
     plt.close(fig)
+
 
 
 def main():
@@ -189,14 +229,15 @@ def figc(shapes, cards, out):
         rows = sorted(c["cards"].items(), key=lambda x: -x[1]["t_us"])
         names = [k for k, v in rows if v.get("w_gap")]
         wb = [v["w_gap"] for k, v in rows if v.get("w_gap")]
-        vi = [v["vmem"] / (v["req_bytes"] / 1024) for k, v in rows if v.get("w_gap")]
+        ta = [v.get("ta_amp") or 0 for k, v in rows if v.get("w_gap")]
         x = np.arange(len(names))
-        ax.bar(x - 0.2, wb, 0.4, color="tab:red", label="HBM bytes / interface")
-        ax.bar(x + 0.2, vi, 0.4, color="tab:olive", label="VMEM insts / 1KB-pattern bound")
+        ax.bar(x - 0.2, ta, 0.4, color="tab:blue",
+               label="TA amplification (measured TA-busy / ideal-TA)")
+        ax.bar(x + 0.2, wb, 0.4, color="tab:red", label="w_gap (HBM bytes / interface)")
         ax.axhline(1.0, color="0.4", ls="--", lw=1)
         ax.set_xticks(x); ax.set_xticklabels(names, rotation=30, ha="right", fontsize=7.5)
         ax.set_title(f"{c['T'] // 1024}K/H{c['H']} work amplification", fontsize=9, loc="left")
-        ax.set_yscale("log"); ax.set_ylim(0.3, 10)
+        ax.set_yscale("log"); ax.set_ylim(0.3, 20)
         ax.grid(True, axis="y", ls=":", lw=0.5)
     axs[-1].legend(fontsize=7, ncol=2, loc="upper center", bbox_to_anchor=(0.5, -0.5))
     fig.suptitle("Figure C — actual / required work multipliers")
@@ -217,37 +258,97 @@ figb_figc()
 
 
 def figd(shapes, cards, out):
-    """16 shapes x (kernel, binding) heatmap: share of kernel time by binding."""
-    bind_cols = {"mem": "#d62728", "compute": "#222222", "issue": "#bcbd22", "chain": "#9467bd"}
-    kernels = ["wy_s4b#1", "wy_s4a#1", "bwd_tail#1", "wu#1", "dhu_v8b4#1", "dhu_v8b#1",
-               "fwd_prep_a#1", "fwd_prep_b#1", "dav#1", "gate#1", "l2n_apply#1",
-               "fwd_h_v8o4#1", "fwd_h_v8o4w#1", "fwd_h_v8o4#2", "fwd_h_v8o4w#2",
-               "exp2#1", "bwd_tail_reduce#1"]
     ss = sorted(shapes, key=lambda s: (cards[s]["T"], cards[s]["H"]))
-    fig, ax = plt.subplots(figsize=(11, 6.5))
-    im = np.zeros((len(kernels), len(ss)))
+    kernels = sorted({k for s in ss for k in cards[s]["cards"]},
+                     key=lambda k: -max(cards[s]["cards"].get(k, {}).get("t_us", 0)
+                                        for s in ss))
+    im = np.full((len(kernels), len(ss)), np.nan)
     for j, s in enumerate(ss):
-        c = cards[s]
-        tot = sum(v["t_us"] for v in c["cards"].values())
+        tot = sum(v["t_us"] for v in cards[s]["cards"].values())
         for i, k in enumerate(kernels):
-            v = c["cards"].get(k)
+            v = cards[s]["cards"].get(k)
             im[i, j] = v["t_us"] / tot if v else np.nan
-    ax.imshow(np.ma.masked_invalid(im), aspect="auto", cmap="viridis", vmin=0, vmax=im[~np.isnan(im)].max())
+    bind_cols = {"mem": "tab:red", "ta": "tab:blue", "valu": "tab:orange",
+                 "lds": "tab:purple", "chain": "tab:brown", "mmop": "tab:green",
+                 "mmac": "tab:green", "issue": "tab:blue"}
+    fig, ax = plt.subplots(figsize=(13, 0.55 * len(kernels) + 2.5))
+    msk = np.ma.masked_invalid(im)
+    ax.imshow(msk, aspect="auto", cmap="viridis", vmin=0, vmax=im[~np.isnan(im)].max())
+    from matplotlib.patches import Rectangle
     for i in range(len(kernels)):
         for j, s in enumerate(ss):
-            if not np.isnan(im[i, j]):
-                v = cards[s]["cards"][kernels[i]]
-                ax.text(j, i, f"{im[i, j] * 100:.0f}", ha="center", va="center",
-                        fontsize=7, color=bind_cols.get(v["binding"], "w"))
+            if np.isnan(im[i, j]):
+                continue
+            v = cards[s]["cards"][kernels[i]]
+            pct = im[i, j] * 100
+            lum = 0.299 * 0.267 + 0.587 * 0.005 + 0.114 * 0.329   # viridis-ish luminance
+            frac = im[i, j] / im[~np.isnan(im)].max()
+            tc = "k" if frac > 0.55 else "w"
+            ax.text(j, i, f"{pct:.0f}%\n{v['primary'][:3].upper()}.{v['u_primary']:.2f}",
+                    ha="center", va="center", fontsize=6.8, color=tc)
+            ax.add_patch(Rectangle((j - 0.5, i - 0.5), 1, 1, fill=False,
+                                   edgecolor=bind_cols.get(v["binding"], "0.8"), lw=1.8))
     ax.set_xticks(range(len(ss)))
     ax.set_xticklabels([f"{cards[s]['T'] // 1024}K/H{cards[s]['H']}" for s in ss],
                        rotation=45, ha="right", fontsize=8)
     ax.set_yticks(range(len(kernels)))
     ax.set_yticklabels([k.replace("#1", "") for k in kernels], fontsize=8)
     from matplotlib.patches import Patch
-    ax.legend(handles=[Patch(color=cc, label=b) for b, cc in bind_cols.items()],
+    ax.legend(handles=[Patch(fill=False, edgecolor=cc, label=b)
+                       for b, cc in bind_cols.items() if b != "mmac"],
               fontsize=7, loc="upper left", bbox_to_anchor=(1.01, 1))
-    ax.set_title("Figure D — kernel time share (%) per shape; text color = binding resource")
+    ax.set_title("Figure D — kernel time share per shape (cell: % share + primary.util; "
+                 "border color = binding resource)")
+    fig.tight_layout()
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+
+
+def fig_gap_matrix(cards, out):
+    """rows=kernels, cols=shapes; cell = gap types + potential gain us vs iface floor.
+    Items excluded by ablation evidence (R42/R43/P54b) are hatched gray."""
+    ss = sorted(cards, key=lambda s: (cards[s]["T"], cards[s]["H"]))
+    kernels = sorted({k for s in ss for k in cards[s]["cards"]},
+                     key=lambda k: -max(cards[s]["cards"].get(k, {}).get("t_us", 0)
+                                        for s in ss))
+    excluded_full = {"dav", "wu", "fwd_prep_a", "fwd_prep_b"}          # R42/43 ablated: no gain
+    excluded_part = {"fwd_h_v8o4", "fwd_h_v8o4w", "dhu_v8b", "dhu_v8b4"}  # conflict part excluded
+    fig, ax = plt.subplots(figsize=(13, 0.5 * len(kernels) + 2))
+    gain_max = 0.0
+    cells = {}
+    for i, k in enumerate(kernels):
+        for j, s in enumerate(ss):
+            v = cards[s]["cards"].get(k)
+            if not v:
+                continue
+            gain = max(v["t_us"] - (v.get("f_iface_us") or v["t_us"]), 0)
+            cells[(i, j)] = (v.get("gap_types", "—"), gain, k)
+            gain_max = max(gain_max, gain)
+    ax.imshow(np.zeros((len(kernels), len(ss))), cmap="Blues", vmin=0,
+              vmax=1, aspect="auto", alpha=0.0)
+    from matplotlib.patches import Rectangle
+    for (i, j), (gt, gain, k) in cells.items():
+        a = min(gain / gain_max, 1.0)
+        base = k.split("#")[0]
+        fc = (0.2, 0.4, 0.8, 0.15 + 0.55 * a)
+        ax.add_patch(Rectangle((j - 0.5, i - 0.5), 1, 1, facecolor=fc, edgecolor="0.7", lw=0.4))
+        if base in excluded_full:
+            ax.add_patch(Rectangle((j - 0.5, i - 0.5), 1, 1, facecolor="none",
+                                   edgecolor="0.4", hatch="///", lw=0))
+        elif base in excluded_part:
+            ax.add_patch(Rectangle((j - 0.5, i - 0.5), 1, 0.45, facecolor="none",
+                                   edgecolor="0.4", hatch="///", lw=0))
+        ax.text(j, i - 0.18, gt, ha="center", va="center", fontsize=6.5, fontweight="bold")
+        ax.text(j, i + 0.22, f"{gain / 1e3:.2f}ms", ha="center", va="center", fontsize=5.8,
+                color="0.25")
+    ax.set_xticks(range(len(ss)))
+    ax.set_xticklabels([f"{cards[s]['T'] // 1024}K/H{cards[s]['H']}" for s in ss],
+                       rotation=45, ha="right", fontsize=8)
+    ax.set_yticks(range(len(kernels)))
+    ax.set_yticklabels([k.replace("#1", "") for k in kernels], fontsize=8)
+    ax.set_xlim(-0.5, len(ss) - 0.5); ax.set_ylim(len(kernels) - 0.5, -0.5)
+    ax.set_title("fig_gap_matrix — gap types + potential gain (ms vs interface floor); "
+                 "hatched = ablation-excluded items (R42/43)")
     fig.tight_layout()
     fig.savefig(out, dpi=150)
     plt.close(fig)
@@ -256,44 +357,64 @@ def figd(shapes, cards, out):
 def figd_main():
     cards = json.load(open(RES / "cards.json"))
     figd(list(cards), cards, RES / "figD.png")
-    print("figD done")
+    fig_gap_matrix(cards, RES / "fig_gap_matrix.png")
+    print("figD + gap_matrix done")
 
 
 figd_main()
 
 
 def fige(cards, out):
-    """Operator-level gap: measured vs sum-of-floors vs first-principles bound."""
+    """fig_op_gap: per shape 4 bars — measured (stacked by kernel), Σstream floor,
+    Σinterface floor, operator bound. Gap shares annotated on top."""
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from kda_bound import bounds as algo_bounds
     ss = sorted(cards, key=lambda s: (cards[s]["T"], cards[s]["H"]))
     meas = np.array([sum(v["t_us"] for v in cards[s]["cards"].values()) / 1e3 for s in ss])
     flor = np.array([sum(v["floor_us"] for v in cards[s]["cards"].values()) / 1e3 for s in ss])
+    iface = np.array([sum(v.get("f_iface_us") or 0 for v in cards[s]["cards"].values()) / 1e3
+                      for s in ss])
     bnd = np.array([algo_bounds("BW1000", cards[s]["T"], cards[s]["H"])["bound"] * 1e3
                     for s in ss])
     x = np.arange(len(ss))
-    fig, ax = plt.subplots(figsize=(13.5, 5.5))
-    ax.bar(x - 0.28, meas, 0.26, color="tab:red", alpha=0.85, label="measured Σ kernels")
-    ax.bar(x, flor, 0.26, color="tab:blue", alpha=0.85,
-           label="Σ existing-instruction-stream floors")
-    ax.bar(x + 0.28, bnd, 0.26, color="tab:green", alpha=0.85,
-           label="operator first-principles bound")
+    fig, ax = plt.subplots(figsize=(15, 6))
+    # measured: stacked per-kernel segments (top-6 named, rest gray)
+    top_names = ["wy_s4b", "wy_s4a", "bwd_tail", "wu", "dhu", "fwd_h", "prep"]
+    palette = ["tab:red", "tab:orange", "gold", "tab:purple", "tab:brown",
+               "tab:pink", "tab:olive"]
+    for i, s in enumerate(ss):
+        bot = 0.0
+        groups = {n: 0.0 for n in top_names}
+        for k, v in cards[s]["cards"].items():
+            base = next((n for n in top_names if k.startswith(n)), "other")
+            groups[base] = groups.get(base, 0) + v["t_us"] / 1e3
+        for gi, (n, tv) in enumerate(groups.items()):
+            col = palette[top_names.index(n)] if n in top_names else "0.75"
+            ax.bar(x[i] - 0.3, tv, 0.26, bottom=bot, color=col, alpha=0.9,
+                   label=n if i == 0 else None)
+            bot += tv
+    ax.bar(x, flor, 0.20, color="tab:blue", alpha=0.9, label="sum stream floor")
+    ax.bar(x + 0.24, iface, 0.20, color="tab:cyan", alpha=0.9, label="sum interface floor")
+    ax.bar(x + 0.46, bnd, 0.20, color="tab:green", alpha=0.9, label="first-principles bound")
     for i in range(len(ss)):
-        ax.text(i, flor[i] * 1.03, f"{meas[i] / flor[i]:.2f}x", ha="center", fontsize=7)
-        ax.text(i + 0.28, bnd[i] * 1.03, f"{flor[i] / bnd[i]:.1f}x", ha="center",
-                fontsize=7, color="tab:green")
+        r_stall = (meas[i] - flor[i]) / meas[i]
+        r_strm = (flor[i] - iface[i]) / meas[i]
+        r_ifc = (iface[i] - bnd[i]) / meas[i]
+        ax.text(x[i] - 0.3, meas[i] * 1.05,
+                f"stall {r_stall * 100:.0f}% | strm x{flor[i] / iface[i]:.2f} | ifc x{iface[i] / bnd[i]:.1f}",
+                ha="center", fontsize=6.3, rotation=0)
     ax.set_yscale("log")
     ax.set_xticks(x)
     ax.set_xticklabels([f"{cards[s]['T'] // 1024}K/H{cards[s]['H']}" for s in ss],
                        rotation=45, ha="right", fontsize=8)
     ax.set_ylabel("ms (log scale)")
-    ax.set_title("Figure E — operator-level gap: measured / Σ instruction-stream floors / operator bound")
-    ax.legend(fontsize=8)
+    ax.set_title("fig_op_gap — measured (stacked) / sum stream floor / sum interface floor / operator bound")
+    ax.legend(fontsize=7, ncol=4)
     ax.grid(axis="y", ls=":", lw=0.5)
     fig.tight_layout()
     fig.savefig(out, dpi=150)
     plt.close(fig)
 
 
-fige(cards=json.load(open(RES / "cards.json")), out=RES / "figE.png")
-print("figE done")
+fige(cards=json.load(open(RES / "cards.json")), out=RES / "fig_op_gap.png")
+print("fig_op_gap done")

@@ -134,3 +134,56 @@
   dhu_v8b#1: ISA loop 24/iter x 8192/CTA x 384 CTAs = 75497472 vs SQ 75497472 dev +0.000 (PASS)
   wy_s4a#1: ISA loop 12/iter x 64/CTA x 98304 CTAs = 75497472 vs SQ 75497472 dev +0.000 (PASS)
   wy_s4b#1: ISA loop 80/iter x 16/CTA x 98304 CTAs = 125829120 vs SQ 125829120 dev +0.000 (PASS)
+
+## F-修订检查
+F2 iface<=stream<=measured violations: 18
+  8192_12 l2n_apply#1: iface=83.9 stream=83.9 meas=78.2us
+  8192_24 l2n_apply#1: iface=167.8 stream=167.8 meas=155.4us
+  8192_48 l2n_apply#1: iface=335.6 stream=335.6 meas=311.9us
+  8192_96 l2n_apply#1: iface=671.2 stream=671.3 meas=624.5us
+  16384_12 l2n_apply#1: iface=167.8 stream=167.8 meas=155.7us
+  16384_24 l2n_apply#1: iface=335.6 stream=335.6 meas=310.4us
+  16384_48 l2n_apply#1: iface=671.2 stream=671.3 meas=624.5us
+  16384_96 l2n_apply#1: iface=1342.5 stream=1342.5 meas=1249.1us
+  32768_12 l2n_apply#1: iface=335.6 stream=335.6 meas=311.8us
+  32768_24 l2n_apply#1: iface=671.2 stream=671.3 meas=624.6us
+  32768_48 l2n_apply#1: iface=1342.5 stream=1342.5 meas=1249.4us
+  32768_48 fwd_h_v8o4w#2: iface=2018.4 stream=2014.5 meas=3163.7us
+F3 TA放大<1.0: 6
+  ('16384_96', 'gate#1', 0.9850739313339628)
+  ('32768_96', 'gate#1', 0.9822223583623307)
+  ('65536_24', 'gate#1', 0.9629174480533536)
+  ('65536_48', 'gate#1', 0.9676579015191435)
+  ('65536_96', 'gate#1', 0.9581862906437346)
+  ('8192_24', 'exp2#1', 0.9392265420191904)
+F1 16384_48: sqtt kernels=14 not-in-prod-trace=0 PASS
+F1 16384_12: sqtt kernels=14 not-in-prod-trace=0 PASS
+F5 16384_12: unchanged kernels beyond ±3%: 7 (uniform shifts are positional/power noise, see cards.md 增量节)
+    16384_12 fwd_prep_b#1: 349->326us (-6.7%)
+    16384_12 wu#1: 639->600us (-6.1%)
+    16384_12 fwd_h_v8o4#2: 503->464us (-7.9%)
+    16384_12 dav#1: 277->260us (-5.9%)
+    16384_12 dhu_v8b#1: 656->585us (-10.9%)
+    16384_12 wy_s4a#1: 560->526us (-6.0%)
+    16384_12 wy_s4b#1: 1283->1163us (-9.4%)
+F5 16384_24: unchanged kernels beyond ±3%: 7 (uniform shifts are positional/power noise, see cards.md 增量节)
+    16384_24 fwd_prep_b#1: 716->677us (-5.5%)
+    16384_24 wu#1: 1275->1187us (-6.9%)
+    16384_24 fwd_h_v8o4#2: 876->821us (-6.3%)
+    16384_24 dav#1: 544->517us (-5.1%)
+    16384_24 dhu_v8b4#1: 1271->1144us (-10.0%)
+    16384_24 wy_s4a#1: 1281->1192us (-6.9%)
+    16384_24 wy_s4b#1: 2669->2340us (-12.3%)
+F5 16384_48: unchanged kernels beyond ±3%: 4 (uniform shifts are positional/power noise, see cards.md 增量节)
+    16384_48 wu#1: 2532->2644us (+4.4%)
+    16384_48 fwd_h_v8o4#2: 1550->1632us (+5.3%)
+    16384_48 dav#1: 1041->1088us (+4.4%)
+    16384_48 wy_s4a#1: 2797->2962us (+5.9%)
+F5 16384_96: unchanged kernels beyond ±3%: 7 (uniform shifts are positional/power noise, see cards.md 增量节)
+    16384_96 fwd_prep_b#1: 2963->2731us (-7.8%)
+    16384_96 wu#1: 5779->5174us (-10.5%)
+    16384_96 fwd_h_v8o4#2: 2684->2439us (-9.1%)
+    16384_96 dav#1: 2163->1988us (-8.1%)
+    16384_96 dhu_v8b#1: 3665->3496us (-4.6%)
+    16384_96 wy_s4a#1: 8450->7668us (-9.2%)
+    16384_96 wy_s4b#1: 15721->14563us (-7.4%)
