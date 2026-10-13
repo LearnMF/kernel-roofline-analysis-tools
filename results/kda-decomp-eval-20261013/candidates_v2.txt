@@ -1,0 +1,17 @@
+candidate                                   8192/12  8192/24  8192/48  8192/96 16384/12 16384/24 16384/48 16384/96 32768/12 32768/24 32768/48 32768/96 65536/12 65536/24 65536/48 65536/96   TP8   TP2   mean
+F3a  s4b recomputes dAqk (dav pass 1 goes)   +1.68%   +1.74%   +1.74%   +1.74%   +1.70%   +1.75%   +1.75%   +1.75%   +1.75%   +1.77%   +1.77%   +1.70%   +1.77%   +1.78%   +1.80%   +1.78% +1.72 +1.77 +1.75
+L1   dav writes dAqk^T; s4b aqB as rows      -0.45%   -0.76%   -0.72%   -0.64%   -0.73%   -0.74%   -0.70%   -0.64%   -0.76%   -0.74%   -0.72%   -0.61%   -0.75%   -0.75%   -0.76%   -0.67% -0.67 -0.72 -0.70
+L2   s4a writes dA^T; s4b akB as rows        -0.10%   -0.11%   -0.10%   -0.09%   -0.10%   -0.11%   -0.10%   -0.09%   -0.11%   -0.11%   -0.10%   -0.10%   -0.11%   -0.10%   -0.11%   -0.09% -0.10 -0.10 -0.10
+L1+L2 both transposed copies                 -0.54%   -0.87%   -0.82%   -0.73%   -0.84%   -0.84%   -0.79%   -0.72%   -0.86%   -0.84%   -0.82%   -0.71%   -0.85%   -0.85%   -0.87%   -0.76% -0.77 -0.83 -0.80
+F2   drop Wb, dhu transposes Wn in LDS       -0.61%   -0.23%   -0.43%   -0.31%   -0.64%   -0.24%   -0.45%   -0.31%   -0.69%   -0.25%   -0.45%   -0.32%   -0.70%   -0.25%   -0.48%   -0.32% -0.66 -0.45 -0.42
+G    wu computes g from g_raw                -0.60%   -0.64%   -0.60%   -0.55%   -0.62%   -0.62%   -0.61%   -0.55%   -0.65%   -0.64%   -0.61%   -0.56%   -0.64%   -0.63%   -0.65%   -0.57% -0.63 -0.62 -0.61
+D    dav's dv inside the dh recurrence      -17.80%  -10.57%   -8.04%  -12.98%  -18.48%  -11.03%   -8.16%  -13.33%  -19.47%  -11.45%   -8.34%  -14.15%  -19.56%  -11.03%   -8.71%  -14.58% -18.83 -8.31 -12.98
+
+  F3a  s4b recomputes dAqk (dav pass 1 goes) class: A (same MMAC order as dav)     s4b VGPR 236+48 > 256: spill risk
+  L1   dav writes dAqk^T; s4b aqB as rows    class: A (layout only)                LDS reuse in s4a assumed (else 46 KB -> 1 CTA/CU)
+  L2   s4a writes dA^T; s4b akB as rows      class: A (layout only)                LDS reuse in s4a assumed (else 46 KB -> 1 CTA/CU)
+  L1+L2 both transposed copies               class: A (layout only)                LDS reuse in s4a assumed (else 46 KB -> 1 CTA/CU)
+  F2   drop Wb, dhu transposes Wn in LDS     class: A                              
+  G    wu computes g from g_raw              class: A if the scan order equals the gate kernel's 
+  D    dav's dv inside the dh recurrence     class: A                              
+(operator-level speedup %, positive = faster; model is conservative for copy removals, see backtest)

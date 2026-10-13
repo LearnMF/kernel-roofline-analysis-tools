@@ -40,7 +40,9 @@ E_PHYS = 1.10                              # attainable throughput efficiency of
 CPI_MMAC = 16.0                            # cycles an added dependent 16x16x16 MMAC adds to a CTA
 KAPPA_TA = 0.8                             # share of a CTA's added TA cycles on its latency (calibrated, P-20)
 # TA cost table (results/kda-bound-20261012, CU cycles per wave-level VMEM instruction, data in HBM)
-TA_RD = {"c1k": 21, "c512": 22, "r4x256": 43, "r16x64": 169, "r16x32": 85, "gather4": 229, "c256": 10}
+TA_RD = {"c1k": 21, "c512": 22, "r4x256": 43, "r16x64": 169, "r16x32": 85, "gather64": 229, "c256": 10,
+         "gather4": 43}   # gather4: s4b aqB / akB = 4 B/lane in 4 rows x 64 B per instruction (read from the code;
+                          # the first step-2 run assumed the 64 rows x 4 B pattern, 229 cycles -> P-55 / L1 / L2 overrated)
 TA_WR = {"c1k": 56, "c512": 28, "r16x64": 67, "r16x32": 67}
 FLOORS = ("f_mem", "f_ta", "f_val", "f_lds", "f_cmp", "f_chain")
 
