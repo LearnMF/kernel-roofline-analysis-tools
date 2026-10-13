@@ -1,0 +1,13 @@
+Current Python version 3.10 is below the recommended 3.11 version. It is recommended to upgrade to Python 3.11 or higher for the best experience.
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+T=16384 H=24 round 0: fwd_h_bn 883 us, dhu 1263 us, serial 2139 us | together: fwd_h_bn 2153 us, dhu 2688 us, wall 2688 us -> saving -549 us (-25.7% of serial)
+T=16384 H=24 round 1: fwd_h_bn 883 us, dhu 1266 us, serial 2159 us | together: fwd_h_bn 2059 us, dhu 2568 us, wall 2568 us -> saving -410 us (-19.0% of serial)
+T=16384 H=24 round 2: fwd_h_bn 889 us, dhu 1265 us, serial 2146 us | together: fwd_h_bn 2025 us, dhu 2517 us, wall 2517 us -> saving -371 us (-17.3% of serial)
+DONE
