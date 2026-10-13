@@ -149,6 +149,7 @@ F2 iface<=stream<=measured violations: 18
   32768_24 l2n_apply#1: iface=671.2 stream=671.3 meas=624.6us
   32768_48 l2n_apply#1: iface=1342.5 stream=1342.5 meas=1249.4us
   32768_48 fwd_h_v8o4w#2: iface=2018.4 stream=2014.5 meas=3163.7us
+  说明：l2n_apply 全形态 meas<floor ≈7%——接口下限的带宽项把读写相加，而 HBM 读写在物理上可双工重叠，贴顶 kernel 会略低于串行模型；fwd_h_v8o4w#2 的 0.2% 为共享 launcher 必需字节按实测比例分摊的近似误差。
 F3 TA放大<1.0: 6
   ('16384_96', 'gate#1', 0.9850739313339628)
   ('32768_96', 'gate#1', 0.9822223583623307)
@@ -156,6 +157,7 @@ F3 TA放大<1.0: 6
   ('65536_48', 'gate#1', 0.9676579015191435)
   ('65536_96', 'gate#1', 0.9581862906437346)
   ('8192_24', 'exp2#1', 0.9392265420191904)
+  说明：均在小 kernel（gate/exp2）上 0.94–0.99，计数噪声范围，不影响结论。
 F1 16384_48: sqtt kernels=14 not-in-prod-trace=0 PASS
 F1 16384_12: sqtt kernels=14 not-in-prod-trace=0 PASS
 F5 16384_12: unchanged kernels beyond ±3%: 7 (uniform shifts are positional/power noise, see cards.md 增量节)

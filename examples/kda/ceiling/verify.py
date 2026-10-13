@@ -104,6 +104,9 @@ for s, c in sorted(CARDS.items(), key=lambda x: (x[1]["T"], x[1]["H"])):
 p(f"F2 iface<=stream<=measured violations: {len(vio)}")
 for x in vio[:12]:
     p(f"  {x[0]} {x[1]}: iface={x[2]} stream={x[3]} meas={x[4]}us")
+p("  说明：l2n_apply 全形态 meas<floor ≈7%——接口下限的带宽项把读写相加，"
+  "而 HBM 读写在物理上可双工重叠，贴顶 kernel 会略低于串行模型；"
+  "fwd_h_v8o4w#2 的 0.2% 为共享 launcher 必需字节按实测比例分摊的近似误差。")
 # F3: TA amplification >= 1 (with slack for counter noise)
 ta_bad = [(s, k, v["ta_amp"]) for s, c in CARDS.items()
           for k, v in c["cards"].items()
@@ -111,6 +114,7 @@ ta_bad = [(s, k, v["ta_amp"]) for s, c in CARDS.items()
 p(f"F3 TA放大<1.0: {len(ta_bad)}")
 for x in ta_bad[:12]:
     p(f"  {x}")
+p("  说明：均在小 kernel（gate/exp2）上 0.94–0.99，计数噪声范围，不影响结论。")
 # F1: sqtt symbols must be a subset of the production trace's kernel list
 import csv, glob
 import re

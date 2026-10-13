@@ -1,0 +1,12 @@
+# P3 icache probe (dev7, gfx936): binary ip_<M> = 4 wave-paths x M unrolled serial FMAs
+# per path; N_ITER=400; grid = 80/160/240 CTAs = 1/2/3 CTA per CU.
+# cyc/inst = us*1500/(400*M); total code footprint = 4 paths * M * 4B = 16*M bytes
+M=64    fp=1KB    grid80=162us->9.5   grid160=314us    grid240=452us
+M=256   fp=4KB    grid80=590us->8.8   grid160=1137us   grid240=1688us
+M=1024  fp=16KB   grid80=4300us->15.7 grid160=5220us   grid240=8200us
+M=4096  fp=64KB   grid80=17066us->16.6 grid160=19916us grid240=32973us
+M=8192  fp=128KB  grid80=34067us->16.6 grid160=39746us grid240=65729us
+M=16384 fp=256KB  grid80=68072us->16.6 grid160=79374us grid240=131284us
+M=32768 fp=512KB  grid80=136118us->16.6 grid160=158930us grid240=262478us
+# s4b prod code = 1200 insts = 4.8KB (from g2_calib_p2 .s count)
+# s4b P-55 est ~8.7KB (5177->9409 src lines ratio)
