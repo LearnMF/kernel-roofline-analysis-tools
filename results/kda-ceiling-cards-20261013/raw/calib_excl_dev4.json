@@ -1,0 +1,286 @@
+{
+  "schema": "kra.machine/1",
+  "id": "gfx936-BW200,_UBB_BW1000",
+  "provenance": {
+    "host": "bw7",
+    "arch": "gfx936",
+    "visible_devices": "4",
+    "timestamp_utc": "2026-10-13T09:10:44Z",
+    "hipcc_version": "dcc version: 25.10.0-0\nclang version 17.0.0 (http://10.4.0.1/dcutoolkit/driverruntime/llvm-project.git ff5bf917a679c83afe927af051a20b86fef7b07d)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/dtk/llvm/bin",
+    "smi": "================================= System Management Interface ==================================\n================================================================================================\nHCU     Temp     AvgPwr     Perf     PwrCap     VRAM%      HCU%      Dec%      Enc%      Mode     \n0       39.0C    132.0W     manual   800.0W     91%        0.0%      0.0%      0.0%      Normal   \n1       40.0C    132.0W     manual   800.0W     91%        0.0%      0.0%      0.0%      Normal   \n2       37.0C    132.0W     manual   800.0W     91%        0.0%      0.0%      0.0%      Normal   \n3       35.0C    134.0W     manual   800.0W     91%        0.0%      0.0%      0.0%      Normal   \n4       43.0C    223.0W     manual   800.0W     0%         0.0%      0.0%      0.0%      Normal   \n5       40.0C    133.0W     manual   800.0W     55%        0.0%      0.0%      0.0%      Normal   \n6       38.0C    132.0W     manual   800.0W     86%        0.0%      0.0%      0.0%      Normal   \n7       36.0C    132.0W     manual   800.0W     86%        0.0%      0.0%      0.0%      Normal   \n================================================================================================\n======================================== End of SMI Log ========================================",
+    "tool_git_sha": null,
+    "source": "/public/home/tanbo/kra/kra/calibrate/microbench.hip"
+  },
+  "device": {
+    "name": "BW200, UBB BW1000",
+    "gcnArchName": "gfx936:sramecc+:xnack-",
+    "cu_count": 80,
+    "warp_size": 64,
+    "clock_khz": 1500000,
+    "memory_clock_khz": 1800000,
+    "memory_bus_width": 4096,
+    "l2_bytes": 8388608,
+    "lds_per_block": 65536,
+    "lds_per_cu": 65536,
+    "regs_per_block": 196608,
+    "max_threads_per_cu": 2560,
+    "global_mem_bytes": 68702699520,
+    "wall_clock_khz": 25000
+  },
+  "peaks": {
+    "hbm_read": {
+      "value": 1336.0,
+      "median_of_best_config": 1256.5,
+      "config": {
+        "bytes_per_pass": 1073741824,
+        "grid": 320,
+        "block": 512,
+        "unroll": 1
+      },
+      "n_configs": 16,
+      "unit": "GB/s",
+      "theoretical": 1843.2,
+      "pct_of_theoretical": 72.5
+    },
+    "hbm_read_nt": {
+      "value": 1336.3,
+      "median_of_best_config": 1253.7,
+      "config": {
+        "bytes_per_pass": 1073741824,
+        "grid": 320,
+        "block": 512,
+        "unroll": 1
+      },
+      "n_configs": 8,
+      "unit": "GB/s",
+      "theoretical": 1843.2,
+      "pct_of_theoretical": 72.5
+    },
+    "hbm_write": {
+      "value": 1088.5,
+      "median_of_best_config": 1079.1,
+      "config": {
+        "bytes_per_pass": 1073741824,
+        "grid": 320,
+        "block": 256,
+        "unroll": 1
+      },
+      "n_configs": 16,
+      "unit": "GB/s",
+      "theoretical": 1843.2,
+      "pct_of_theoretical": 59.1
+    },
+    "hbm_copy": {
+      "value": 1128.3,
+      "median_of_best_config": 1119.2,
+      "config": {
+        "bytes_per_pass": 2147483648,
+        "grid": 320,
+        "block": 256,
+        "unroll": 1
+      },
+      "n_configs": 16,
+      "unit": "GB/s (read+write bytes)",
+      "theoretical": 1843.2,
+      "pct_of_theoretical": 61.2
+    },
+    "l2_read": {
+      "value": 6135.4,
+      "median_of_best_config": 5937.8,
+      "config": {
+        "working_set": 2097152,
+        "l2_size": 8388608,
+        "resident": true,
+        "grid": 1280,
+        "block": 512,
+        "loads_per_thread": 1024
+      },
+      "n_configs": 12,
+      "unit": "GB/s",
+      "bytes_per_cu_per_clock": 51.1
+    }
+  },
+  "ridge_points_flop_per_byte": {},
+  "latency": {
+    "gmem_small_ws": null,
+    "gmem_l2_ws": null,
+    "gmem_hbm_ws": null,
+    "lds": null,
+    "mmac_bf16_dependent": null,
+    "barrier": {}
+  },
+  "launch": {},
+  "pcie_GBps": {},
+  "observed_shader_clock_mhz": null,
+  "warnings": [],
+  "isa_check": {
+    "ok": true,
+    "asm": "/tmp/kra_calibrate_build/microbench-hip-amdgcn-amd-amdhsa-gfx936.s",
+    "kernels": {
+      "k_mmac_bf16": {
+        "symbol": "_Z11k_mmac_bf16ILi4EEviPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "v_mmac_f32_16x16x16_bf16": 4,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_mmac_f16": {
+        "symbol": "_Z10k_mmac_f16ILi8EEviPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "v_mmac_f32_16x16x16_f16": 8,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_mmac_f32x8": {
+        "symbol": "_Z12k_mmac_f32x8ILi8EEviPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "v_fma_f32": 1,
+          "v_mmac_16x16x8_f32": 8,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_mmac_tf32": {
+        "symbol": "_Z11k_mmac_tf32ILi8EEviPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "v_fma_f32": 1,
+          "v_mmac_f32_16x16x8_tf32": 8,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_mmac_i8": {
+        "symbol": "_Z9k_mmac_i8ILi8EEviPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "v_mmac_i32_16x16x32_i8": 8,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_fma_f32": {
+        "symbol": "_Z9k_fma_f32ILi8EEviPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "v_fma_f32": 1,
+          "v_pk_fma_f32": 36,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_exp2": {
+        "symbol": "_Z6k_exp2ILi8EEviPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "v_fma_f32": 1,
+          "v_exp_f32": 72,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_readILi1": {
+        "symbol": "_Z6k_readILi1EEvPKDv4_fmPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 2,
+          "s_load_dwordx4": 1,
+          "s_load_dwordx2": 1,
+          "global_load_dwordx4": 2,
+          "global_store_dword": 1
+        }
+      },
+      "k_read_nt": {
+        "symbol": "_Z9k_read_ntPKDv4_fmPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 2,
+          "s_load_dwordx4": 1,
+          "s_load_dwordx2": 1,
+          "global_load_dwordx4": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_copyILi1": {
+        "symbol": "_Z6k_copyILi1EEvPKDv4_fPS0_m",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 2,
+          "s_load_dwordx2": 1,
+          "s_load_dwordx4": 1,
+          "global_load_dwordx4": 2,
+          "global_store_dwordx4": 2
+        }
+      },
+      "k_writeILi1": {
+        "symbol": "_Z7k_writeILi1EEvPDv4_fmf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 3,
+          "s_load_dwordx4": 1,
+          "global_store_dwordx4": 2
+        }
+      },
+      "k_lds_read": {
+        "symbol": "_Z10k_lds_readiPf",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 1,
+          "s_barrier": 1,
+          "ds_read_b128": 12,
+          "s_load_dwordx2": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_chase": {
+        "symbol": "_Z7k_chasePKjijPyPj",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dwordx4": 2,
+          "global_load_dword": 65,
+          "global_store_dwordx4": 1,
+          "global_store_dword": 1
+        }
+      },
+      "k_lds_chase": {
+        "symbol": "_Z11k_lds_chaseiPyPj",
+        "ok": true,
+        "missing": [],
+        "counts": {
+          "s_load_dword": 2,
+          "s_barrier": 1,
+          "ds_read_b32": 9,
+          "s_load_dwordx4": 1,
+          "global_store_dwordx4": 1,
+          "global_store_dword": 1
+        }
+      }
+    }
+  },
+  "raw": "calib_excl_dev4.raw.jsonl"
+}

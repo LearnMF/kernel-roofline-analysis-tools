@@ -1,0 +1,1494 @@
+{
+  "schema": "kra.optrace/1",
+  "meta": {
+    "T": 8192,
+    "H": 12,
+    "arm": "g2",
+    "tree": "/opt/kda_env/g2_card_p52"
+  },
+  "calls": [
+    {
+      "seq": 0,
+      "launcher": "fwd_prep",
+      "in_bytes": 101062704,
+      "out_bytes": 139984896,
+      "inputs": [
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140262277906432
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140262303072256
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261992693760
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140262017859584
+        },
+        {
+          "shape": [
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 48,
+          "dup": false,
+          "ptr": 140261936071168
+        },
+        {
+          "shape": [
+            1536
+          ],
+          "dtype": "float32",
+          "bytes": 6144,
+          "dup": false,
+          "ptr": 140261936077824
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 393216,
+          "dup": false,
+          "ptr": 140261936463872
+        }
+      ],
+      "outputs": [
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261363548160
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261495668736
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261522931712
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261550194688
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            4,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 12582912,
+          "dup": false,
+          "ptr": 140261835407360
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            64
+          ],
+          "dtype": "bfloat16",
+          "bytes": 12582912,
+          "dup": false,
+          "ptr": 140261850087424
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            64
+          ],
+          "dtype": "bfloat16",
+          "bytes": 12582912,
+          "dup": false,
+          "ptr": 140261864767488
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 393216,
+          "dup": false,
+          "ptr": 140261936857088
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 393216,
+          "dup": false,
+          "ptr": 140261937250304
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4
+          ],
+          "dtype": "float32",
+          "bytes": 786432,
+          "dup": false,
+          "ptr": 140261202067456
+        }
+      ]
+    },
+    {
+      "seq": 1,
+      "launcher": "fwd_h_o",
+      "in_bytes": 114032640,
+      "out_bytes": 25165824,
+      "inputs": [
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261363548160
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261495668736
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261522931712
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4
+          ],
+          "dtype": "float32",
+          "bytes": 786432,
+          "dup": false,
+          "ptr": 140261202067456
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261550194688
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            4,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 12582912,
+          "dup": false,
+          "ptr": 140261835407360
+        }
+      ],
+      "outputs": [
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261577457664
+        }
+      ]
+    },
+    {
+      "seq": 2,
+      "launcher": "l2n_apply",
+      "in_bytes": 51118080,
+      "out_bytes": 50331648,
+      "inputs": [
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140262277906432
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140262303072256
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 393216,
+          "dup": false,
+          "ptr": 140261936857088
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 393216,
+          "dup": false,
+          "ptr": 140261937250304
+        }
+      ],
+      "outputs": [
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261363548160
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261495668736
+        }
+      ]
+    },
+    {
+      "seq": 3,
+      "launcher": "head_gate",
+      "in_bytes": 25172016,
+      "out_bytes": 50331648,
+      "inputs": [
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140262017859584
+        },
+        {
+          "shape": [
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 48,
+          "dup": false,
+          "ptr": 140261936071168
+        },
+        {
+          "shape": [
+            1536
+          ],
+          "dtype": "float32",
+          "bytes": 6144,
+          "dup": false,
+          "ptr": 140261936077824
+        }
+      ],
+      "outputs": [
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "float32",
+          "bytes": 50331648,
+          "dup": false,
+          "ptr": 140261206261760
+        }
+      ]
+    },
+    {
+      "seq": 4,
+      "launcher": "wu",
+      "in_bytes": 138805248,
+      "out_bytes": 176160768,
+      "inputs": [
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261495668736
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261992693760
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261363548160
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 393216,
+          "dup": false,
+          "ptr": 140261936463872
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            64
+          ],
+          "dtype": "bfloat16",
+          "bytes": 12582912,
+          "dup": false,
+          "ptr": 140261864767488
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "float32",
+          "bytes": 50331648,
+          "dup": false,
+          "ptr": 140261206261760
+        }
+      ],
+      "outputs": [
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261522931712
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261550194688
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261604720640
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261631983616
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261659246592
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261770395648
+        },
+        {
+          "shape": [
+            1,
+            128,
+            12,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261879447552
+        }
+      ]
+    },
+    {
+      "seq": 5,
+      "launcher": "fwd_h_bn",
+      "in_bytes": 77070336,
+      "out_bytes": 75497472,
+      "inputs": [
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261522931712
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261659246592
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261604720640
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4
+          ],
+          "dtype": "float32",
+          "bytes": 786432,
+          "dup": false,
+          "ptr": 140261202067456
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4
+          ],
+          "dtype": "float32",
+          "bytes": 786432,
+          "dup": false,
+          "ptr": 140261202853888
+        }
+      ],
+      "outputs": [
+        {
+          "shape": [
+            1,
+            128,
+            12,
+            8,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 50331648,
+          "dup": false,
+          "ptr": 140261258690560
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140262095454208
+        }
+      ]
+    },
+    {
+      "seq": 6,
+      "launcher": "dav",
+      "in_bytes": 62914560,
+      "out_bytes": 75497472,
+      "inputs": [
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140262070288384
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140262095454208
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            64
+          ],
+          "dtype": "bfloat16",
+          "bytes": 12582912,
+          "dup": false,
+          "ptr": 140261850087424
+        }
+      ],
+      "outputs": [
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            64
+          ],
+          "dtype": "float32",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261522931712
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261604720640
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261659246592
+        }
+      ]
+    },
+    {
+      "seq": 7,
+      "launcher": "dhu_bn",
+      "in_bytes": 126615552,
+      "out_bytes": 75497472,
+      "inputs": [
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261631983616
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261770395648
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261550194688
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261659246592
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261604720640
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            8,
+            4,
+            4
+          ],
+          "dtype": "float32",
+          "bytes": 786432,
+          "dup": false,
+          "ptr": 140261202067456
+        }
+      ],
+      "outputs": [
+        {
+          "shape": [
+            1,
+            128,
+            12,
+            8,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 50331648,
+          "dup": false,
+          "ptr": 140261311119360
+        },
+        {
+          "shape": [
+            1,
+            128,
+            12,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261797658624
+        }
+      ]
+    },
+    {
+      "seq": 8,
+      "launcher": "wy_s4_split",
+      "in_bytes": 365297664,
+      "out_bytes": 176553984,
+      "inputs": [
+        {
+          "shape": [
+            1,
+            128,
+            12,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261879447552
+        },
+        {
+          "shape": [
+            12582912
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261495668736
+        },
+        {
+          "shape": [
+            0
+          ],
+          "dtype": "bfloat16",
+          "bytes": 0,
+          "dup": false,
+          "ptr": 0
+        },
+        {
+          "shape": [
+            0
+          ],
+          "dtype": "bfloat16",
+          "bytes": 0,
+          "dup": true,
+          "ptr": 0
+        },
+        {
+          "shape": [
+            12582912
+          ],
+          "dtype": "float32",
+          "bytes": 50331648,
+          "dup": false,
+          "ptr": 140261206261760
+        },
+        {
+          "shape": [
+            98304
+          ],
+          "dtype": "float32",
+          "bytes": 393216,
+          "dup": false,
+          "ptr": 140261936463872
+        },
+        {
+          "shape": [
+            6291456
+          ],
+          "dtype": "bfloat16",
+          "bytes": 12582912,
+          "dup": false,
+          "ptr": 140261864767488
+        },
+        {
+          "shape": [
+            1,
+            128,
+            12,
+            8,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 50331648,
+          "dup": false,
+          "ptr": 140261258690560
+        },
+        {
+          "shape": [
+            0
+          ],
+          "dtype": "bfloat16",
+          "bytes": 0,
+          "dup": true,
+          "ptr": 0
+        },
+        {
+          "shape": [
+            1,
+            128,
+            12,
+            8,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 50331648,
+          "dup": false,
+          "ptr": 140261311119360
+        },
+        {
+          "shape": [
+            1,
+            128,
+            12,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261797658624
+        },
+        {
+          "shape": [
+            12582912
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261363548160
+        },
+        {
+          "shape": [
+            12582912
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261992693760
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            64
+          ],
+          "dtype": "float32",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261522931712
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140262070288384
+        },
+        {
+          "shape": [
+            1,
+            12,
+            128,
+            4,
+            8,
+            4,
+            16,
+            4
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140262095454208
+        }
+      ],
+      "outputs": [
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "float32",
+          "bytes": 50331648,
+          "dup": false,
+          "ptr": 140261390811136
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "float32",
+          "bytes": 50331648,
+          "dup": false,
+          "ptr": 140261443239936
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261550194688
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "float32",
+          "bytes": 50331648,
+          "dup": false,
+          "ptr": 140261940264960
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 393216,
+          "dup": false,
+          "ptr": 140261203640320
+        }
+      ]
+    },
+    {
+      "seq": 9,
+      "launcher": "bwd_tail",
+      "in_bytes": 228071472,
+      "out_bytes": 75896880,
+      "inputs": [
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "float32",
+          "bytes": 50331648,
+          "dup": false,
+          "ptr": 140261390811136
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "float32",
+          "bytes": 50331648,
+          "dup": false,
+          "ptr": 140261443239936
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "float32",
+          "bytes": 50331648,
+          "dup": false,
+          "ptr": 140261940264960
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 393216,
+          "dup": false,
+          "ptr": 140261203640320
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261363548160
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261495668736
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 393216,
+          "dup": false,
+          "ptr": 140261936857088
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 393216,
+          "dup": false,
+          "ptr": 140261937250304
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140262017859584
+        },
+        {
+          "shape": [
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 48,
+          "dup": false,
+          "ptr": 140261936071168
+        },
+        {
+          "shape": [
+            1536
+          ],
+          "dtype": "float32",
+          "bytes": 6144,
+          "dup": false,
+          "ptr": 140261936077824
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 393216,
+          "dup": false,
+          "ptr": 140261936463872
+        }
+      ],
+      "outputs": [
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261522931712
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261604720640
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12,
+            128
+          ],
+          "dtype": "bfloat16",
+          "bytes": 25165824,
+          "dup": false,
+          "ptr": 140261631983616
+        },
+        {
+          "shape": [
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 48,
+          "dup": false,
+          "ptr": 140261936071680
+        },
+        {
+          "shape": [
+            1536
+          ],
+          "dtype": "float32",
+          "bytes": 6144,
+          "dup": false,
+          "ptr": 140261204033536
+        },
+        {
+          "shape": [
+            1,
+            8192,
+            12
+          ],
+          "dtype": "float32",
+          "bytes": 393216,
+          "dup": false,
+          "ptr": 140261937643520
+        }
+      ]
+    }
+  ],
+  "caveats": [
+    "inputs counted fully even if only partly read",
+    "in-place outputs counted once (as input)"
+  ]
+}

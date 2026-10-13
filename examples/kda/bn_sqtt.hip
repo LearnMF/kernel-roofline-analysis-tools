@@ -97,17 +97,17 @@ int main(int argc, char** argv) {
         CKR(g2_fwd_prep(q, k, v, g, A_log, dt_bias, beta, Wn, Kn, Un, QgA, AqkA, Aqk, Akk,
                         q_rstd, k_rstd, Gn, R, Kb, -5.0, 1.0, /*gate*/0, scale, H, NT,
                         nullptr, nullptr, 0));
-        // forward recurrence with bf16-o emit (production fwd; also the ckpt recompute path
-        // adds HbN/ANv -- capture that variant too)
-        CKR(g2::g2_fwd_h_v8o(Wn, Kn, Un, Gn, QgA, AqkA, nullptr, Ob, Vn, nullptr, nullptr,
-                            scale, 1, T, H, nullptr, 1, nullptr, nullptr, 0));
-        CKR(g2::g2_fwd_h_v8o(Wn, Kn, Un, Gn, QgA, AqkA, nullptr, Ob, Vn, HbN, ANv,
-                            scale, 1, T, H, nullptr, 1, nullptr, nullptr, 0));
+        // forward recurrence: production launches MODE 1 (o only) and MODE 4 (HbN+Vn,
+        // ANv omitted); pass GnRaw so the raw-Gn instance is taken at deep saturation
+        CKR(g2::g2_fwd_h_v8o(Wn, Kn, Un, Gn, QgA, AqkA, nullptr, Ob, nullptr, nullptr, nullptr,
+                            scale, 1, T, H, nullptr, 1, nullptr, nullptr, Gn, 0));
+        CKR(g2::g2_fwd_h_v8o(Wn, Kn, Un, Gn, QgA, AqkA, nullptr, nullptr, Vn, HbN, nullptr,
+                            scale, 1, T, H, nullptr, 1, nullptr, nullptr, Gn, 0));
         CKR(g2_wu(k, v, q, beta, Aqk, g, Wn, Wb, Un, KgA, Kn, QgA, kgB, vB,
                      1, T, H, nullptr, nullptr, 0));
         CKR(g2_dav(dO, Vn, Aqk, dA, dv2, dOT, ANv2, scale, 1, T, H,
                       nullptr, nullptr, 0));
-        CKR(g2::g2_dhu_v8b(KgA, Qg, Wb, dOT, dv, Gn, dv2, HbN, ANv2, scale, 1, T, H,
+        CKR(g2::g2_dhu_v8b(KgA, Qg, Wb, dOT, dv, Gn, nullptr, HbN, ANv2, scale, 1, T, H,
                           nullptr, 1, 0));
         CKR(g2::g2_wy_s4_split(kgB, k, vB, Vn, g, beta, Aqk, HbN, dO, dh, dv, dAqk,
                               dq, dk, dv2, dg, db, dA, dwT, db_part, scale, T, H, NT,
