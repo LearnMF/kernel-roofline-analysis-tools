@@ -20,6 +20,11 @@ Transformations (each returns a new Kernel, then t is recomputed):
                          VMEM: the kernel's own measured cycles per instruction), floors += the added demand
     remove_bytes(k, ...) dropped loads / stores: floors -= demand, lam -= beta x the traffic's share of lam
     geometry(k, ...)     CTA count / per-CTA work change (wide slabs): lam scales with the per-CTA work
+Residency DECREASES (merge / geometry growing LDS or VGPR) use the measured t(res) curves of the calibration
+(results/kda-decomp-calib-20261013/calib.json, P1: LDS top-up probe, paired medians at 16K/12 and 16K/48):
+latency term = rounds at the original residency x lam x measured t(res_new)/t(res_old).  Without a measured
+curve (or for residency increases) the R x lam rule stays and is flagged.  The P2-P4 coefficients of that
+calibration are single-point fits and are NOT used as predictive terms.
 Out of scope (flagged, not modelled): L2-capacity effects (P-49 64K), stream-level concurrency (F9).
     python3 decomp_eval.py backtest | regimes
 """
@@ -45,6 +50,34 @@ TA_RD = {"c1k": 21, "c512": 22, "r4x256": 43, "r16x64": 169, "r16x32": 85, "gath
                           # the first step-2 run assumed the 64 rows x 4 B pattern, 229 cycles -> P-55 / L1 / L2 overrated)
 TA_WR = {"c1k": 56, "c512": 28, "r16x64": 67, "r16x32": 67}
 FLOORS = ("f_mem", "f_ta", "f_val", "f_lds", "f_cmp", "f_chain")
+_CALIB = os.path.join(ROOT, "results", "kda-decomp-calib-20261013", "calib.json")
+OCC = json.load(open(_CALIB))["p1"] if os.path.exists(_CALIB) else None
+OCC_FLAGS = set()
+
+
+def occ_ratio(name, shape, res_old, res_new):
+    """measured t(res_new)/t(res_old) for a residency decrease, or None when either point is unmeasured."""
+    if OCC is None or res_new >= res_old:
+        return None
+    base = name.split("#")[0]
+    cls = OCC["class_of"].get(base)
+    curve = OCC["curves"].get(cls) if cls else None
+    if not curve or str(res_old) not in curve or str(res_new) not in curve:
+        return None
+    T, H = map(int, shape.split("_"))
+
+    def val(r):
+        v = curve[str(r)]
+        if not isinstance(v, dict):
+            return v
+        keys = list(v)
+        pick = min(keys, key=lambda k: abs(int(k.split("_")[1]) - H) + abs(int(k.split("_")[0]) - T) / 1e6)
+        v = v[pick]
+        if isinstance(v, dict):
+            sub = "s4a" if "s4a" in base else "s4b" if "s4b" in base else base[-1]
+            v = v.get(sub, sum(v.values()) / len(v))
+        return v
+    return val(res_new) / val(res_old)
 
 
 @dataclass
@@ -65,6 +98,8 @@ class Kernel:
     note: str = ""
     regime: str = "thr"
     t_meas: float = 0.0
+    res0: int = 0              # residency of the measured (card) kernel
+    shape: str = ""
 
     def resident(self):
         r = min(LDS_CU // max(self.lds, 1), WAVES_CU // self.waves,
@@ -86,7 +121,16 @@ class Kernel:
 
     def t(self):
         R = self.rounds()
-        return max(R * self.lam, self.F() * self.imb() * self.e)
+        lat = R * self.lam
+        res = self.resident()
+        if self.res0 and 0 < res < self.res0:
+            r = occ_ratio(self.name, self.shape, self.res0, res)
+            if r is not None:                       # measured t(res) curve (P1), not R x lam
+                R0 = math.ceil(self.ctas / (CU * self.res0))
+                lat = R0 * self.lam * r
+            else:
+                OCC_FLAGS.add(f"{self.name.split('#')[0]} {self.res0}->{res}")
+        return max(lat, self.F() * self.imb() * self.e)
 
     def feasible(self):
         return self.resident() > 0 and self.vgpr <= 256
@@ -107,6 +151,7 @@ def load(shape):
         # the launcher's residency (P-24 throttle / cards) overrides the generic rule when lower
         if c["resident"] < k.resident():
             k.res_cap = c["resident"]
+        k.res0, k.shape = k.resident(), shape
         k.lam = c["t_us"] / k.rounds()
         if k.rounds() == 1 and k.ctas > CU and n in iso and iso[n]["ctas"] <= CU:
             k.lam = min(k.lam, iso[n]["t_us"])          # isolated per-CTA latency (same kernel at H = 12)
@@ -452,6 +497,8 @@ def candidates():
     for name, _, _, _, _, note, cls in rows:
         print(f"  {name:42s} class: {cls:30s} {note}")
     print("(operator-level speedup %, positive = faster; model is conservative for copy removals, see backtest)")
+    if OCC_FLAGS:
+        print("residency decreases without a measured curve (R x lam rule kept):", ", ".join(sorted(OCC_FLAGS)))
 
 
 def backtest():
@@ -482,6 +529,8 @@ def backtest():
             ms = (f"{m[0]:.3f}-{m[1]:.3f}" if m[0] != m[1] else f"{m[0]:.3f}") if isinstance(m[0], float) else m[0]
         print(f"{r['name']:56s} {ps:>13s} {ms:>21s}  {r['detail']}")
     print("(ratios: >1 = the change is faster; B4b / P-51 / F6 are expected < 1)")
+    if OCC_FLAGS:
+        print("residency decreases without a measured curve (R x lam rule kept):", ", ".join(sorted(OCC_FLAGS)))
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ P-13b: l2n_apply -> consumer recompute (8192_48)                 1.004          
 P-51: dhu 64 columns per CTA (16384_48)                          0.833           0.840-0.860  R 3 -> 2, lam 776 -> 1397 us
 P-51: dhu 64 columns per CTA (32768_48)                          0.833           0.870-0.890  R 3 -> 2, lam 1498 -> 2697 us
 P-51: dhu 64 columns per CTA (65536_48)                          0.833                 0.870  R 3 -> 2, lam 2931 -> 5276 us
-F6: s4a + s4b in one kernel (16K/12)                             0.513  infeasible or slower  LDS 61.8 KB -> resident 1, R 39 (was 20): fused 3595 vs 1843 us
+F6: s4a + s4b in one kernel (16K/12)                             0.741  infeasible or slower  LDS 61.8 KB -> resident 1, R 39 (was 20): fused 2487 vs 1843 us
 P-49: recurrences 64 columns per CTA (16384_48) #1/#2    1.000 / 0.938           1.01 / 0.91  #1: R 1->1 imb 1.25->1.67 [thr]; #2: R 1->1 imb 1.25->1.67 [thr]
 P-49: recurrences 64 columns per CTA (32768_48) #1/#2    1.111 / 1.111           1.12 / 1.02  #1: R 2->1 imb 1.25->1.67 [lat]; #2: R 2->1 imb 1.25->1.67 [thr]
 P-49: recurrences 64 columns per CTA (65536_48) #1/#2    1.111 / 1.111           1.40 / 1.12  #1: R 2->1 imb 1.25->1.67 [thr]; #2: R 2->1 imb 1.25->1.67 [thr]
