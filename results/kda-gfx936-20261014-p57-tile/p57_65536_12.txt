@@ -1,0 +1,20 @@
+kernel                                  A us      B us     A/B  A spread B spread  procs  (median of per-process medians; spread = (max-min)/median)
+g2_fwd_prep_a_kernel#1                2351.4    2366.0  0.9938    12.95%    7.37%  5/5
+g2_fwd_prep_b_kernel#1                1313.4    1293.0  1.0158    12.29%   20.15%  5/5
+g2_fwd_h_v8o4_kernel#1                2263.7    2101.2  1.0773   116.74%   66.84%  5/5
+g2_l2n_apply_kernel#1                  623.9     624.1  0.9997    25.93%   21.32%  5/5
+g2_gate_kernel#1                       671.8     671.5  1.0004    10.81%    7.39%  5/5
+g2_wu_kernel#1                        2427.6    2486.2  0.9764    12.39%   21.15%  5/5
+direct_copy_kernel_cuda#1               20.2      20.3  0.9961   506.32%   40.94%  5/5
+direct_copy_kernel_cuda#2               19.1      19.0  1.0042   418.83%  281.09%  5/5
+g2_exp2_kernel#1                        22.2      22.2  0.9964   519.49%  287.41%  5/5
+g2_fwd_h_v8o4_kernel#2                1733.6    1732.3  1.0007    22.29%   13.60%  5/5
+g2_dav_kernel#1                       1080.2    1068.1  1.0114     7.43%   17.51%  5/5
+g2_dhu_v8b_kernel#1                   2114.2    2112.9  1.0006    69.03%   58.50%  5/5
+p3_wy_s4a_kernel#1                    2164.2    2154.4  1.0045    10.06%   10.78%  5/5
+p3_wy_s4b_kernel#1                    4723.1    4489.3  1.0521    10.96%   10.99%  5/5
+g2_bwd_tail_kernel#1                  2415.0    2375.7  1.0165     7.97%    7.34%  5/5
+g2_bwd_tail_reduce_kernel#1             50.2      49.9  1.0048   198.09%  148.72%  5/5
+TOTAL common kernels                 23993.6   23586.1  1.0173
+TOTAL (sum of medians)               23993.6   23586.1  1.0173   (all kernels of each side)
+DONE
