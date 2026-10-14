@@ -13,10 +13,10 @@
 typedef unsigned u2 __attribute__((ext_vector_type(2)));
 typedef unsigned u4 __attribute__((ext_vector_type(4)));
 
-enum Op { RB32, RB64, RB128, R2B32, RB16, WB32, WB64, WB128, BPERM };
+enum Op { RB32, RB64, RB128, R2B32, RB16, WB32, WB64, WB128, BPERM, WB16H, R2B64 };
 static const char* NAME[] = {"ds_read_b32", "ds_read_b64", "ds_read_b128", "ds_read2_b32", "ds_read_u16",
-                             "ds_write_b32", "ds_write_b64", "ds_write_b128", "ds_bpermute_b32"};
-static const int BYTES[] = {4, 8, 16, 8, 2, 4, 8, 16, 4};
+                             "ds_write_b32", "ds_write_b64", "ds_write_b128", "ds_bpermute_b32", "ds_write_b16_d16_hi", "ds_read2_b64"};
+static const int BYTES[] = {4, 8, 16, 8, 2, 4, 8, 16, 4, 2, 16};
 
 template <int OP>
 __device__ __forceinline__ unsigned lds_op(unsigned a, unsigned x) {
@@ -30,6 +30,8 @@ __device__ __forceinline__ unsigned lds_op(unsigned a, unsigned x) {
     if (OP == WB64) { u2 v = {x, x}; asm volatile("ds_write_b64 %0, %1" :: "v"(a), "v"(v)); }
     if (OP == WB128) { u4 v = {x, x, x, x}; asm volatile("ds_write_b128 %0, %1" :: "v"(a), "v"(v)); }
     if (OP == BPERM) { asm volatile("ds_bpermute_b32 %0, %1, %2" : "=v"(r) : "v"(a), "v"(x)); }
+    if (OP == WB16H) { asm volatile("ds_write_b16_d16_hi %0, %1" :: "v"(a), "v"(x)); }
+    if (OP == R2B64) { u4 v; asm volatile("ds_read2_b64 %0, %1 offset1:4" : "=v"(v) : "v"(a)); r = v.x ^ v.w; }
     return r;
 }
 
@@ -56,6 +58,21 @@ __global__ void __launch_bounds__(64) k_lat(int iters, unsigned* out) {
     unsigned a = (unsigned)(uintptr_t)(s + l);
     for (int it = 0; it < iters; ++it) asm volatile("ds_read_b32 %0, %0\n s_waitcnt lgkmcnt(0)" : "+v"(a));
     if (a == 1u) out[blockIdx.x] = a;
+}
+
+// completion latency seen by s_waitcnt: issue one LDS op, wait lgkmcnt(0), repeat (no address dependency)
+template <int K>
+__global__ void __launch_bounds__(64) k_wlat(int iters, unsigned* out) {
+    __shared__ __align__(16) unsigned s[2048];
+    const unsigned a = (unsigned)(uintptr_t)(s + threadIdx.x * 2);
+    unsigned acc = 0;
+    for (int it = 0; it < iters; ++it) {
+        if (K == 0) asm volatile("ds_write_b32 %0, %1\n s_waitcnt lgkmcnt(0)" :: "v"(a), "v"(acc) : "memory");
+        if (K == 1) { unsigned r; asm volatile("ds_read_b32 %0, %1\n s_waitcnt lgkmcnt(0)" : "=v"(r) : "v"(a) : "memory"); acc ^= r; }
+        if (K == 2) { u4 v; asm volatile("ds_read2_b64 %0, %1 offset1:4\n s_waitcnt lgkmcnt(0)" : "=v"(v) : "v"(a) : "memory"); acc ^= v.x; }
+        if (K == 3) asm volatile("ds_write_b16_d16_hi %0, %1\n s_waitcnt lgkmcnt(0)" :: "v"(a), "v"(acc) : "memory");
+    }
+    if (acc == 0x9e3779b9u) out[threadIdx.x] = acc;
 }
 
 // exchange step: write X bytes per wave -> barrier -> read another wave's X bytes -> barrier
@@ -125,7 +142,7 @@ template <int OP>
 static void op_sweep(unsigned* out) {
     const int strides[] = {4, 8, 16, 32, 64, 128};
     for (int st : strides) {
-        if (st < BYTES[OP] && OP != BPERM && OP != RB16) continue;
+        if (st < BYTES[OP] && OP != BPERM && OP != RB16 && !(OP == R2B64 && st == 8)) continue;
         const int iters = 2000, grid = 80 * 4;
         const float ms = best_ms([&] { hipLaunchKernelGGL(k_op<OP>, dim3(grid), dim3(256), 0, 0, iters, st, out); });
         const double insts = (double)grid * 4 * iters * 8;
@@ -167,10 +184,21 @@ int main(int argc, char** argv) {
     printf("# clk=%.3f GHz; LDSOP: 16 waves/CU, 8 ops/iter; ways = distinct addresses per bank per 32-lane half\n", clk / 1e9);
     op_sweep<RB32>(out); op_sweep<RB64>(out); op_sweep<RB128>(out); op_sweep<R2B32>(out); op_sweep<RB16>(out);
     op_sweep<WB32>(out); op_sweep<WB64>(out); op_sweep<WB128>(out); op_sweep<BPERM>(out);
+    op_sweep<WB16H>(out); op_sweep<R2B64>(out);
     {
         const int iters = 20000;
         const float ms = best_ms([&] { hipLaunchKernelGGL(k_lat, dim3(80), dim3(64), 0, 0, iters, out); });
         printf("LDSLAT ds_read_b32 dependent chain: %.1f cycles\n", ms * 1e-3 * clk / iters);
+    }
+    {
+        const char* nm[] = {"ds_write_b32", "ds_read_b32", "ds_read2_b64(8B/lane consecutive)", "ds_write_b16_d16_hi"};
+        const int iters = 20000;
+        float ms[4];
+        ms[0] = best_ms([&] { hipLaunchKernelGGL(k_wlat<0>, dim3(80), dim3(64), 0, 0, iters, out); });
+        ms[1] = best_ms([&] { hipLaunchKernelGGL(k_wlat<1>, dim3(80), dim3(64), 0, 0, iters, out); });
+        ms[2] = best_ms([&] { hipLaunchKernelGGL(k_wlat<2>, dim3(80), dim3(64), 0, 0, iters, out); });
+        ms[3] = best_ms([&] { hipLaunchKernelGGL(k_wlat<3>, dim3(80), dim3(64), 0, 0, iters, out); });
+        for (int k = 0; k < 4; ++k) printf("LDSCOMPL op=%s issue_to_lgkmcnt0_cycles=%.1f\n", nm[k], ms[k] * 1e-3 * clk / iters);
     }
     xchg_sweep<4>(out); xchg_sweep<8>(out);
     bar_sweep<4>(out); bar_sweep<8>(out); bar_sweep<16>(out);

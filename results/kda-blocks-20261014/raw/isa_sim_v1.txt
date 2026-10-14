@@ -1,0 +1,6 @@
+  steady state: 3963 cycles = 2.642 us per iteration (waves: [3963, 3963, 3963, 3963])
+  wave-0 stalls per iteration (cycles): {'issue:vmem': 844, 'wait:lgkmcn': 491, 'barrier': 273, 'issue:lds': 211, 'dep:valu': 165, 'dep:lds': 116, 'wait:vmcnt(': 51, 'dep:valu64': 21, 'dep:pk': 18, 'dep:mmac16': 18, 'dep:carry': 9, 'dep:vld': 4}
+  steady state: 3571 cycles = 2.381 us per iteration (waves: [3571, 3571, 3571, 3571])
+  wave-0 stalls per iteration (cycles): {'issue:vmem': 571, 'wait:lgkmcn': 419, 'wait:vmcnt(': 321, 'barrier': 279, 'issue:lds': 142, 'dep:valu': 102, 'dep:lds': 83, 'dep:pk': 32, 'dep:carry': 24, 'dep:valu64': 21, 'dep:mmac16': 18, 'dep:vst': 12, 'dep:vld': 2}
+  steady state: 4684 cycles = 3.123 us per iteration (waves: [4684, 4682, 4677, 4684, 4674, 4678, 4680, 4684])
+  wave-0 stalls per iteration (cycles): {'issue:vmem': 1718, 'issue:lds': 990, 'barrier': 461, 'simd_busy': 214, 'wait:lgkmcn': 70, 'wait:vmcnt(': 70, 'dep:mmac16': 8, 'dep:carry': 4, 'dep:vld': 2, 'dep:valu64': 1, 'dep:vst': 0}

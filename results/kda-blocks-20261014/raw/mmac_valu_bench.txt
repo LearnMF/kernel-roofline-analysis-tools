@@ -1,49 +1,53 @@
 # clk=1.500 GHz
-MMAC form=bf16_16x16x16 indep=1 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=47.64 cyc_per_mmac_simd=47.64
-MMAC form=bf16_16x16x16 indep=1 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=48.96 cyc_per_mmac_simd=24.48
-MMAC form=bf16_16x16x16 indep=1 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=71.46 cyc_per_mmac_simd=17.87
-MMAC form=bf16_16x16x16 indep=2 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=28.26 cyc_per_mmac_simd=28.26
-MMAC form=bf16_16x16x16 indep=2 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=31.17 cyc_per_mmac_simd=15.59
-MMAC form=bf16_16x16x16 indep=2 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=53.55 cyc_per_mmac_simd=13.39
-MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=21.23 cyc_per_mmac_simd=21.23
-MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=24.44 cyc_per_mmac_simd=12.22
-MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=44.87 cyc_per_mmac_simd=11.22
-MMAC form=bf16_16x16x16 indep=8 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=13.53 cyc_per_mmac_simd=13.53
-MMAC form=bf16_16x16x16 indep=8 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=21.23 cyc_per_mmac_simd=10.61
-MMAC form=bf16_16x16x16 indep=8 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=55.33 cyc_per_mmac_simd=13.83
-MMAC form=bf16_16x16x16 indep=16 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=10.99 cyc_per_mmac_simd=10.99
-MMAC form=bf16_16x16x16 indep=16 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=18.59 cyc_per_mmac_simd=9.29
-MMAC form=bf16_16x16x16 indep=16 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=38.19 cyc_per_mmac_simd=9.55
-MMAC form=f32_16x16x8 indep=1 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=80.04 cyc_per_mmac_simd=80.04
-MMAC form=f32_16x16x8 indep=1 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=79.02 cyc_per_mmac_simd=39.51
-MMAC form=f32_16x16x8 indep=1 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=181.20 cyc_per_mmac_simd=45.30
-MMAC form=f32_16x16x8 indep=2 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=59.43 cyc_per_mmac_simd=59.43
-MMAC form=f32_16x16x8 indep=2 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=70.41 cyc_per_mmac_simd=35.20
-MMAC form=f32_16x16x8 indep=2 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=142.56 cyc_per_mmac_simd=35.64
-MMAC form=f32_16x16x8 indep=4 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=41.29 cyc_per_mmac_simd=41.29
-MMAC form=f32_16x16x8 indep=4 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=70.69 cyc_per_mmac_simd=35.35
-MMAC form=f32_16x16x8 indep=4 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=145.45 cyc_per_mmac_simd=36.36
-MMAC form=f32_16x16x8 indep=8 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=39.01 cyc_per_mmac_simd=39.01
-MMAC form=f32_16x16x8 indep=8 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=68.16 cyc_per_mmac_simd=34.08
-MMAC form=f32_16x16x8 indep=8 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=134.93 cyc_per_mmac_simd=33.73
-MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=2 waves_per_simd=1 cyc_per_mmac_wave=28.08 cyc_per_mmac_simd=28.08
-MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=2 waves_per_simd=2 cyc_per_mmac_wave=42.33 cyc_per_mmac_simd=21.16
-MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=2 waves_per_simd=4 cyc_per_mmac_wave=78.63 cyc_per_mmac_simd=19.66
-MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=4 waves_per_simd=1 cyc_per_mmac_wave=38.55 cyc_per_mmac_simd=38.55
-MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=4 waves_per_simd=2 cyc_per_mmac_wave=59.40 cyc_per_mmac_simd=29.70
-MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=4 waves_per_simd=4 cyc_per_mmac_wave=112.03 cyc_per_mmac_simd=28.01
-MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=8 waves_per_simd=1 cyc_per_mmac_wave=54.19 cyc_per_mmac_simd=54.19
-MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=8 waves_per_simd=2 cyc_per_mmac_wave=93.07 cyc_per_mmac_simd=46.54
-MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=8 waves_per_simd=4 cyc_per_mmac_wave=176.25 cyc_per_mmac_simd=44.06
-VALU op=fma lat_cyc=8.91 thr_cyc_per_inst_simd=4.847
-VALU op=exp lat_cyc=18.31 thr_cyc_per_inst_simd=16.607
-VALU op=rcp lat_cyc=18.31 thr_cyc_per_inst_simd=16.549
-VALU op=log lat_cyc=21.68 thr_cyc_per_inst_simd=16.800
-VALU op=pkfma lat_cyc=11.33 thr_cyc_per_inst_simd=6.064
-VALU op=pkmul lat_cyc=8.17 thr_cyc_per_inst_simd=5.414
-VALU op=add3 lat_cyc=6.52 thr_cyc_per_inst_simd=4.663
-VALU op=bfe lat_cyc=6.31 thr_cyc_per_inst_simd=4.689
-VALU op=perm lat_cyc=6.53 thr_cyc_per_inst_simd=4.657
-VALU op=dpp lat_cyc=6.40 thr_cyc_per_inst_simd=5.031
-VALU op=cvtf16 lat_cyc=7.47 thr_cyc_per_inst_simd=4.561
-VALU op=rne lat_cyc=11.09 thr_cyc_per_inst_simd=9.184
+MMAC form=bf16_16x16x16 indep=1 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=50.40 cyc_per_mmac_simd=50.40
+MMAC form=bf16_16x16x16 indep=1 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=47.40 cyc_per_mmac_simd=23.70
+MMAC form=bf16_16x16x16 indep=1 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=67.56 cyc_per_mmac_simd=16.89
+MMAC form=bf16_16x16x16 indep=2 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=26.76 cyc_per_mmac_simd=26.76
+MMAC form=bf16_16x16x16 indep=2 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=28.77 cyc_per_mmac_simd=14.38
+MMAC form=bf16_16x16x16 indep=2 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=50.49 cyc_per_mmac_simd=12.62
+MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=20.37 cyc_per_mmac_simd=20.37
+MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=20.40 cyc_per_mmac_simd=10.20
+MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=39.83 cyc_per_mmac_simd=9.96
+MMAC form=bf16_16x16x16 indep=8 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=12.69 cyc_per_mmac_simd=12.69
+MMAC form=bf16_16x16x16 indep=8 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=19.46 cyc_per_mmac_simd=9.73
+MMAC form=bf16_16x16x16 indep=8 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=36.90 cyc_per_mmac_simd=9.23
+MMAC form=bf16_16x16x16 indep=16 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=10.35 cyc_per_mmac_simd=10.35
+MMAC form=bf16_16x16x16 indep=16 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=18.25 cyc_per_mmac_simd=9.12
+MMAC form=bf16_16x16x16 indep=16 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=34.80 cyc_per_mmac_simd=8.70
+MMAC form=f32_16x16x8 indep=1 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=77.46 cyc_per_mmac_simd=77.46
+MMAC form=f32_16x16x8 indep=1 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=77.52 cyc_per_mmac_simd=38.76
+MMAC form=f32_16x16x8 indep=1 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=173.58 cyc_per_mmac_simd=43.39
+MMAC form=f32_16x16x8 indep=2 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=52.74 cyc_per_mmac_simd=52.74
+MMAC form=f32_16x16x8 indep=2 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=66.75 cyc_per_mmac_simd=33.38
+MMAC form=f32_16x16x8 indep=2 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=139.80 cyc_per_mmac_simd=34.95
+MMAC form=f32_16x16x8 indep=4 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=40.36 cyc_per_mmac_simd=40.36
+MMAC form=f32_16x16x8 indep=4 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=68.38 cyc_per_mmac_simd=34.19
+MMAC form=f32_16x16x8 indep=4 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=133.42 cyc_per_mmac_simd=33.36
+MMAC form=f32_16x16x8 indep=8 valu_per_mmac=0 waves_per_simd=1 cyc_per_mmac_wave=37.19 cyc_per_mmac_simd=37.19
+MMAC form=f32_16x16x8 indep=8 valu_per_mmac=0 waves_per_simd=2 cyc_per_mmac_wave=67.70 cyc_per_mmac_simd=33.85
+MMAC form=f32_16x16x8 indep=8 valu_per_mmac=0 waves_per_simd=4 cyc_per_mmac_wave=131.99 cyc_per_mmac_simd=33.00
+MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=2 waves_per_simd=1 cyc_per_mmac_wave=27.37 cyc_per_mmac_simd=27.37
+MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=2 waves_per_simd=2 cyc_per_mmac_wave=41.38 cyc_per_mmac_simd=20.69
+MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=2 waves_per_simd=4 cyc_per_mmac_wave=75.92 cyc_per_mmac_simd=18.98
+MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=4 waves_per_simd=1 cyc_per_mmac_wave=37.37 cyc_per_mmac_simd=37.37
+MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=4 waves_per_simd=2 cyc_per_mmac_wave=58.61 cyc_per_mmac_simd=29.30
+MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=4 waves_per_simd=4 cyc_per_mmac_wave=109.41 cyc_per_mmac_simd=27.35
+MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=8 waves_per_simd=1 cyc_per_mmac_wave=51.37 cyc_per_mmac_simd=51.37
+MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=8 waves_per_simd=2 cyc_per_mmac_wave=92.19 cyc_per_mmac_simd=46.09
+MMAC form=bf16_16x16x16 indep=4 valu_per_mmac=8 waves_per_simd=4 cyc_per_mmac_wave=174.01 cyc_per_mmac_simd=43.50
+VALU op=fma lat_cyc=8.02 thr_cyc_per_inst_simd=4.764
+VALU op=exp lat_cyc=18.27 thr_cyc_per_inst_simd=16.523
+VALU op=rcp lat_cyc=18.27 thr_cyc_per_inst_simd=16.523
+VALU op=log lat_cyc=18.27 thr_cyc_per_inst_simd=16.523
+VALU op=pkfma lat_cyc=7.27 thr_cyc_per_inst_simd=4.854
+VALU op=pkmul lat_cyc=7.27 thr_cyc_per_inst_simd=4.854
+VALU op=add3 lat_cyc=6.52 thr_cyc_per_inst_simd=4.655
+VALU op=bfe lat_cyc=6.27 thr_cyc_per_inst_simd=4.582
+VALU op=perm lat_cyc=6.52 thr_cyc_per_inst_simd=4.655
+VALU op=dpp lat_cyc=6.27 thr_cyc_per_inst_simd=4.582
+VALU op=cvtf16 lat_cyc=6.52 thr_cyc_per_inst_simd=4.474
+VALU op=rne lat_cyc=10.52 thr_cyc_per_inst_simd=8.871
+VALU op=mov64 lat_cyc=6.77 thr_cyc_per_inst_simd=4.571
+VALU op=lshl64 lat_cyc=7.02 thr_cyc_per_inst_simd=4.597
+VALU op=addco lat_cyc=18.77 thr_cyc_per_inst_simd=16.659
+VALU op=subf lat_cyc=7.02 thr_cyc_per_inst_simd=4.599

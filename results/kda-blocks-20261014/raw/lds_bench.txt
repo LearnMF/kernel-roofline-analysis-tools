@@ -1,82 +1,97 @@
 # clk=1.500 GHz; LDSOP: 16 waves/CU, 8 ops/iter; ways = distinct addresses per bank per 32-lane half
-LDSOP op=ds_read_b32 bytes=4 stride=4 ways=1 cyc_per_inst_cu=3.12 bytes_per_cyc_cu=82.1
-LDSOP op=ds_read_b32 bytes=4 stride=8 ways=2 cyc_per_inst_cu=4.03 bytes_per_cyc_cu=63.5
-LDSOP op=ds_read_b32 bytes=4 stride=16 ways=4 cyc_per_inst_cu=8.02 bytes_per_cyc_cu=31.9
-LDSOP op=ds_read_b32 bytes=4 stride=32 ways=8 cyc_per_inst_cu=16.02 bytes_per_cyc_cu=16.0
+LDSOP op=ds_read_b32 bytes=4 stride=4 ways=1 cyc_per_inst_cu=3.28 bytes_per_cyc_cu=78.0
+LDSOP op=ds_read_b32 bytes=4 stride=8 ways=2 cyc_per_inst_cu=4.46 bytes_per_cyc_cu=57.4
+LDSOP op=ds_read_b32 bytes=4 stride=16 ways=4 cyc_per_inst_cu=8.11 bytes_per_cyc_cu=31.6
+LDSOP op=ds_read_b32 bytes=4 stride=32 ways=8 cyc_per_inst_cu=17.69 bytes_per_cyc_cu=14.5
 LDSOP op=ds_read_b32 bytes=4 stride=64 ways=16 cyc_per_inst_cu=32.03 bytes_per_cyc_cu=8.0
-LDSOP op=ds_read_b32 bytes=4 stride=128 ways=32 cyc_per_inst_cu=64.13 bytes_per_cyc_cu=4.0
-LDSOP op=ds_read_b64 bytes=8 stride=8 ways=2 cyc_per_inst_cu=5.06 bytes_per_cyc_cu=101.2
+LDSOP op=ds_read_b32 bytes=4 stride=128 ways=32 cyc_per_inst_cu=64.03 bytes_per_cyc_cu=4.0
+LDSOP op=ds_read_b64 bytes=8 stride=8 ways=2 cyc_per_inst_cu=6.75 bytes_per_cyc_cu=75.9
 LDSOP op=ds_read_b64 bytes=8 stride=16 ways=4 cyc_per_inst_cu=8.09 bytes_per_cyc_cu=63.3
-LDSOP op=ds_read_b64 bytes=8 stride=32 ways=8 cyc_per_inst_cu=16.09 bytes_per_cyc_cu=31.8
-LDSOP op=ds_read_b64 bytes=8 stride=64 ways=16 cyc_per_inst_cu=32.11 bytes_per_cyc_cu=15.9
-LDSOP op=ds_read_b64 bytes=8 stride=128 ways=32 cyc_per_inst_cu=64.13 bytes_per_cyc_cu=8.0
-LDSOP op=ds_read_b128 bytes=16 stride=16 ways=4 cyc_per_inst_cu=8.10 bytes_per_cyc_cu=126.4
-LDSOP op=ds_read_b128 bytes=16 stride=32 ways=8 cyc_per_inst_cu=16.10 bytes_per_cyc_cu=63.6
-LDSOP op=ds_read_b128 bytes=16 stride=64 ways=16 cyc_per_inst_cu=32.13 bytes_per_cyc_cu=31.9
-LDSOP op=ds_read_b128 bytes=16 stride=128 ways=32 cyc_per_inst_cu=64.13 bytes_per_cyc_cu=16.0
-LDSOP op=ds_read2_b32 bytes=8 stride=8 ways=2 cyc_per_inst_cu=8.12 bytes_per_cyc_cu=63.1
-LDSOP op=ds_read2_b32 bytes=8 stride=16 ways=4 cyc_per_inst_cu=16.09 bytes_per_cyc_cu=31.8
-LDSOP op=ds_read2_b32 bytes=8 stride=32 ways=8 cyc_per_inst_cu=32.13 bytes_per_cyc_cu=15.9
-LDSOP op=ds_read2_b32 bytes=8 stride=64 ways=16 cyc_per_inst_cu=64.13 bytes_per_cyc_cu=8.0
-LDSOP op=ds_read2_b32 bytes=8 stride=128 ways=32 cyc_per_inst_cu=128.17 bytes_per_cyc_cu=4.0
-LDSOP op=ds_read_u16 bytes=2 stride=4 ways=1 cyc_per_inst_cu=4.65 bytes_per_cyc_cu=27.5
-LDSOP op=ds_read_u16 bytes=2 stride=8 ways=2 cyc_per_inst_cu=5.37 bytes_per_cyc_cu=23.8
-LDSOP op=ds_read_u16 bytes=2 stride=16 ways=4 cyc_per_inst_cu=10.09 bytes_per_cyc_cu=12.7
-LDSOP op=ds_read_u16 bytes=2 stride=32 ways=8 cyc_per_inst_cu=19.58 bytes_per_cyc_cu=6.5
-LDSOP op=ds_read_u16 bytes=2 stride=64 ways=16 cyc_per_inst_cu=34.02 bytes_per_cyc_cu=3.8
-LDSOP op=ds_read_u16 bytes=2 stride=128 ways=32 cyc_per_inst_cu=65.49 bytes_per_cyc_cu=2.0
-LDSOP op=ds_write_b32 bytes=4 stride=4 ways=1 cyc_per_inst_cu=4.71 bytes_per_cyc_cu=54.3
-LDSOP op=ds_write_b32 bytes=4 stride=8 ways=2 cyc_per_inst_cu=5.40 bytes_per_cyc_cu=47.4
-LDSOP op=ds_write_b32 bytes=4 stride=16 ways=4 cyc_per_inst_cu=8.21 bytes_per_cyc_cu=31.2
-LDSOP op=ds_write_b32 bytes=4 stride=32 ways=8 cyc_per_inst_cu=16.03 bytes_per_cyc_cu=16.0
-LDSOP op=ds_write_b32 bytes=4 stride=64 ways=16 cyc_per_inst_cu=33.36 bytes_per_cyc_cu=7.7
-LDSOP op=ds_write_b32 bytes=4 stride=128 ways=32 cyc_per_inst_cu=64.12 bytes_per_cyc_cu=4.0
-LDSOP op=ds_write_b64 bytes=8 stride=8 ways=2 cyc_per_inst_cu=7.99 bytes_per_cyc_cu=64.1
-LDSOP op=ds_write_b64 bytes=8 stride=16 ways=4 cyc_per_inst_cu=8.05 bytes_per_cyc_cu=63.6
+LDSOP op=ds_read_b64 bytes=8 stride=32 ways=8 cyc_per_inst_cu=17.54 bytes_per_cyc_cu=29.2
+LDSOP op=ds_read_b64 bytes=8 stride=64 ways=16 cyc_per_inst_cu=33.92 bytes_per_cyc_cu=15.1
+LDSOP op=ds_read_b64 bytes=8 stride=128 ways=32 cyc_per_inst_cu=66.30 bytes_per_cyc_cu=7.7
+LDSOP op=ds_read_b128 bytes=16 stride=16 ways=4 cyc_per_inst_cu=9.09 bytes_per_cyc_cu=112.7
+LDSOP op=ds_read_b128 bytes=16 stride=32 ways=8 cyc_per_inst_cu=17.80 bytes_per_cyc_cu=57.5
+LDSOP op=ds_read_b128 bytes=16 stride=64 ways=16 cyc_per_inst_cu=32.16 bytes_per_cyc_cu=31.8
+LDSOP op=ds_read_b128 bytes=16 stride=128 ways=32 cyc_per_inst_cu=65.83 bytes_per_cyc_cu=15.6
+LDSOP op=ds_read2_b32 bytes=8 stride=8 ways=2 cyc_per_inst_cu=9.25 bytes_per_cyc_cu=55.4
+LDSOP op=ds_read2_b32 bytes=8 stride=16 ways=4 cyc_per_inst_cu=17.37 bytes_per_cyc_cu=29.5
+LDSOP op=ds_read2_b32 bytes=8 stride=32 ways=8 cyc_per_inst_cu=32.68 bytes_per_cyc_cu=15.7
+LDSOP op=ds_read2_b32 bytes=8 stride=64 ways=16 cyc_per_inst_cu=65.80 bytes_per_cyc_cu=7.8
+LDSOP op=ds_read2_b32 bytes=8 stride=128 ways=32 cyc_per_inst_cu=128.07 bytes_per_cyc_cu=4.0
+LDSOP op=ds_read_u16 bytes=2 stride=4 ways=1 cyc_per_inst_cu=3.26 bytes_per_cyc_cu=39.3
+LDSOP op=ds_read_u16 bytes=2 stride=8 ways=2 cyc_per_inst_cu=4.16 bytes_per_cyc_cu=30.8
+LDSOP op=ds_read_u16 bytes=2 stride=16 ways=4 cyc_per_inst_cu=9.13 bytes_per_cyc_cu=14.0
+LDSOP op=ds_read_u16 bytes=2 stride=32 ways=8 cyc_per_inst_cu=16.07 bytes_per_cyc_cu=8.0
+LDSOP op=ds_read_u16 bytes=2 stride=64 ways=16 cyc_per_inst_cu=34.64 bytes_per_cyc_cu=3.7
+LDSOP op=ds_read_u16 bytes=2 stride=128 ways=32 cyc_per_inst_cu=64.04 bytes_per_cyc_cu=2.0
+LDSOP op=ds_write_b32 bytes=4 stride=4 ways=1 cyc_per_inst_cu=4.70 bytes_per_cyc_cu=54.5
+LDSOP op=ds_write_b32 bytes=4 stride=8 ways=2 cyc_per_inst_cu=4.42 bytes_per_cyc_cu=57.9
+LDSOP op=ds_write_b32 bytes=4 stride=16 ways=4 cyc_per_inst_cu=9.10 bytes_per_cyc_cu=28.1
+LDSOP op=ds_write_b32 bytes=4 stride=32 ways=8 cyc_per_inst_cu=16.10 bytes_per_cyc_cu=15.9
+LDSOP op=ds_write_b32 bytes=4 stride=64 ways=16 cyc_per_inst_cu=32.27 bytes_per_cyc_cu=7.9
+LDSOP op=ds_write_b32 bytes=4 stride=128 ways=32 cyc_per_inst_cu=64.67 bytes_per_cyc_cu=4.0
+LDSOP op=ds_write_b64 bytes=8 stride=8 ways=2 cyc_per_inst_cu=6.80 bytes_per_cyc_cu=75.3
+LDSOP op=ds_write_b64 bytes=8 stride=16 ways=4 cyc_per_inst_cu=8.32 bytes_per_cyc_cu=61.6
 LDSOP op=ds_write_b64 bytes=8 stride=32 ways=8 cyc_per_inst_cu=16.17 bytes_per_cyc_cu=31.7
-LDSOP op=ds_write_b64 bytes=8 stride=64 ways=16 cyc_per_inst_cu=33.23 bytes_per_cyc_cu=15.4
+LDSOP op=ds_write_b64 bytes=8 stride=64 ways=16 cyc_per_inst_cu=32.17 bytes_per_cyc_cu=15.9
 LDSOP op=ds_write_b64 bytes=8 stride=128 ways=32 cyc_per_inst_cu=64.03 bytes_per_cyc_cu=8.0
-LDSOP op=ds_write_b128 bytes=16 stride=16 ways=4 cyc_per_inst_cu=10.31 bytes_per_cyc_cu=99.3
-LDSOP op=ds_write_b128 bytes=16 stride=32 ways=8 cyc_per_inst_cu=16.11 bytes_per_cyc_cu=63.6
-LDSOP op=ds_write_b128 bytes=16 stride=64 ways=16 cyc_per_inst_cu=32.11 bytes_per_cyc_cu=31.9
-LDSOP op=ds_write_b128 bytes=16 stride=128 ways=32 cyc_per_inst_cu=64.11 bytes_per_cyc_cu=16.0
-LDSOP op=ds_bpermute_b32 bytes=4 stride=4 ways=1 cyc_per_inst_cu=6.32 bytes_per_cyc_cu=40.5
-LDSOP op=ds_bpermute_b32 bytes=4 stride=8 ways=1 cyc_per_inst_cu=6.40 bytes_per_cyc_cu=40.0
-LDSOP op=ds_bpermute_b32 bytes=4 stride=16 ways=1 cyc_per_inst_cu=6.41 bytes_per_cyc_cu=39.9
-LDSOP op=ds_bpermute_b32 bytes=4 stride=32 ways=1 cyc_per_inst_cu=6.38 bytes_per_cyc_cu=40.1
-LDSOP op=ds_bpermute_b32 bytes=4 stride=64 ways=1 cyc_per_inst_cu=8.24 bytes_per_cyc_cu=31.1
-LDSOP op=ds_bpermute_b32 bytes=4 stride=128 ways=1 cyc_per_inst_cu=6.37 bytes_per_cyc_cu=40.2
-LDSLAT ds_read_b32 dependent chain: 88.6 cycles
-XCHG W=4 ctas_per_cu=1 bytes_per_wave=1024 lds=4096 us_per_step=0.1875 cyc_per_step=281
-XCHG W=4 ctas_per_cu=1 bytes_per_wave=2048 lds=8192 us_per_step=0.2670 cyc_per_step=400
-XCHG W=4 ctas_per_cu=1 bytes_per_wave=4096 lds=16384 us_per_step=0.4239 cyc_per_step=636
-XCHG W=4 ctas_per_cu=1 bytes_per_wave=8192 lds=32768 us_per_step=0.7092 cyc_per_step=1064
-XCHG W=4 ctas_per_cu=1 bytes_per_wave=16384 lds=65536 us_per_step=1.3055 cyc_per_step=1958
-XCHG W=4 ctas_per_cu=2 bytes_per_wave=1024 lds=4096 us_per_step=0.2066 cyc_per_step=310
-XCHG W=4 ctas_per_cu=2 bytes_per_wave=2048 lds=8192 us_per_step=0.3102 cyc_per_step=465
-XCHG W=4 ctas_per_cu=2 bytes_per_wave=4096 lds=16384 us_per_step=0.6727 cyc_per_step=1009
-XCHG W=4 ctas_per_cu=2 bytes_per_wave=8192 lds=32768 us_per_step=0.8697 cyc_per_step=1305
-XCHG W=4 ctas_per_cu=3 bytes_per_wave=1024 lds=4096 us_per_step=0.2790 cyc_per_step=418
-XCHG W=4 ctas_per_cu=3 bytes_per_wave=2048 lds=8192 us_per_step=0.3294 cyc_per_step=494
-XCHG W=4 ctas_per_cu=3 bytes_per_wave=4096 lds=16384 us_per_step=0.6708 cyc_per_step=1006
-XCHG W=8 ctas_per_cu=1 bytes_per_wave=1024 lds=8192 us_per_step=0.2740 cyc_per_step=411
-XCHG W=8 ctas_per_cu=1 bytes_per_wave=2048 lds=16384 us_per_step=0.3370 cyc_per_step=505
-XCHG W=8 ctas_per_cu=1 bytes_per_wave=4096 lds=32768 us_per_step=0.5289 cyc_per_step=793
-XCHG W=8 ctas_per_cu=1 bytes_per_wave=8192 lds=65536 us_per_step=0.9168 cyc_per_step=1375
-XCHG W=8 ctas_per_cu=2 bytes_per_wave=1024 lds=8192 us_per_step=0.2845 cyc_per_step=427
-XCHG W=8 ctas_per_cu=2 bytes_per_wave=2048 lds=16384 us_per_step=0.4858 cyc_per_step=729
-XCHG W=8 ctas_per_cu=2 bytes_per_wave=4096 lds=32768 us_per_step=0.9800 cyc_per_step=1470
-XCHG W=8 ctas_per_cu=3 bytes_per_wave=1024 lds=8192 us_per_step=0.5364 cyc_per_step=805
-XCHG W=8 ctas_per_cu=3 bytes_per_wave=2048 lds=16384 us_per_step=0.6597 cyc_per_step=990
-BAR W=4 skew_valu=0 cyc_per_barrier=56.9
-BAR W=4 skew_valu=16 cyc_per_barrier=749.1
-BAR W=4 skew_valu=64 cyc_per_barrier=2861.0
-BAR W=4 skew_valu=256 cyc_per_barrier=11313.1
-BAR W=8 skew_valu=0 cyc_per_barrier=64.9
-BAR W=8 skew_valu=16 cyc_per_barrier=794.6
-BAR W=8 skew_valu=64 cyc_per_barrier=2861.8
-BAR W=8 skew_valu=256 cyc_per_barrier=11340.4
-BAR W=16 skew_valu=0 cyc_per_barrier=94.2
-BAR W=16 skew_valu=16 cyc_per_barrier=748.7
-BAR W=16 skew_valu=64 cyc_per_barrier=2860.9
-BAR W=16 skew_valu=256 cyc_per_barrier=11308.9
+LDSOP op=ds_write_b128 bytes=16 stride=16 ways=4 cyc_per_inst_cu=10.60 bytes_per_cyc_cu=96.6
+LDSOP op=ds_write_b128 bytes=16 stride=32 ways=8 cyc_per_inst_cu=16.17 bytes_per_cyc_cu=63.3
+LDSOP op=ds_write_b128 bytes=16 stride=64 ways=16 cyc_per_inst_cu=32.08 bytes_per_cyc_cu=31.9
+LDSOP op=ds_write_b128 bytes=16 stride=128 ways=32 cyc_per_inst_cu=64.08 bytes_per_cyc_cu=16.0
+LDSOP op=ds_bpermute_b32 bytes=4 stride=4 ways=1 cyc_per_inst_cu=6.19 bytes_per_cyc_cu=41.3
+LDSOP op=ds_bpermute_b32 bytes=4 stride=8 ways=1 cyc_per_inst_cu=7.44 bytes_per_cyc_cu=34.4
+LDSOP op=ds_bpermute_b32 bytes=4 stride=16 ways=1 cyc_per_inst_cu=6.37 bytes_per_cyc_cu=40.2
+LDSOP op=ds_bpermute_b32 bytes=4 stride=32 ways=1 cyc_per_inst_cu=8.15 bytes_per_cyc_cu=31.4
+LDSOP op=ds_bpermute_b32 bytes=4 stride=64 ways=1 cyc_per_inst_cu=7.54 bytes_per_cyc_cu=34.0
+LDSOP op=ds_bpermute_b32 bytes=4 stride=128 ways=1 cyc_per_inst_cu=6.36 bytes_per_cyc_cu=40.2
+LDSOP op=ds_write_b16_d16_hi bytes=2 stride=4 ways=1 cyc_per_inst_cu=4.42 bytes_per_cyc_cu=28.9
+LDSOP op=ds_write_b16_d16_hi bytes=2 stride=8 ways=2 cyc_per_inst_cu=5.59 bytes_per_cyc_cu=22.9
+LDSOP op=ds_write_b16_d16_hi bytes=2 stride=16 ways=4 cyc_per_inst_cu=10.13 bytes_per_cyc_cu=12.6
+LDSOP op=ds_write_b16_d16_hi bytes=2 stride=32 ways=8 cyc_per_inst_cu=16.17 bytes_per_cyc_cu=7.9
+LDSOP op=ds_write_b16_d16_hi bytes=2 stride=64 ways=16 cyc_per_inst_cu=33.42 bytes_per_cyc_cu=3.8
+LDSOP op=ds_write_b16_d16_hi bytes=2 stride=128 ways=32 cyc_per_inst_cu=64.07 bytes_per_cyc_cu=2.0
+LDSOP op=ds_read2_b64 bytes=16 stride=8 ways=2 cyc_per_inst_cu=9.86 bytes_per_cyc_cu=103.8
+LDSOP op=ds_read2_b64 bytes=16 stride=16 ways=4 cyc_per_inst_cu=16.08 bytes_per_cyc_cu=63.7
+LDSOP op=ds_read2_b64 bytes=16 stride=32 ways=8 cyc_per_inst_cu=32.05 bytes_per_cyc_cu=31.9
+LDSOP op=ds_read2_b64 bytes=16 stride=64 ways=16 cyc_per_inst_cu=64.47 bytes_per_cyc_cu=15.9
+LDSOP op=ds_read2_b64 bytes=16 stride=128 ways=32 cyc_per_inst_cu=128.41 bytes_per_cyc_cu=8.0
+LDSLAT ds_read_b32 dependent chain: 89.7 cycles
+LDSCOMPL op=ds_write_b32 issue_to_lgkmcnt0_cycles=112.5
+LDSCOMPL op=ds_read_b32 issue_to_lgkmcnt0_cycles=109.5
+LDSCOMPL op=ds_read2_b64(8B/lane consecutive) issue_to_lgkmcnt0_cycles=121.9
+LDSCOMPL op=ds_write_b16_d16_hi issue_to_lgkmcnt0_cycles=112.5
+XCHG W=4 ctas_per_cu=1 bytes_per_wave=1024 lds=4096 us_per_step=0.1912 cyc_per_step=287
+XCHG W=4 ctas_per_cu=1 bytes_per_wave=2048 lds=8192 us_per_step=0.2949 cyc_per_step=442
+XCHG W=4 ctas_per_cu=1 bytes_per_wave=4096 lds=16384 us_per_step=0.4834 cyc_per_step=725
+XCHG W=4 ctas_per_cu=1 bytes_per_wave=8192 lds=32768 us_per_step=0.7150 cyc_per_step=1072
+XCHG W=4 ctas_per_cu=1 bytes_per_wave=16384 lds=65536 us_per_step=1.3051 cyc_per_step=1958
+XCHG W=4 ctas_per_cu=2 bytes_per_wave=1024 lds=4096 us_per_step=0.1932 cyc_per_step=290
+XCHG W=4 ctas_per_cu=2 bytes_per_wave=2048 lds=8192 us_per_step=0.2916 cyc_per_step=437
+XCHG W=4 ctas_per_cu=2 bytes_per_wave=4096 lds=16384 us_per_step=0.4824 cyc_per_step=724
+XCHG W=4 ctas_per_cu=2 bytes_per_wave=8192 lds=32768 us_per_step=0.8522 cyc_per_step=1278
+XCHG W=4 ctas_per_cu=3 bytes_per_wave=1024 lds=4096 us_per_step=0.1971 cyc_per_step=296
+XCHG W=4 ctas_per_cu=3 bytes_per_wave=2048 lds=8192 us_per_step=0.3170 cyc_per_step=476
+XCHG W=4 ctas_per_cu=3 bytes_per_wave=4096 lds=16384 us_per_step=0.8512 cyc_per_step=1277
+XCHG W=8 ctas_per_cu=1 bytes_per_wave=1024 lds=8192 us_per_step=0.4441 cyc_per_step=666
+XCHG W=8 ctas_per_cu=1 bytes_per_wave=2048 lds=16384 us_per_step=0.4978 cyc_per_step=747
+XCHG W=8 ctas_per_cu=1 bytes_per_wave=4096 lds=32768 us_per_step=0.5474 cyc_per_step=821
+XCHG W=8 ctas_per_cu=1 bytes_per_wave=8192 lds=65536 us_per_step=0.9118 cyc_per_step=1368
+XCHG W=8 ctas_per_cu=2 bytes_per_wave=1024 lds=8192 us_per_step=0.2460 cyc_per_step=369
+XCHG W=8 ctas_per_cu=2 bytes_per_wave=2048 lds=16384 us_per_step=0.4844 cyc_per_step=727
+XCHG W=8 ctas_per_cu=2 bytes_per_wave=4096 lds=32768 us_per_step=0.8843 cyc_per_step=1326
+XCHG W=8 ctas_per_cu=3 bytes_per_wave=1024 lds=8192 us_per_step=0.3475 cyc_per_step=521
+XCHG W=8 ctas_per_cu=3 bytes_per_wave=2048 lds=16384 us_per_step=0.6527 cyc_per_step=979
+BAR W=4 skew_valu=0 cyc_per_barrier=56.6
+BAR W=4 skew_valu=16 cyc_per_barrier=749.3
+BAR W=4 skew_valu=64 cyc_per_barrier=2868.1
+BAR W=4 skew_valu=256 cyc_per_barrier=11309.3
+BAR W=8 skew_valu=0 cyc_per_barrier=65.0
+BAR W=8 skew_valu=16 cyc_per_barrier=755.7
+BAR W=8 skew_valu=64 cyc_per_barrier=2860.3
+BAR W=8 skew_valu=256 cyc_per_barrier=11310.1
+BAR W=16 skew_valu=0 cyc_per_barrier=95.0
+BAR W=16 skew_valu=16 cyc_per_barrier=748.6
+BAR W=16 skew_valu=64 cyc_per_barrier=2860.3
+BAR W=16 skew_valu=256 cyc_per_barrier=11309.0

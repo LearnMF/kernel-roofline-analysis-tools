@@ -67,6 +67,11 @@ VOP(bfe, asm volatile("v_bfe_u32 %0, %0, 16, 1" : "+v"(u[c])))
 VOP(perm, asm volatile("v_perm_b32 %0, %0, %1, %1" : "+v"(u[c]) : "v"(w)))
 VOP(dpp, asm volatile("v_mov_b32_dpp %0, %0 row_shr:1 bound_ctrl:0" : "+v"(u[c])))
 VOP(cvtf16, asm volatile("v_cvt_f16_f32 %0, %0" : "+v"(x[c])))
+// 64-bit VALU forms that the recurrence loops use (address arithmetic, operand moves)
+VOP(mov64, asm volatile("v_mov_b64_e32 %0, %0" : "+v"(p[c])))
+VOP(lshl64, asm volatile("v_lshlrev_b64 %0, 1, %0" : "+v"(p[c])))
+VOP(addco, { unsigned t2 = u[c] + 1u; asm volatile("v_add_co_u32_e32 %0, vcc, %1, %0\n v_addc_co_u32_e32 %1, vcc, 0, %1, vcc" : "+v"(u[c]), "+v"(t2) :: "vcc"); u[c] ^= t2; })
+VOP(subf, asm volatile("v_sub_f32_e32 %0, %1, %0" : "+v"(x[c]) : "v"(y)))
 // production bf16 RNE (g2_common.h bf_rne): v_bfe_u32 + v_add3_u32 (+ the shift / pack done by the consumer)
 VOP(rne, { unsigned t; asm volatile("v_bfe_u32 %0, %1, 16, 1\n v_add3_u32 %1, %1, %2, %0" : "=&v"(t), "+v"(u[c]) : "v"(w)); })
 
@@ -112,6 +117,6 @@ int main(int argc, char** argv) {
     mm<1, 1, 0>(out); mm<1, 2, 0>(out); mm<1, 4, 0>(out); mm<1, 8, 0>(out);
     mm<0, 4, 2>(out); mm<0, 4, 4>(out); mm<0, 4, 8>(out);
     RUNV(fma) RUNV(exp) RUNV(rcp) RUNV(log) RUNV(pkfma) RUNV(pkmul) RUNV(add3) RUNV(bfe) RUNV(perm) RUNV(dpp)
-    RUNV(cvtf16) RUNV(rne)
+    RUNV(cvtf16) RUNV(rne) RUNV(mov64) RUNV(lshl64) RUNV(addco) RUNV(subf)
     return 0;
 }
