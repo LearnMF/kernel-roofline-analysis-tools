@@ -14,7 +14,7 @@ contiguous kernels this script reports
   * residency (64 KB LDS / CU; VGPR rule of R38: 768 / VGPR waves per SIMD) and a verdict:
         infeasible (VGPR > 256 or LDS > 64 KB) | res1 (fits, 1 CTA / CU: price with the occupancy curves) | res2+.
 No timing here: bytes saved are NOT time saved (R36); the constructive model prices the survivors.
-    python3 kda_partition.py [--dav split|whole] [--C 64] [--budget]"""
+    python3 kda_partition.py [--dav split|whole] [--C 64] [--budget] [--scenarios]"""
 import argparse
 import itertools
 import os
@@ -38,6 +38,42 @@ CORE = {   # op: (lds bytes, vgpr, production kernel)
     "wy_bwd_b": (32768, 236, "wy_s4b"),
     "tail": (6144, 120, "bwd_tail"),
 }
+
+# LDS buffers of the production op implementations, as functions of the chunk size c (source: g2_wu.cuh,
+# g2_dav.cuh, g2_wy.cuh, g2_bwd_tail.cuh; at c = 64 they add up to the measured footprints byte for byte).
+#   need : data exchange between waves / a layout change that must go through LDS (bitwise: no K-permutation
+#          tricks, R44)
+#   cache: data reused from LDS that could be re-read from L1 / L2 instead (more VMEM / TA)
+#   pipe : double buffers / prefetch stages (latency hiding)
+#   small: scalars and per-row vectors
+BUFFERS = {
+    "re_wy": [("slab: transposed k / v staging for the B operand (union with the row-major gated tile)",
+               lambda c: 128 * (c + 4) * 2, "need"),
+              ("sA: T^-1 kept for both MMAC phases", lambda c: c * (c + 4) * 2, "cache"),
+              ("sBeta + sGl", lambda c: c * 4 + 128 * 4, "small")],
+    "dav": [("slab union: pass-1 B staging [c][132] / dA fp32 [c][c+4] / pass-2 [128][c+4]",
+             lambda c: max(c * 132 * 2, c * (c + 4) * 4, 128 * (c + 4) * 2), "need")],
+    "wy_bwd_a": [("S: dv^T -> dw^T transpose", lambda c: 128 * (c + 4) * 2, "need"),
+                 ("XT: dA-stage staging", lambda c: c * (c + 4) * 2, "need"),
+                 ("KGs: kgB tile of step kt, double-buffered (P-28)", lambda c: 2 * 16 * c * 2, "pipe"),
+                 ("BETAs", lambda c: c * 4, "small")],
+    "wy_bwd_b": [("TA / TQ / TK tables (16 k x c rows, read by every wave)", lambda c: 3 * 16 * (c + 4) * 4, "need"),
+                 ("gM + cs1 / cs2", lambda c: (c // 16) * 16 * 4 + 2 * 2 * (c // 16) * 16 * 4, "small"),
+                 ("stg: h / dh tiles of step kt, single buffer (16 x 128 bf16 each, c-independent)",
+                  lambda c: 2 * 16 * 128 * 2, "need"),
+                 ("stg: second buffer (prefetch one kt ahead, P4'')", lambda c: 2 * 16 * 128 * 2, "pipe"),
+                 ("dwTs: dwT tile of step kt (P-29)", lambda c: 16 * c * 2, "need")],
+    "tail": [("sDA / sBlk / sDDt partials", lambda c: 3 * 8 * c * 4, "need")],
+    "re_gate": [("gate smem", lambda c: 2048 * c // 64, "need")],
+    "re_l2norm": [],
+}
+BUFFERS["dav_v"] = BUFFERS["dav_a"] = BUFFERS["dav"]
+
+
+def core_lds(op, c, lean=False):
+    keep = ("need", "small") if lean else ("need", "small", "cache", "pipe")
+    return sum(f(c) for _, f, k in BUFFERS.get(op, []) if k in keep)
+
 
 # how a tensor handed from one op to the next INSIDE one kernel has to live on chip (per CTA, C = 64)
 #   fold : the consumer forms it from what it loads anyway (l2norm with the saved rstd): 0 B, extra VALU
@@ -114,6 +150,9 @@ def compositions(seq):
         yield groups
 
 
+CORE_MODE = {"lean": False}
+
+
 def kernel_footprint(group):
     names = [o.name for o in group]
     live = []    # (tensor, producer index, last consumer index)
@@ -125,6 +164,8 @@ def kernel_footprint(group):
     lds_pk = vgpr_pk = 0
     for i, o in enumerate(group):
         l, v, _ = CORE[o.name]
+        if CORE_MODE["lean"] or C != 64:
+            l = core_lds(o.name, C, lean=CORE_MODE["lean"])
         for t, p, last in live:
             if p <= i <= last and not (p == i and last == i):
                 mode, b = onchip_bytes(t)
@@ -194,6 +235,41 @@ def budget(groups):
         print(f"| {'+'.join(g)} | {fp['lds'] / 1024:.1f} | {core:.1f} | {ho or '-'} | {fp['lds'] / 1024 - 32:+.1f} |")
 
 
+def scenarios():
+    """fused-group LDS under {current, lean} op implementations x C in {64, 32}, and the net HBM bytes including
+    the chunk-size change of the formulation's scan <-> chunk crossing (kda_ir.crossing)."""
+    global C
+    groups = [["re_gate", "re_wy"], ["wy_bwd_a", "wy_bwd_b"], ["dav_a", "wy_bwd_a", "wy_bwd_b"],
+              ["wy_bwd_b", "tail"], ["dav_a", "wy_bwd_a", "wy_bwd_b", "tail"]]
+    print("core LDS per op (KB): current / lean, C=64 and C=32 (measured at C=64 in parentheses)")
+    for op in ("re_gate", "re_wy", "dav", "wy_bwd_a", "wy_bwd_b", "tail"):
+        print(f"  {op:9s} C=64 {core_lds(op, 64) / 1024:5.1f} / {core_lds(op, 64, True) / 1024:5.1f}  "
+              f"C=32 {core_lds(op, 32) / 1024:5.1f} / {core_lds(op, 32, True) / 1024:5.1f}   (measured {CORE[op][0] / 1024:.1f})")
+    x64 = ir.crossing(ir.formulation(), 64)
+    cross = {c: sum((1 if d == "input->scan" else 2) * b for _, d, b in ir.crossing(ir.formulation(), c))
+             for c in (64, 32)}
+    segs, ops = segments("split")
+    byname = {o.name: o for o in ops}
+    base_k = [[o] for seg in segs for o in seg]
+    print("\n| fused group | handoff saved B/tok*head | LDS KB (res): current C=64 | lean C=64 | current C=32 | lean C=32 |")
+    print("|---|---:|---:|---:|---:|---:|")
+    for g in groups:
+        cells = []
+        for c, lean in ((64, False), (64, True), (32, False), (32, True)):
+            C = c
+            CORE_MODE["lean"] = lean
+            fp = kernel_footprint([byname[n] for n in g])
+            cells.append(f"{fp['lds'] / 1024:.1f} ({fp['res'] if fp['lds'] <= LDS_CU else 0})")
+        C = 64
+        CORE_MODE["lean"] = False
+        rest = [k for k in base_k if k[0].name not in g]
+        hb0, _ = handoff_bytes(ops, base_k)
+        hb1, _ = handoff_bytes(ops, rest + [[byname[n] for n in g]])
+        print(f"| {'+'.join(g)} | {hb0 - hb1:.0f} | " + " | ".join(cells) + " |")
+    print(f"\nformulation crossing (scan <-> chunk, W+R): C=64 {cross[64]:.0f}, C=32 {cross[32]:.0f} B/tok*head "
+          f"-> going to C=32 costs {cross[32] - cross[64]:+.0f} B/tok*head before any fusion saving")
+
+
 def main():
     global C
     ap = argparse.ArgumentParser()
@@ -201,8 +277,12 @@ def main():
     ap.add_argument("--C", type=int, default=64, help="chunk size for the on-chip handoff sizes (op cores stay "
                                                        "the C=64 production footprints)")
     ap.add_argument("--budget", action="store_true")
+    ap.add_argument("--scenarios", action="store_true")
     a = ap.parse_args()
     C = a.C
+    if a.scenarios:
+        scenarios()
+        return
     if a.budget:
         budget([["re_gate", "re_wy"], ["re_l2norm", "re_gate", "re_wy"], ["wy_bwd_a", "wy_bwd_b"],
                 ["dav_a", "wy_bwd_a", "wy_bwd_b"], ["wy_bwd_b", "tail"], ["dav_a", "wy_bwd_a", "wy_bwd_b", "tail"]])
