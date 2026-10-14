@@ -49,7 +49,7 @@ def chunk(sh, card, name):
     hf = min(1.0, c["hbm_rd"] / max(1.0, trace_sim.loaded_bytes(progs) * c["ctas"]))
     n = math.ceil(c["ctas"] / 80)
     res = residency(c)
-    cyc = trace_sim.simulate(progs, res, n, hf, min(80, c["ctas"]))
+    cyc = trace_sim.simulate(progs, res, n, hf, min(80, c["ctas"]))   # per-CU HBM queue (better validated than simulate_mf)
     return cyc / 1500.0, c["t_us"], hf, res
 
 

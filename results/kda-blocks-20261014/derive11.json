@@ -3,90 +3,90 @@
   "shape": "16384_12",
   "kernel": "fwd_prep_a#1",
   "kind": "chunk",
-  "predicted": 644.3165331028794,
+  "predicted": 616.553131147557,
   "measured": 604.239,
-  "error": 0.06632728622760098,
+  "error": 0.020379570248787227,
   "res": 3
  },
  {
   "shape": "16384_12",
   "kernel": "fwd_prep_b#1",
   "kind": "chunk",
-  "predicted": 289.1485584364145,
+  "predicted": 286.6290191327175,
   "measured": 349.12,
-  "error": -0.1717788770725983,
+  "error": -0.17899570596723913,
   "res": 3
  },
  {
   "shape": "16384_12",
   "kernel": "l2n_apply#1",
   "kind": "chunk",
-  "predicted": 169.14731197259619,
+  "predicted": 168.2523316789927,
   "measured": 155.68,
-  "error": 0.0865063718691943,
+  "error": 0.08075752620113508,
   "res": 10
  },
  {
   "shape": "16384_12",
   "kernel": "gate#1",
   "kind": "chunk",
-  "predicted": 240.91458355293403,
+  "predicted": 247.14388519066716,
   "measured": 175.27949999999998,
-  "error": 0.37445955489908433,
+  "error": 0.40999880300130465,
   "res": 8
  },
  {
   "shape": "16384_12",
   "kernel": "wu#1",
   "kind": "chunk",
-  "predicted": 658.607920366282,
+  "predicted": 654.0978996075413,
   "measured": 638.56,
-  "error": 0.03139551548215058,
+  "error": 0.024332716749469796,
   "res": 2
  },
  {
   "shape": "16384_12",
   "kernel": "dav#1",
   "kind": "chunk",
-  "predicted": 252.64065584957646,
+  "predicted": 261.91192261894247,
   "measured": 276.64,
-  "error": -0.08675297914409896,
+  "error": -0.05323914611429115,
   "res": 3
  },
  {
   "shape": "16384_12",
   "kernel": "wy_s4a#1",
   "kind": "chunk",
-  "predicted": 471.90036774537396,
+  "predicted": 467.897019950386,
   "measured": 560.0,
-  "error": -0.15732077188326077,
+  "error": -0.16446960723145365,
   "res": 2
  },
  {
   "shape": "16384_12",
   "kernel": "wy_s4b#1",
   "kind": "chunk",
-  "predicted": 1008.3457385430288,
+  "predicted": 907.8414199428609,
   "measured": 1283.4389999999999,
-  "error": -0.21434073723563885,
+  "error": -0.29264934294278033,
   "res": 2
  },
  {
   "shape": "16384_12",
   "kernel": "bwd_tail#1",
   "kind": "chunk",
-  "predicted": 599.141907584259,
+  "predicted": 496.99074158210914,
   "measured": 643.44,
-  "error": -0.06884572363505692,
+  "error": -0.22760359694437848,
   "res": 6
  },
  {
   "shape": "16384_12",
   "kernel": "fwd_h_v8o4#1",
   "kind": "recurrence",
-  "predicted": 536.576000000031,
+  "predicted": 568.8897224111678,
   "measured": 658.0795,
-  "error": -0.18463346753693
+  "error": -0.1355303995776077
  },
  {
   "shape": "16384_12",
@@ -100,97 +100,97 @@
   "shape": "16384_12",
   "kernel": "dhu_v8b#1",
   "kind": "recurrence",
-  "predicted": 545.1946666666686,
+  "predicted": 545.1669333333346,
   "measured": 656.4794999999999,
-  "error": -0.1695176061603315
+  "error": -0.16955985170392274
  },
  {
   "shape": "16384_48",
   "kernel": "fwd_prep_a#1",
   "kind": "chunk",
-  "predicted": 2549.2682953988055,
+  "predicted": 2425.802509397803,
   "measured": 2288.2380000000003,
-  "error": 0.11407480139688486,
+  "error": 0.060118094969930036,
   "res": 3
  },
  {
   "shape": "16384_48",
   "kernel": "fwd_prep_b#1",
   "kind": "chunk",
-  "predicted": 1142.9610536190235,
+  "predicted": 1131.8171524727818,
   "measured": 1438.799,
-  "error": -0.20561450653008273,
+  "error": -0.21335978654921095,
   "res": 3
  },
  {
   "shape": "16384_48",
   "kernel": "l2n_apply#1",
   "kind": "chunk",
-  "predicted": 672.285605617379,
+  "predicted": 671.3906280524801,
   "measured": 624.4795,
-  "error": 0.07655352276156213,
+  "error": 0.07512036512404352,
   "res": 10
  },
  {
   "shape": "16384_48",
   "kernel": "gate#1",
   "kind": "chunk",
-  "predicted": 938.8059520530154,
+  "predicted": 965.8898503315363,
   "measured": 672.4795,
-  "error": 0.39603653650857074,
+  "error": 0.43631121890189406,
   "res": 8
  },
  {
   "shape": "16384_48",
   "kernel": "wu#1",
   "kind": "chunk",
-  "predicted": 2563.770836214742,
+  "predicted": 2521.404978890802,
   "measured": 2531.5985,
-  "error": 0.012708309084059621,
+  "error": -0.004026515701126443,
   "res": 2
  },
  {
   "shape": "16384_48",
   "kernel": "dav#1",
   "kind": "chunk",
-  "predicted": 997.4092811463014,
+  "predicted": 1041.2600939869976,
   "measured": 1041.3595,
-  "error": -0.04220465540833751,
+  "error": -9.54579211140949e-05,
   "res": 3
  },
  {
   "shape": "16384_48",
   "kernel": "wy_s4a#1",
   "kind": "chunk",
-  "predicted": 1838.9380984664535,
+  "predicted": 1808.2035831968524,
   "measured": 2796.558,
-  "error": -0.34242804960009643,
+  "error": -0.35341817219708926,
   "res": 2
  },
  {
   "shape": "16384_48",
   "kernel": "wy_s4b#1",
   "kind": "chunk",
-  "predicted": 3902.8782195537333,
+  "predicted": 3517.3145365466567,
   "measured": 5897.596,
-  "error": -0.3382255719866648,
+  "error": -0.4036019868864098,
   "res": 2
  },
  {
   "shape": "16384_48",
   "kernel": "bwd_tail#1",
   "kind": "chunk",
-  "predicted": 2203.7937816990284,
+  "predicted": 1962.476261631918,
   "measured": 2584.1585,
-  "error": -0.14719093983630327,
+  "error": -0.24057434494365648,
   "res": 6
  },
  {
   "shape": "16384_48",
   "kernel": "dhu_v8b4#1",
   "kind": "recurrence",
-  "predicted": 1931.0080000001017,
+  "predicted": 2017.3194870921584,
   "measured": 2327.5985,
-  "error": -0.17038612973839706
+  "error": -0.13330435335296942
  }
 ]

@@ -1,0 +1,12 @@
+LATLOAD target=hbm background_cus=0 background_GBs=0 latency_cycles=1380
+LATLOAD target=hbm background_cus=8 background_GBs=179 latency_cycles=1310
+LATLOAD target=hbm background_cus=20 background_GBs=444 latency_cycles=1326
+LATLOAD target=hbm background_cus=40 background_GBs=861 latency_cycles=1355
+LATLOAD target=hbm background_cus=60 background_GBs=1094 latency_cycles=1575
+LATLOAD target=hbm background_cus=79 background_GBs=1183 latency_cycles=2009
+LATLOAD target=l2 background_cus=0 background_GBs=0 latency_cycles=1098
+LATLOAD target=l2 background_cus=8 background_GBs=179 latency_cycles=1253
+LATLOAD target=l2 background_cus=20 background_GBs=444 latency_cycles=1256
+LATLOAD target=l2 background_cus=40 background_GBs=862 latency_cycles=1271
+LATLOAD target=l2 background_cus=60 background_GBs=1095 latency_cycles=1463
+LATLOAD target=l2 background_cus=79 background_GBs=1185 latency_cycles=1928

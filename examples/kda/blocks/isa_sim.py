@@ -155,7 +155,8 @@ HBM_RD, HBM_WR = 1339.2e9, 1100.5e9   # achievable device bandwidth (machines/gf
 CLK = 1.5e9
 
 
-LAT_L2, LAT_HBM = 386.0, 588.0   # load issue -> vmcnt (vmem_compl_bench, warm run): L2-resident / HBM
+LAT_L2, LAT_HBM = 700.0, 950.0   # load latency, fresh lines, pointer chase (vmem_bench lat_cyc: L2 664-735, HBM 861-977);
+                                 # vmem_compl_bench (386 / 588) re-touched lines (L1 / L2 hits), lat_load: +2% at 64%, +14% at 82%, +45% at 88% HBM load
 
 
 def simulate(body, W=4, iters=16, vmem_lat=None, st_lat=430.0, trace=False, hbm_frac=0.0, active_cus=80,

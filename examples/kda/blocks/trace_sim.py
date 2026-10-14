@@ -33,6 +33,33 @@ def decode_prog(asm_lines):
     return prog
 
 
+LOAD_LAT = [(0.0, 1.0), (0.64, 1.02), (0.82, 1.14), (0.88, 1.45), (1.0, 2.0)]   # lat_load_bench: latency x vs HBM load
+
+
+def lat_factor(u):
+    for (u0, f0), (u1, f1) in zip(LOAD_LAT, LOAD_LAT[1:]):
+        if u <= u1:
+            return f0 + (f1 - f0) * (max(u, u0) - u0) / (u1 - u0)
+    return LOAD_LAT[-1][1]
+
+
+def simulate_mf(progs, res, n_ctas, hbm_frac, active_cus=80, ta_occ=None, iters=3):
+    """mean-field HBM: no per-CU HBM queue; the load latency follows the GPU-wide HBM utilisation u of the kernel
+    (lat_load_bench) and the kernel time is at least its HBM bytes / bandwidth share.  Returns (cycles, u)."""
+    ld = loaded_bytes(progs) * hbm_frac
+    st = sum(64 * WIDTH.get(o.split("_", 2)[-1].replace("_d16_hi", "").replace("_d16", ""), 4)
+             for p in progs for o, _, cl, *r in p if cl == "vst")
+    hbm_cyc = n_ctas * (ld / (S.HBM_RD / active_cus / S.CLK) + st / (S.HBM_WR / active_cus / S.CLK))
+    u = 0.5
+    for _ in range(iters):
+        f = lat_factor(u)
+        cyc = simulate(progs, res, n_ctas, 0.0, active_cus, vmem_lat=(S.LAT_L2 + hbm_frac * (S.LAT_HBM - S.LAT_L2)) * f,
+                       st_lat=430.0 * f, ta_occ=ta_occ)
+        cyc = max(cyc, hbm_cyc)
+        u = min(1.0, hbm_cyc / cyc)
+    return cyc, u
+
+
 def simulate(progs, res, n_ctas, hbm_frac=0.0, active_cus=80, vmem_lat=None, st_lat=430.0, ta_occ=None):
     """ta_occ: optional per-wave list (one entry per VMEM instruction, None = default by width) of TA occupancy"""
     W = len(progs)
