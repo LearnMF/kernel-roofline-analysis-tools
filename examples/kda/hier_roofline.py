@@ -9,7 +9,12 @@ Operator  : results/kda-gfx936-20261010-ceiling/g2_8192_{48,12}_prod.waterlevel.
             The kra "executed MMAC" number is an ESTIMATE from VALU issue slots (slots - insts) x 8192;
             transcendentals (4 slots) and fp32 MMAC (4096 FLOP) inflate it, so it is drawn only as an
             upper-bound marker, and per-kernel FLOP points are NOT plotted.
-Kernels   : second panel = directly measured per-kernel utilizations (HBM, VMEM issue, VALU pipe).
+Per-kernel: second panel = directly measured utilizations (HBM, VMEM issue, VALU pipe); the
+            roofline panel additionally places every MMAC kernel at its LDS / L2 / HBM
+            arithmetic intensity (measured 2026-10-13 on bw7, hipprof custom counters:
+            FLOPs = exact bf16/fp32 MMAC split via SQ_INSTS_MMOP + SQ_ACTIVE_INST_MMOP;
+            LDS bytes = SQ_LDS_IDX_ACTIVE x 128B; L2 = TCC_REQ x 64B; HBM = calibrated EA formula;
+            raw: results/gfx936-hier-roofline-20261013/raw/, merged.json).
 Usage: python hier_roofline.py [out_dir]   (needs matplotlib)
 """
 import json
@@ -22,6 +27,17 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 MACHINE = os.path.join(ROOT, "machines", "gfx936-bw1000.json")
+
+
+def _hier(h):
+    d = os.path.join(ROOT, "results", "gfx936-hier-roofline-20261013", "raw", "merged.json")
+    try:
+        return json.load(open(d))["8192_%d" % h]
+    except Exception:
+        return []
+
+
+HIER = {48: _hier(48), 12: _hier(12)}
 WL = os.path.join(ROOT, "results", "kda-gfx936-20261010-ceiling", "g2_8192_{h}_prod.waterlevel.json")
 
 
@@ -57,7 +73,8 @@ def load():
         by = sum(k["hbm_rd_MB"] + k["hbm_wr_MB"] for k in allk) * 1e6
         c = d["compute"]
         op = dict(t_s=t, bytes=by, model=c["model_GFLOP"] * 1e9, executed=c["executed_mmac_GFLOP"] * 1e9)
-        kernels[h] = (d.get("operator", ""), rows, op)
+        kernels[h] = (d.get("operator", ""), rows, op, HIER.get(h) or [])
+    return m, mem, comp, kernels
     return m, mem, comp, kernels
 
 
@@ -83,7 +100,7 @@ def plot(mem, comp, kernels, out):
             ax.annotate(f"{r:.0f}", (r, tf), textcoords="offset points", xytext=(4, -12),
                         fontsize=8, color=colors[name])
     mk = {48: ("s", "tab:red"), 12: ("^", "tab:blue")}
-    for h, (_, rows, op) in kernels.items():
+    for h, (_, rows, op, kpts) in kernels.items():
         m_, c_ = mk[h]
         x1, y1 = op["model"] / op["bytes"], op["model"] / op["t_s"] / 1e12
         x2, y2 = op["executed"] / op["bytes"], op["executed"] / op["t_s"] / 1e12
@@ -92,6 +109,37 @@ def plot(mem, comp, kernels, out):
         ax.plot([x1, x2], [y1, y2], ":", color=c_, lw=1)
         ax.annotate(f"H{h}: AI {x1:.0f}, {y1:.1f} TFLOPS", (x1, y1), textcoords="offset points",
                     xytext=(-10, -16 if h == 48 else 10), fontsize=8, color=c_, ha="right")
+    # per-kernel hierarchical points: same y (achieved TFLOPS), x = AI vs each level
+    pc = {48: "tab:red", 12: "tab:blue"}
+    for h, (_, _, _, kpts) in kernels.items():
+        for k in kpts:
+            f = k["gflop"] * 1e9
+            t = k["t_us"] * 1e-6
+            if f < 1e9:
+                continue
+            y = f / t / 1e12
+            ai = {"HBM": f / max(1, k["hbm_MB"]) / 1e-6 / 1e0 if k["hbm_MB"] else 0,
+                  "L2": f / (k["l2_MB"] * 1e6) if k["l2_MB"] else 0,
+                  "LDS": f / (k["lds_MB"] * 1e6) if k["lds_MB"] else 0}
+            ai = {"HBM": f / (k["hbm_MB"] * 1e6) if k["hbm_MB"] else 0,
+                  "L2": f / (k["l2_MB"] * 1e6) if k["l2_MB"] else 0,
+                  "LDS": f / (k["lds_MB"] * 1e6) if k["lds_MB"] else 0}
+            lvl_pts = [(ai["LDS"], "d"), (ai["L2"], "v"), (ai["HBM"], "o")]
+            xs3 = [a_ for a_, _ in lvl_pts if a_ > 0]
+            if len(xs3) > 1:
+                ax.plot(sorted(xs3), [y] * len(xs3), "-", color=pc[h], lw=0.7, alpha=0.35)
+            for a_, m_ in lvl_pts:
+                if a_ > 0:
+                    ax.plot([a_], [y], m_, color=pc[h], ms=4, alpha=0.8)
+            if h == 48 and k["t_us"] > 500:
+                off = {"p3_wy_s4b": (6, 4), "p3_wy_s4a": (-38, 10), "dhu_v8b4": (-30, -14),
+                       "fwd_h_v8o4": (8, 8), "fwd_h_v8o4#2": (-46, 10), "wu": (-30, -16),
+                       "dav": (8, -12), "fwd_prep_a": (8, 4)}.get(k["short"], (5, 5))
+                ax.annotate(f"{k['short']} ({k['t_us']:.0f}us)", (ai["HBM"], y),
+                            textcoords="offset points", xytext=off, fontsize=7, color=pc[h])
+    ax.plot([], [], "o", color="0.4", ms=4, label="kernel point @ HBM AI")
+    ax.plot([], [], "v", color="0.4", ms=4, label="kernel point @ L2 AI")
+    ax.plot([], [], "d", color="0.4", ms=4, label="kernel point @ LDS AI")
     ax.set_xscale("log"); ax.set_yscale("log")
     ax.set_xlim(0.1, 2e4); ax.set_ylim(0.5, 900)
     ax.set_xlabel("Arithmetic intensity (FLOP / HBM byte)")
@@ -101,7 +149,7 @@ def plot(mem, comp, kernels, out):
     ax.grid(True, which="both", ls=":", lw=0.5)
     ax.legend(loc="lower right", fontsize=8)
     # panel 2: measured per-kernel utilization, 8K/H48 (sorted by time)
-    _, rows, _ = kernels[48]
+    _, rows, _, _ = kernels[48]
     rows = sorted(rows, key=lambda r: -r["t_us"])
     ys = range(len(rows))
     w = 0.27
@@ -134,7 +182,7 @@ def table(m, mem, comp, kernels, out):
     L += ["", "## KDA 算子（fwd+bwd）在 HBM roofline 上的位置", "",
           "| 形态 | 模型 FLOPs | HBM 流量 | kernel 时间 | 算术强度（模型 FLOPs） | 实际算力 | 实际 HBM 带宽 | 执行 MMAC 估计（上界） |",
           "|---|---|---|---|---|---|---|---|"]
-    for h, (opname, rows, op) in kernels.items():
+    for h, (opname, rows, op, kpts) in kernels.items():
         L.append(f"| 8K/H{h} | {op['model'] / 1e9:.1f} GFLOP | {op['bytes'] / 1e9:.2f} GB | {op['t_s'] * 1e3:.2f} ms | "
                  f"{op['model'] / op['bytes']:.1f} FLOP/B | {op['model'] / op['t_s'] / 1e12:.1f} TFLOPS | "
                  f"{op['bytes'] / op['t_s'] / 1e9:.0f} GB/s | AI {op['executed'] / op['bytes']:.0f}，{op['executed'] / op['t_s'] / 1e12:.1f} TFLOPS |")
