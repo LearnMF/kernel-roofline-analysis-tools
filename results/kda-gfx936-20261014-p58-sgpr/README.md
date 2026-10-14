@@ -44,3 +44,11 @@
 | 8K/96（未启用） | 1.035 | 1.009 | 噪声范围 |
 
 **结论**：TP8 上两个递推稳定快 1.5–5.3%，H 大的形态不再回退。**可以合入**：按惯例依次同步 bw52 生产版、bw7 和 flash-train，三方的设备代码指纹要一致。
+
+## 合入记录（2026-10-14）
+
+| 位置 | 状态 |
+|---|---|
+| bw52 生产版 `g2_opt` | `82e00e7`；对照合入前备份 GATE_ALL PASS（10/10） |
+| bw7（bw47，容器 `tanbo_mega_k3`）`/opt/kda_env/g2_r5` | `g2_fwd_v8.cuh` 指纹与 bw52 一致（`4217341488aa`）；对照备份 `g2_r5_bak_p58d` GATE_ALL PASS（`raw/g58b7.out`） |
+| flash-train `feat/kda-g2` | 本地提交 `2f92ab3`（**未推送**）。vendored 文件去掉 5 行头后与 bw52 逐字节一致；新构建 `ft_site_r19`（`libflash_train.so` md5 前缀 `f32807fd6f7e`）与旧版 FT（`ft_site_r18` = `b1ec083`）、与 hip_kda 在 8192:12、8192:48 和两组变长上 8/8 逐位一致，pytest 29 passed（`raw/ft_p58d.sh`、`raw/ft_p58d3.out`） |
