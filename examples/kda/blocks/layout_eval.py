@@ -89,6 +89,14 @@ def width_label(op, kernel):
     return None
 
 
+# HBM-sourced cost per wave instruction at full concurrency (vmem_bench HBM column, scatter, pitch 3-12 KB): the TA is
+# held for the DRAM transfer, so the cost reflects the pattern's DRAM efficiency (README section 13)
+PAT_HBM = {"ld16x64": 206.0, "ld16x32": 173.0, "ldg4x64": 53.0, "ldc1k": 99.5, "ldc512": 48.8, "ld4x128": 69.0,
+           "ldrow1": 126.0, "ld2x512": 113.0, "ld2x256": 48.6, "ldc256": 28.9,
+           "st16x64": 230.0, "st16x32": 210.0, "stc1k": 110.8, "st4x256": 130.0, "stc256": 31.8, "stc512": 54.2}
+MIX = {"on": True}
+
+
 CANDIDATES = {   # tensor -> label substitutions when it is stored in the s4b-native fragment layout
     "baseline": {},
     "g native": {"ld16x64:g": "ldc1k", "stc256:g": "st16x32", "ld2x512:g": "ld16x64"},
@@ -98,7 +106,7 @@ CANDIDATES = {   # tensor -> label substitutions when it is stored in the s4b-na
 }
 
 
-def occ_lists(kernel, waves, subst):
+def occ_lists(kernel, waves, subst, f=0.0):
     out = []
     for w in waves:
         if kernel == "wy_s4b":
@@ -111,7 +119,9 @@ def occ_lists(kernel, waves, subst):
                 occ.append(None)
                 continue
             lab = subst.get(lab, lab)
-            occ.append(PAT[lab.split(":")[0]])
+            key = lab.split(":")[0]
+            fx = 1.0 if key.startswith("st") else f
+            occ.append((1 - fx) * PAT[key] + fx * PAT_HBM[key] if MIX["on"] else PAT[key])
         out.append(occ)
     return out
 
@@ -121,8 +131,10 @@ def kernel_time(sh, card, name, subst):
     tr = json.load(open(os.path.join(D.TRACES, name + ".json")))
     progs = [T.decode_prog(w) for w in tr["waves"]]
     hf = min(1.0, c["hbm_rd"] / max(1.0, T.loaded_bytes(progs) * c["ctas"]))
-    occ = occ_lists(name, tr["waves"], subst)
-    return T.simulate(progs, D.residency(c), math.ceil(c["ctas"] / 80), hf, min(80, c["ctas"]), ta_occ=occ) / 1500.0
+    occ = occ_lists(name, tr["waves"], subst, hf)
+    # the mixed TA occupancy already holds the DRAM time of the HBM-sourced part -> no separate per-CU HBM queue
+    return T.simulate(progs, D.residency(c), math.ceil(c["ctas"] / 80), 0.0 if MIX["on"] else hf, min(80, c["ctas"]),
+                      ta_occ=occ, vmem_lat=T.S.LAT_L2 + hf * (T.S.LAT_HBM - T.S.LAT_L2)) / 1500.0
 
 
 def main():
@@ -132,7 +144,9 @@ def main():
     ks = [("gate#1", "gate_kernel"), ("l2n_apply#1", "l2n_apply"), ("wu#1", "g2_wu_kernel"), ("dav#1", "g2_dav_kernel"),
           ("wy_s4a#1", "wy_s4a"), ("wy_s4b#1", "wy_s4b")]
     base = {n: kernel_time(a.shape, c, n, {}) for c, n in ks}
-    print(f"### {a.shape}: pattern-aware baseline (us): " + ", ".join(f"{n} {t:.0f}" for n, t in base.items()))
+    meas = {n: D.CARDS[a.shape]["cards"][c]["t_us"] for c, n in ks}
+    print(f"### {a.shape}: pattern-aware baseline vs measured (us): " +
+          ", ".join(f"{n} {t:.0f}/{meas[n]:.0f}" for n, t in base.items()))
     print("\n| candidate | " + " | ".join(n for _, n in ks) + " | net us |")
     print("|---|" + "---:|" * (len(ks) + 1))
     for cand, sub in CANDIDATES.items():
