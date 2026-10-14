@@ -19,7 +19,7 @@ import derive11 as D  # noqa: E402
 
 # L2-resident TA cycles per wave instruction by access pattern (vmem_bench, raw/vmem_bench.txt)
 PAT = {"ld16x64": 43.0, "ld16x32": 41.0, "ldg4x64": 14.0, "ldc1k": 30.0, "ldc512": 21.0, "ld4x128": 23.0,
-       "ldrow1": 13.0, "ld2x512": 24.0, "ld2x256": 23.0, "ldc256": 12.0,
+       "ldrow1": 13.0, "ld2x512": 24.0, "ld2x256": 23.0, "ldc256": 12.0, "ldg4x64s": 13.0,
        "st16x64": 52.0, "st16x32": 51.0, "stc1k": 59.0, "st4x256": 57.5, "stc256": 15.0, "stc512": 29.0}
 
 
@@ -43,7 +43,8 @@ def s4b_map(wave):
             lab.append("ld16x32" if nx2 < 12 else "ldc512")      # aa (4) + ado (8): row-major frags; avn: natC
             nx2 += 1
         elif op == "global_load_dword":
-            lab.append("ldg4x64")
+            ng = sum(1 for x in lab if x and x.startswith("ldg4x64"))
+            lab.append("ldg4x64:dA" if ng < 10 else "ldg4x64:dAqk")
         elif op == "global_load_dwordx4":
             lab.append(None)
         else:
@@ -93,16 +94,27 @@ def width_label(op, kernel):
 # held for the DRAM transfer, so the cost reflects the pattern's DRAM efficiency (README section 13)
 PAT_HBM = {"ld16x64": 206.0, "ld16x32": 173.0, "ldg4x64": 53.0, "ldc1k": 99.5, "ldc512": 48.8, "ld4x128": 69.0,
            "ldrow1": 126.0, "ld2x512": 113.0, "ld2x256": 48.6, "ldc256": 28.9,
+           "ldg4x64s": 40.0,   # 4 rows x 64 B at a 256 B pitch inside one 1 KB block: NOT MEASURED, between the
+                               # contiguous 256 B (28.9) and the 3 KB-pitch 4 x 64 B (52.3) points
            "st16x64": 230.0, "st16x32": 210.0, "stc1k": 110.8, "st4x256": 130.0, "stc256": 31.8, "stc512": 54.2}
 MIX = {"on": True}
+# s4b: HBM fraction per access class (64 B DRAM sectors; reuse across kt steps / waves); bytes-weighted mean 0.79 vs
+# the PMC hbm_frac 0.82 of the kernel
+S4B_F = {"ld16x64:g": 1.0, "ld16x32:kq": 0.5, "ld16x64:dA": 1.0, "ld16x64:dAqk": 1.0, "ldg4x64": 0.25,
+         "ldg4x64:dA": 0.25, "ldg4x64:dAqk": 0.25, "ld16x32": 0.5, "ldc512": 1.0, "ldc1k": 1.0, "ldc1k:dA": 1.0,
+         "ldc1k:dAqk": 1.0, "ld4x128": 1.0, "ldrow1": 0.05, "ldg4x64s:dA": 0.25, "ldg4x64s:dAqk": 0.25}
 
 
 CANDIDATES = {   # tensor -> label substitutions when it is stored in the s4b-native fragment layout
     "baseline": {},
     "g native": {"ld16x64:g": "ldc1k", "stc256:g": "st16x32", "ld2x512:g": "ld16x64"},
     "kn/qn native": {"ld16x32:kq": "ldc512", "stc512:kq": "st16x32", "ld2x256:kq": "ld16x32"},
-    "dA native (row reads)": {"ld16x64:dA": "ldc1k", "st16x64:dA": "stc1k"},
-    "dAqk native (row reads)": {"ld16x64:dAqk": "ldc1k", "st4x256:dAqk": "stc1k"},
+    "dA native (row reads)": {"ld16x64:dA": "ldc1k:dA", "st16x64:dA": "stc1k"},
+    "dA native (rows + transposed reads)": {"ld16x64:dA": "ldc1k:dA", "st16x64:dA": "stc1k", "ldg4x64:dA": "ldg4x64s:dA"},
+    "dAqk native (row reads)": {"ld16x64:dAqk": "ldc1k:dAqk", "st4x256:dAqk": "stc1k"},
+    "dAqk native (rows + transposed reads)": {"ld16x64:dAqk": "ldc1k:dAqk", "st4x256:dAqk": "stc1k", "ldg4x64:dAqk": "ldg4x64s:dAqk"},
+    "dA + dAqk native (all)": {"ld16x64:dA": "ldc1k:dA", "st16x64:dA": "stc1k", "ldg4x64:dA": "ldg4x64s:dA",
+                               "ld16x64:dAqk": "ldc1k:dAqk", "st4x256:dAqk": "stc1k", "ldg4x64:dAqk": "ldg4x64s:dAqk"},
 }
 
 
@@ -120,7 +132,7 @@ def occ_lists(kernel, waves, subst, f=0.0):
                 continue
             lab = subst.get(lab, lab)
             key = lab.split(":")[0]
-            fx = 1.0 if key.startswith("st") else f
+            fx = 1.0 if key.startswith("st") else (S4B_F.get(lab, f) if kernel == "wy_s4b" else f)
             occ.append((1 - fx) * PAT[key] + fx * PAT_HBM[key] if MIX["on"] else PAT[key])
         out.append(occ)
     return out
