@@ -15,6 +15,7 @@ p.add_argument("--T", type=int, default=8192)
 p.add_argument("--H", type=int, default=12)
 p.add_argument("--out", required=True)
 p.add_argument("--cu", default=None)
+p.add_argument("--no-l2norm", action="store_true", help="use_qk_l2norm_in_kernel=False (the X1 forward chain)")
 a = p.parse_args()
 sys.argv = ["x", str(a.T), str(a.H), "ft", "1"]
 src = open(f"{a.tree}/tests/megatron/kda_op_bench_tp.py").read().split("def fwd(arm")[0]
@@ -26,7 +27,8 @@ if a.cu:
 import flash_train.torch as ft  # noqa: E402
 
 o = ft.kimi_delta_attention(L["q"][0], L["k"][0], L["v"][0], L["g"][0], L["beta"][0], A_log=L["A_log"],
-                            dt_bias=L["dt_bias"], cu_seqlens=CU).unsqueeze(0)
+                            dt_bias=L["dt_bias"], cu_seqlens=CU,
+                            use_qk_l2norm_in_kernel=not a.no_l2norm).unsqueeze(0)
 for t in L.values():
     t.grad = None
 o.backward(D_O)

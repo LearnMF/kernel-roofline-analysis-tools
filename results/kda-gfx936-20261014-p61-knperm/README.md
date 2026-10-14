@@ -1,4 +1,4 @@
-# P-61 系列：write_h 的 16 条 `ds_write_b16` 合并成 4 条 `ds_write_b64`（2026-10-14，探针，暂不合入）
+# P-61 系列：write_h 的 16 条 `ds_write_b16` 合并成 4 条 `ds_write_b64`（2026-10-14；P-61e 已合入）
 
 **来源**：P-60 之后关键路径归因的候选 2（`../kda-gfx936-20261014-critpath/README.md` 第 4 节）。GEMM2 的 B 操作数是 Kn，把它的 16 个 lane 按 pi16 重排，C 片段里每个 lane 就持有连续的 4 个 k，hB 可以一条 8 字节写完成。按 k 的衰减系数也要跟着改成自然 k 序。三个变体都逐位一致，gate 10/10 全部通过。
 
@@ -21,3 +21,39 @@ TP8 两列分别是 16K/12、64K/12。非 TP8 形态（16K/48、8K/96）三个�
   - 按 H ≤ 20 统一门控，C++ 和 Python 读同一个环境变量；
   - FT runner 也要同步。
   - 预计 TP8 净收益约为算子的 0.6–0.8%，集成改动涉及 prep_a、wu、exp2、k3_g2 和 FT runner。
+
+## P-61d / P-61e：可合入的版本
+
+**P-61d**（`examples/kda/p61d_kn_perm.py`）：
+- **门控**：H ≤ `KDA_G2_KPERM_MAX_H`（默认 20，也就是 TP8 的头数）。prep、wu、fwd_h 和 Python 读同一个环境变量。
+- **生产方只改存储地址**：prep_a 读 T2 的方式不变，只置换 Kn 的存储 lane；wu 同样处理。prep_a 的 Gn 改为自然 k 序。
+- **反向**：一个 `g2_exp2_dual` 同时写出置换序的 Gn（给 dhu）和自然序的 Gn（给重算）。
+- **各模式的 KP 实例**：kp 时 v8o4 的所有模式都用 KP 实例，同时不走 v8o4w 和 8-wave 形式。
+
+**P-61e**（`examples/kda/p61e_kn_perm.py`，合入版）：在 P-61d 的基础上，把主机侧改成可移植的 extern "C" 设备函数，hip_kda 和 flash-train runner 共用：
+- `g2_gn_kp`：每个 lane 处理一个元素。它写出置换序和自然序两份衰减系数，并把 Gn_raw 原地改成自然序，给深饱和的 raw 实例用。它替换了原来的 `exp2_(Gn_raw.clone())`，也就是一次拷贝加一次 exp2。
+- `g2_kp_relayout`：在非默认的前向路径上（X1、fwd_intra2、FLA scaffold）原地改 Kn 和 Gn 的布局。
+
+**逐位门禁**：P-61d 和 P-61e 都是 10/10，外加 KDA_G2_FI=3 路径与默认路径的对比。gate 里的变长 8192:12 有 5 段，4·5·12 = 240 ≥ 192，覆盖了深饱和 raw 实例。
+
+**A/B**（bw7 HCU 4–7，5 进程 × 6 轮，比值 > 1 表示新版更快）：
+
+| 形态 | 前向递推 | 重算递推 | prep_a | wu | gn_kp 与 exp2 | 算子（全部 kernel） |
+|---|---:|---:|---:|---:|---|---:|
+| 16K/12（kp） | 1.033 | **1.051** | 0.999 | 0.994 | 6.7 对 6.6 µs | **1.0068（−43 µs）** |
+| 64K/12（kp） | 1.051 | **1.055** | 0.995 | 0.990 | 22.8 对 22.1 µs | **1.0060（−144 µs）** |
+| 16K/48（不启用） | 1.004 | 0.996 | 0.998 | 0.999 | 不变 | 0.9996 |
+| 8K/96（不启用） | 0.987（A 侧离散度 6.8%） | 0.992 | 0.999 | 1.000 | 不变 | 0.9986 |
+
+P-61e 的第一版里，gn_kp 每个线程处理一组 16 个元素，耗时 14.1 / 42.2 µs，见 `bw7/p61e_v1/`；改成每个 lane 一个元素后，与 exp2 持平。不启用的两个形态走的完全是原来的代码，差异属于噪声。
+
+**合入**：
+- bw52 `g2_opt` `f80b564`，对照合入前备份 `g2_opt_bak_p61e`：GATE_ALL PASS，FI=3 PASS；
+- bw7 `g2_r5` 的指纹与 bw52 一致（5 个文件合计 `b9380abc238a`）；
+- flash-train 端的移植在 `examples/kda/p61e_ft.py`：vendored 的 3 个 cuh 加 runner。kp 时 runner 在 X1 前向后调用 `g2_kp_relayout`；反向调用 `g2_gn_kp`，其中 GnNat 是新的工作区槽位，大小 CH·128 fp32，只在 kp 时分配。
+
+**合入完成（2026-10-15）**：
+- bw7 对照备份 `g2_r5_bak_p61e`：GATE_ALL PASS（`merge/b61m.out`）；
+- flash-train 本地提交 `13181dc`，**未推送**，比远端多 2 个提交（`c5580f8` P-60、`13181dc` P-61e）：
+  - 新构建 `ft_site_r21` 与上一版 FT、与 hip_kda 在 4 组配置上 8/8 逐位一致，pytest 29 项通过；
+  - X1 路径（`use_qk_l2norm_in_kernel=False`，会走 `g2_kp_relayout`）与上一版 FT 逐位一致，覆盖 8192:12 dense、8192:12 变长和 8192:48（`merge/ft_x1.out`）。
