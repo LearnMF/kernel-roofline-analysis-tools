@@ -1,0 +1,3 @@
+results/kda-blocks-20261014/raw/sqtt_bodies/sq_body_mode1.s: 348 instructions/iteration {'salu': 15, 'wait': 29, 'bar': 2, 'vld': 17, 'lds': 50, 'valu64': 26, 'mmac16': 56, 'valu': 109, 'carry': 24, 'nop': 8, 'vst': 2, 'pk': 8, 'br': 2}
+  steady state: 3131 cycles = 2.087 us per iteration (waves: [3131, 3131, 3131, 3131])
+  wave-0 stalls per iteration (cycles): {'wait:lgkmcn': 658, 'wait:vmcnt(': 200, 'barrier': 179, 'dep:valu': 165, 'dep:lds': 116, 'dep:valu64': 21, 'dep:pk': 18, 'dep:mmac16': 18, 'dep:carry': 9, 'dep:vld': 4}

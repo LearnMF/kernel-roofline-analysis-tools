@@ -1,0 +1,46 @@
+[
+ {
+  "name": "fwd MODE 1 (fwd_h_o)",
+  "body": "sq_body_mode1.s",
+  "waves": 4,
+  "shape": "16384_12",
+  "hbm_frac": 0.267,
+  "active_cus": 48,
+  "predicted_us": 2.0873,
+  "measured_us": 2.5706,
+  "error": -0.188
+ },
+ {
+  "name": "recompute MODE 4 (fwd_h_bn)",
+  "body": "sq_body_mode4.s",
+  "waves": 4,
+  "shape": "16384_12",
+  "hbm_frac": 0.276,
+  "active_cus": 48,
+  "predicted_us": 2.0085,
+  "measured_us": 1.9663,
+  "error": 0.0215
+ },
+ {
+  "name": "dhu 8-wave",
+  "body": "sq_body_dhu8.s",
+  "waves": 8,
+  "shape": "16384_12",
+  "hbm_frac": 0.252,
+  "active_cus": 48,
+  "predicted_us": 2.1324,
+  "measured_us": 2.5644,
+  "error": -0.1685
+ },
+ {
+  "name": "dhu 4-wave (P-24 throttled, 1 CTA/CU)",
+  "body": "sq_body_dhu4.s",
+  "waves": 4,
+  "shape": "16384_48",
+  "hbm_frac": 0.314,
+  "active_cus": 80,
+  "predicted_us": 2.5166,
+  "measured_us": 3.0307,
+  "error": -0.1696
+ }
+]

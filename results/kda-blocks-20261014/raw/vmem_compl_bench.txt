@@ -1,0 +1,4 @@
+VMEMCOMPL load_dwordx2 ws=4MB issue_to_vmcnt0_cycles=386
+VMEMCOMPL load_dwordx2 ws=1024MB issue_to_vmcnt0_cycles=588
+VMEMCOMPL store_dwordx2 ws=4MB issue_to_vmcnt0_cycles=430
+VMEMCOMPL store_dwordx2 ws=1024MB issue_to_vmcnt0_cycles=432

@@ -1,0 +1,2 @@
+MMACDEP srcC_chain_unrolled cycles_per_dependent_mmac=10.52
+MMACDEP result->VALU->srcA cycles_per_dependent_mmac=38.52

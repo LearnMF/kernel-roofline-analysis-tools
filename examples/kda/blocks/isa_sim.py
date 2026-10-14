@@ -34,10 +34,16 @@ LDS_OCC = {   # cycles of the CU's LDS pipe per wave instruction (conflict-free,
 }
 MMAC_FWD = {"mmac16": 10.5, "mmac8f": 34.0}   # dependent srcC accumulate chain, straight-line (mmac_dep_bench)
 LDS_LAT = 80.0          # issue -> data (dependent ds_read_b32 chain 88.6 incl. its own occupancy)
-TA_OCC = {"ld": {"dword": 12.0, "dwordx2": 21.0, "dwordx4": 22.0, "ushort": 13.0, "short": 13.0},
+import os as _os
+# dwordx4 = 30: CU acceptance with few waves / CU (issue_burst_bench, 2 waves, SQTT); 22 at 32 waves (vmem_bench)
+TA_OCC = {"ld": {"dword": 12.0, "dwordx2": 21.0, "dwordx4": float(_os.environ.get("TA_X4", 30.0)), "ushort": 13.0, "short": 13.0},
           "st": {"dword": 15.0, "dwordx2": 29.0, "dwordx4": 59.0, "short": 11.0}}   # L2-resident contiguous rows
 BAR = {4: 57.0, 8: 65.0, 16: 94.0}
 BRANCH = 8.0            # taken backward branch (assumption: pipeline refill)
+Q_WAVE = 16             # per-wave issue queue for VMEM / LDS (issue_burst_bench SQTT: ~16-20 issue at 4 cycles,
+                        # then issue proceeds at the unit's processing rate; no hard in-flight limit up to 32)
+LDS_WAVE = {"ds_read2_b64": 16.0, "ds_read2st64_b64": 16.0, "ds_write_b16": 8.0, "ds_write_b16_d16_hi": 8.0}
+                        # single-wave LDS rate (issue_burst_bench, 1 wave / CU); other forms: max(CU occupancy, 8)
 ISSUE = 4.0             # every instruction occupies the wave's issue slot for 4 cycles (SQTT clks = 4)
 
 VREG = re.compile(r"\bv\[(\d+):(\d+)\]|\bv(\d+)\b")
@@ -142,7 +148,20 @@ def decode(opc, ops, cls):
     return dst, src, extra
 
 
-def simulate(body, W=4, iters=16, vmem_lat=900.0, st_lat=430.0, trace=False):
+HBM_RD, HBM_WR = 1339.2e9, 1100.5e9   # achievable device bandwidth (machines/gfx936-bw1000.json)
+CLK = 1.5e9
+
+
+LAT_L2, LAT_HBM = 386.0, 588.0   # load issue -> vmcnt (vmem_compl_bench, warm run): L2-resident / HBM
+
+
+def simulate(body, W=4, iters=16, vmem_lat=None, st_lat=430.0, trace=False, hbm_frac=0.0, active_cus=80,
+             ctas_per_cu=1):
+    """hbm_frac: fraction of the loaded bytes that come from HBM (the rest hit L2) -- a memory-behaviour input
+    (e.g. unique bytes / requested bytes from the PMC or the dataflow), active_cus: CUs sharing the bandwidth."""
+    bw_rd = HBM_RD / active_cus / CLK / ctas_per_cu      # bytes / cycle available to this CTA
+    bw_wr = HBM_WR / active_cus / CLK / ctas_per_cu
+    hbm_free = 0.0
     prog = [(o, a, c) + decode(o, a, c) for o, a, c in body]
     n = len(prog)
     simd_free = [0.0] * 4
@@ -153,6 +172,9 @@ def simulate(body, W=4, iters=16, vmem_lat=900.0, st_lat=430.0, trace=False):
     pc = [0] * W
     it = [0] * W
     vm_q = [[] for _ in range(W)]     # completion times of outstanding VMEM ops (in order)
+    vq_leave = [[] for _ in range(W)]  # times the wave's queued VMEM instructions enter the TA
+    lq_leave = [[] for _ in range(W)]
+    wave_lds = [0.0] * W
     lg_q = [[] for _ in range(W)]
     bar_arr, bar_wait = {}, set()
     iter_end = [[] for _ in range(W)]
@@ -224,13 +246,19 @@ def simulate(body, W=4, iters=16, vmem_lat=900.0, st_lat=430.0, trace=False):
             t[w] = start + BRANCH
         elif cls == "lds":
             occ = LDS_OCC.get(opc, 6.0)
-            s0 = max(start, lds_free)
-            if w == 0 and it[w] >= iters // 2 and s0 > start:
-                stall["issue:lds"] = stall.get("issue:lds", 0.0) + s0 - start
-            lds_free = s0 + occ
-            done = s0 + occ + LDS_LAT
+            occ_w = LDS_WAVE.get(opc, max(occ, 8.0))
+            pend = [x for x in lq_leave[w] if x > start]
+            s_iss = start if len(pend) < Q_WAVE else sorted(pend)[len(pend) - Q_WAVE]
+            if w == 0 and it[w] >= iters // 2 and s_iss > start:
+                stall["issue:lds"] = stall.get("issue:lds", 0.0) + s_iss - start
+            s_port = max(s_iss, wave_lds[w])
+            wave_lds[w] = s_port + occ_w
+            s_cu = max(s_port, lds_free)
+            lds_free = s_cu + occ
+            lq_leave[w] = pend + [s_cu]
+            done = s_cu + max(occ, occ_w) + LDS_LAT
             lg_q[w].append(max(done, lg_q[w][-1] if lg_q[w] else 0.0))
-            t[w] = s0 + ISSUE
+            t[w] = s_iss + ISSUE
         elif cls == "smem":
             lg_q[w].append(max(start + 200.0, lg_q[w][-1] if lg_q[w] else 0.0))
             t[w] = start + ISSUE
@@ -238,13 +266,21 @@ def simulate(body, W=4, iters=16, vmem_lat=900.0, st_lat=430.0, trace=False):
             kind = "ld" if cls == "vld" else "st"
             width = opc.split("_", 2)[-1].replace("_d16_hi", "").replace("_d16", "")
             occ = TA_OCC[kind].get(width, 22.0 if kind == "ld" else 59.0)
-            s0 = max(start, ta_free)
-            if w == 0 and it[w] >= iters // 2 and s0 > start:
-                stall["issue:vmem"] = stall.get("issue:vmem", 0.0) + s0 - start
+            pend = [x for x in vq_leave[w] if x > start]
+            s_iss = start if len(pend) < Q_WAVE else sorted(pend)[len(pend) - Q_WAVE]
+            if w == 0 and it[w] >= iters // 2 and s_iss > start:
+                stall["issue:vmem"] = stall.get("issue:vmem", 0.0) + s_iss - start
+            s0 = max(s_iss, ta_free)
             ta_free = s0 + occ
-            done = s0 + occ + (vmem_lat if cls == "vld" else st_lat)
+            vq_leave[w] = pend + [s0]
+            nbytes = 64 * {"dword": 4, "dwordx2": 8, "dwordx4": 16, "ushort": 2, "short": 2}.get(width, 8)
+            hb = nbytes * (hbm_frac if cls == "vld" else 1.0) / (bw_rd if cls == "vld" else bw_wr)
+            h0 = max(s0, hbm_free)
+            hbm_free = h0 + hb
+            lat = (vmem_lat if vmem_lat is not None else LAT_L2 + hbm_frac * (LAT_HBM - LAT_L2)) if cls == "vld" else st_lat
+            done = max(s0 + occ, h0 + hb) + lat
             vm_q[w].append(max(done, vm_q[w][-1] if vm_q[w] else 0.0))
-            t[w] = s0 + ISSUE
+            t[w] = s_iss + ISSUE
         if w == 0 and it[w] >= iters // 2:
             pos_t.setdefault(pc[w], []).append(t[w])
         if trace and w == 0 and it[w] == iters - 2:
@@ -267,12 +303,15 @@ def main():
     ap.add_argument("isa")
     ap.add_argument("--waves", type=int, default=4)
     ap.add_argument("--iters", type=int, default=16)
-    ap.add_argument("--vmem-lat", type=float, default=900.0, help="load issue -> vmcnt (vmem_compl_bench 930-1030)")
+    ap.add_argument("--vmem-lat", type=float, default=None, help="load latency override (default: L2 386 / HBM 588 mix)")
     ap.add_argument("--st-lat", type=float, default=430.0, help="store issue -> vmcnt (vmem_compl_bench 427-430)")
     ap.add_argument("--trace", action="store_true")
+    ap.add_argument("--hbm-frac", type=float, default=0.0)
+    ap.add_argument("--active-cus", type=int, default=80)
+    ap.add_argument("--ctas-per-cu", type=int, default=1)
     a = ap.parse_args()
     body = parse_loop(a.isa)
-    cyc, per = simulate(body, a.waves, a.iters, a.vmem_lat, a.st_lat, a.trace)
+    cyc, per = simulate(body, a.waves, a.iters, a.vmem_lat, a.st_lat, a.trace, a.hbm_frac, a.active_cus, a.ctas_per_cu)
     mix = {}
     for _, _, c in body:
         mix[c] = mix.get(c, 0) + 1

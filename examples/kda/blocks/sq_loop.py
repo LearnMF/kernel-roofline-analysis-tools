@@ -9,8 +9,11 @@ for e in ev:
 s = sorted(max(st.values(), key=len), key=lambda e: (e["ts"], e["args"].get("inst idx", 0)))
 asm = [e["args"]["assembly"].strip() for e in s]
 cnt = collections.Counter(asm)
-cands = [a for a in asm if cnt[a] in (nt, nt - 1)]
-marker = cands[0]
+# loop marker: the loop-counter increment (s_add_i32 sX, sY, 1) that executes once per step (k * NT times when the
+# wave's stream holds k CTAs); fall back to any instruction executed a multiple of NT times
+cands = [a for a in asm if a.startswith("s_add_i32") and a.endswith(", 1") and cnt[a] >= nt - 1 and cnt[a] % nt in (0, nt - 1)]
+cands = cands or [a for a in asm if cnt[a] >= nt - 1 and cnt[a] % nt in (0, nt - 1)] or [None]
+marker = sys.argv[5] if len(sys.argv) > 5 else cands[0]   # optional explicit marker (loop-counter update)
 idx = [k for k, a in enumerate(asm) if a == marker]
 k0 = idx[len(idx) // 2]
 k1 = idx[len(idx) // 2 + 1]

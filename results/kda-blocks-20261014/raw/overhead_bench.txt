@@ -1,0 +1,20 @@
+LAUNCH n=1 us_per_launch=6.72
+LAUNCH n=2 us_per_launch=4.24
+LAUNCH n=8 us_per_launch=2.48
+LAUNCH n=32 us_per_launch=2.03
+LAUNCH n=128 us_per_launch=1.82
+MIN empty_us=6.24 one_load_store_80ctas_us=6.56
+TAIL ctas=80 us=123.84 rounds=1
+TAIL ctas=81 us=244.00 rounds=2
+TAIL ctas=120 us=244.16 rounds=2
+TAIL ctas=160 us=244.32 rounds=2
+TAIL ctas=161 us=364.16 rounds=3
+TAIL ctas=240 us=364.48 rounds=3
+TAIL ctas=241 us=484.32 rounds=4
+TAIL ctas=320 us=484.64 rounds=4
+TAIL ctas=400 us=604.80 rounds=5
+TAIL ctas=401 us=724.64 rounds=6
+DISPATCH ctas=80 us=6.24 ns_per_cta_per_cu=6240.0
+DISPATCH ctas=640 us=6.24 ns_per_cta_per_cu=780.0
+DISPATCH ctas=5120 us=19.84 ns_per_cta_per_cu=310.0
+DISPATCH ctas=40960 us=139.52 ns_per_cta_per_cu=272.5

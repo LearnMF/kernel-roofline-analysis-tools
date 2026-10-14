@@ -1,0 +1,39 @@
+== kind=0 N=32 waves=1
+/tmp/burst_0_32_1: 8 waves, burst length 32; early issue interval 4.0 cyc; first blocking at instruction #4 (gap 68 cyc)
+  issue time per instruction: 0 4 8 12 80 84 88 92 96 100 104 108 112 116 120 124 128 132 136 140 153 169 185 201 217 233 249 265 281 297 313 329
+== kind=0 N=32 waves=2
+/tmp/burst_0_32_2: 16 waves, burst length 32; early issue interval 4.0 cyc; first blocking at instruction #4 (gap 68 cyc)
+  issue time per instruction: 0 4 8 12 80 84 88 92 96 100 104 108 112 116 120 124 128 133 138 142 157 173 190 207 231 262 293 324 355 385 416 447
+== kind=0 N=32 waves=4
+/tmp/burst_0_32_4: 32 waves, burst length 32; early issue interval 32.0 cyc; first blocking at instruction #4 (gap 544 cyc)
+  issue time per instruction: 0 32 64 96 640 672 704 736 768 800 832 864 896 928 960 992 1024 1056 1088 1120 1152 1184 1216 1248 1280 1312 1344 1376 1408 1440 1472 1504
+== kind=1 N=32 waves=1
+/tmp/burst_1_32_1: 8 waves, burst length 32; early issue interval 4.0 cyc; first blocking at instruction #4 (gap 80 cyc)
+  issue time per instruction: 0 4 8 12 92 96 100 104 108 112 116 124 128 132 136 144 148 152 156 164 168 182 198 214 230 246 262 278 294 310 326 342
+== kind=1 N=32 waves=2
+/tmp/burst_1_32_2: 16 waves, burst length 32; early issue interval 4.0 cyc; first blocking at instruction #4 (gap 80 cyc)
+  issue time per instruction: 0 4 8 12 92 96 100 104 108 112 116 124 128 132 136 144 148 152 156 211 271 331 392 452 513 573 634 695 755 816 876 937
+== kind=1 N=32 waves=4
+/tmp/burst_1_32_4: 32 waves, burst length 32; early issue interval 64.0 cyc; first blocking at instruction #4 (gap 1088 cyc)
+  issue time per instruction: 0 64 128 192 1280 1344 1408 1472 1536 1600 1664 1728 1792 1856 1920 1984 2048 2112 2176 2240 2304 2368 2432 2496 2560 2624 2688 2752 2816 2880 2944 3008
+== kind=1 N=32 waves=8
+/tmp/burst_1_32_8: 64 waves, burst length 32; early issue interval 64.0 cyc; first blocking at instruction #4 (gap 3630 cyc)
+  issue time per instruction: 0 64 128 192 3822 3886 3950 4014 4078 4142 4206 4270 4334 4398 4462 4526 5015 5079 5143 5207 5271 5335 5399 5463 5527 5591 5655 5719 5783 5847 5911 5975
+== kind=2 N=32 waves=1
+/tmp/burst_2_32_1: 8 waves, burst length 32; issue interval 4.0; no blocking
+  issue time per instruction: 0 16 20 24 28 36 40 44 48 56 60 64 68 76 80 84 88 96 110 126 142 158 174 190 206 222 238 254 270 286 302 318
+== kind=2 N=32 waves=2
+/tmp/burst_2_32_2: 16 waves, burst length 32; issue interval 4.0; no blocking
+  issue time per instruction: 0 16 20 24 28 36 40 44 48 56 60 64 68 76 80 84 88 98 113 129 145 161 177 193 209 225 241 257 273 289 305 321
+== kind=2 N=32 waves=4
+/tmp/burst_2_32_4: 32 waves, burst length 32; issue interval 9.3; no blocking
+  issue time per instruction: 0 16 22 31 47 65 82 102 122 143 159 176 193 211 228 261 279 297 315 334 352 371 393 417 442 461 486 510 535 559 583 606
+== kind=2 N=32 waves=8
+/tmp/burst_2_32_8: 64 waves, burst length 32; early issue interval 24.1 cyc; first blocking at instruction #13 (gap 170 cyc)
+  issue time per instruction: 0 24 43 74 98 123 147 173 200 228 253 278 304 474 500 532 561 588 614 641 668 695 723 753 782 809 980 1009 1038 1068 1097 1125
+== kind=3 N=32 waves=1
+/tmp/burst_3_32_1: 8 waves, burst length 32; issue interval 8.0; no blocking
+  issue time per instruction: 0 8 16 24 32 40 48 56 64 72 80 88 96 104 112 120 128 136 144 152 160 168 176 184 192 200 208 216 224 232 240 248
+== kind=3 N=32 waves=4
+/tmp/burst_3_32_4: 32 waves, burst length 32; issue interval 14.1; no blocking
+  issue time per instruction: 0 14 28 42 57 72 88 103 119 135 151 167 183 199 215 231 247 263 279 295 311 327 343 359 375 391 406 421 436 451 465 478

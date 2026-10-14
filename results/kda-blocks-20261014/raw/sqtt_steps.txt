@@ -1,0 +1,24 @@
+== fwd dispatch 0
+16 waves; cycles per step: median 3805  min 3576  max 3810  (2.537 us @1.5 GHz)
+per wave per step (cycles): {'issue:vmem': 692, 'busy:valu': 665, 'wait:lgkmcnt': 435, 'issue:lds': 315, 'busy:mmac': 292, 'barrier': 266, 'busy:salu': 266, 'busy:lds': 210, 'wait:vmcnt': 158, 'issue:valu': 94, 'issue:salu': 87, 'wait:vmcnt+lgkmcnt': 82, 'busy:vmem': 76, 'issue:mmac': 74, 'busy:pk': 32, 'issue:pk': 1}
+== fwd dispatch 1
+20 waves; cycles per step: median 2793  min 2673  max 2858  (1.862 us @1.5 GHz)
+per wave per step (cycles): {'busy:valu': 657, 'issue:vmem': 353, 'wait:vmcnt+lgkmcnt': 255, 'wait:lgkmcnt': 254, 'issue:lds': 245, 'busy:lds': 220, 'busy:salu': 210, 'busy:mmac': 156, 'barrier': 120, 'issue:salu': 75, 'busy:vmem': 73, 'issue:valu': 73, 'busy:pk': 32, 'issue:mmac': 28, 'wait:vmcnt': 22, 'issue:pk': 0}
+== fwd dispatch 2
+20 waves; cycles per step: median 3407  min 3306  max 3524  (2.271 us @1.5 GHz)
+per wave per step (cycles): {'busy:valu': 664, 'issue:vmem': 429, 'wait:lgkmcnt': 424, 'issue:lds': 313, 'busy:mmac': 292, 'busy:salu': 266, 'barrier': 230, 'busy:lds': 210, 'wait:vmcnt': 163, 'issue:salu': 84, 'wait:vmcnt+lgkmcnt': 82, 'issue:valu': 80, 'busy:vmem': 76, 'issue:mmac': 68, 'busy:pk': 32, 'issue:pk': 0}
+== fwd dispatch 3
+12 waves; cycles per step: median 2615  min 2598  max 2621  (1.743 us @1.5 GHz)
+per wave per step (cycles): {'busy:valu': 657, 'wait:vmcnt+lgkmcnt': 256, 'wait:lgkmcnt': 255, 'issue:lds': 243, 'issue:vmem': 229, 'busy:lds': 220, 'busy:salu': 210, 'busy:mmac': 156, 'barrier': 93, 'busy:vmem': 73, 'issue:valu': 71, 'issue:salu': 56, 'busy:pk': 32, 'wait:vmcnt': 31, 'issue:mmac': 28, 'issue:pk': 0}
+== dhu8 dispatch 0
+32 waves; cycles per step: median 4363  min 4078  max 5325  (2.908 us @1.5 GHz)
+per wave per step (cycles): {'issue:vmem': 1492, 'barrier': 1016, 'busy:valu': 441, 'issue:lds': 348, 'wait:lgkmcnt': 199, 'busy:salu': 181, 'busy:lds': 168, 'issue:valu': 128, 'wait:vmcnt+lgkmcnt': 121, 'issue:mmac': 108, 'busy:mmac': 106, 'busy:vmem': 66, 'issue:salu': 45, 'busy:pk': 32, 'issue:pk': 8, 'wait:vmcnt': 3}
+== dhu4 dispatch 0
+64 waves; cycles per step: median 4578  min 4200  max 4893  (3.052 us @1.5 GHz)
+per wave per step (cycles): {'busy:valu': 1118, 'issue:vmem': 1112, 'busy:salu': 453, 'issue:lds': 281, 'busy:mmac': 252, 'busy:lds': 246, 'issue:salu': 193, 'barrier': 184, 'wait:vmcnt+lgkmcnt': 144, 'busy:vmem': 122, 'wait:vmcnt': 104, 'wait:lgkmcnt': 91, 'busy:pk': 80, 'issue:valu': 71, 'issue:mmac': 60, 'issue:pk': 4, 'busy:trans': 0, 'issue:trans': 0}
+== dhu8 dispatch 1
+128 waves; cycles per step: median 5103  min 3187  max 22582  (3.402 us @1.5 GHz)
+per wave per step (cycles): {'issue:vmem': 3315, 'barrier': 1738, 'issue:lds': 449, 'busy:valu': 441, 'issue:valu': 230, 'wait:lgkmcnt': 182, 'busy:salu': 181, 'busy:lds': 170, 'issue:mmac': 152, 'wait:vmcnt+lgkmcnt': 124, 'busy:mmac': 106, 'busy:vmem': 66, 'issue:salu': 46, 'busy:pk': 32, 'issue:pk': 15, 'wait:vmcnt': 3}
+== dhu4 dispatch 1
+64 waves; cycles per step: median 4357  min 4188  max 4912  (2.905 us @1.5 GHz)
+per wave per step (cycles): {'busy:valu': 1118, 'issue:vmem': 1078, 'busy:salu': 453, 'issue:lds': 281, 'busy:mmac': 252, 'busy:lds': 246, 'issue:salu': 194, 'barrier': 161, 'wait:vmcnt+lgkmcnt': 128, 'busy:vmem': 122, 'wait:lgkmcnt': 92, 'busy:pk': 80, 'wait:vmcnt': 74, 'issue:valu': 71, 'issue:mmac': 60, 'issue:pk': 4, 'busy:trans': 0, 'issue:trans': 0}
