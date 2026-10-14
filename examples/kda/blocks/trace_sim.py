@@ -33,7 +33,8 @@ def decode_prog(asm_lines):
     return prog
 
 
-def simulate(progs, res, n_ctas, hbm_frac=0.0, active_cus=80, vmem_lat=None, st_lat=430.0):
+def simulate(progs, res, n_ctas, hbm_frac=0.0, active_cus=80, vmem_lat=None, st_lat=430.0, ta_occ=None):
+    """ta_occ: optional per-wave list (one entry per VMEM instruction, None = default by width) of TA occupancy"""
     W = len(progs)
     nslot = res * W
     bw_rd = S.HBM_RD / active_cus / S.CLK
@@ -51,6 +52,7 @@ def simulate(progs, res, n_ctas, hbm_frac=0.0, active_cus=80, vmem_lat=None, st_
     lq_leave = [[] for _ in range(nslot)]
     wave_lds = [0.0] * nslot
     bar_cnt = [0] * nslot
+    vmem_k = [0] * nslot
     bar_arr = {}
     next_cta = 0
     done_waves = {}
@@ -70,6 +72,7 @@ def simulate(progs, res, n_ctas, hbm_frac=0.0, active_cus=80, vmem_lat=None, st_
             t[s] = when
             vready[s].clear(); vfwd[s].clear(); vm_q[s] = []; lg_q[s] = []; vq_leave[s] = []; lq_leave[s] = []
             bar_cnt[s] = 0
+            vmem_k[s] = 0
             heapq.heappush(heap, (when, s))
         done_waves[c] = 0
 
@@ -156,6 +159,9 @@ def simulate(progs, res, n_ctas, hbm_frac=0.0, active_cus=80, vmem_lat=None, st_
             kind = "ld" if cls == "vld" else "st"
             width = opc.split("_", 2)[-1].replace("_d16_hi", "").replace("_d16", "")
             occ = S.TA_OCC[kind].get(width, 22.0 if kind == "ld" else 29.0)
+            if ta_occ is not None and vmem_k[s] < len(ta_occ[w]) and ta_occ[w][vmem_k[s]] is not None:
+                occ = ta_occ[w][vmem_k[s]]
+            vmem_k[s] += 1
             pend = [x for x in vq_leave[s] if x > start]
             s_iss = start if len(pend) < S.Q_WAVE else sorted(pend)[len(pend) - S.Q_WAVE]
             s0 = max(s_iss, ta_free)
