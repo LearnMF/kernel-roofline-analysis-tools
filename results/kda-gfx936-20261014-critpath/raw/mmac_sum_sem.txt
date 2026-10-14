@@ -1,0 +1,3 @@
+bw52 HCU7, DTK hipcc -O3 --offload-arch=gfx936, 4096 tiles x 16 rows, random fp32/bf16 with wide exponent range
+f32 K4   (65536 rows): c-first seq 65536 | seq c-last 58137 | tree c-last 50815 | exact-once 50274
+bf16 K16 (65536 rows): c-first seq 37464 | seq c-last 37112 | pairwise tree 40575 | quad-tree 40575 | exact-once 52389

@@ -1,0 +1,142 @@
+0 0 104 s_barrier
+1 4 0 global_load_dwordx4 v[88:91], v[47:48], off offset:-2048
+2 8 0 global_load_dwordx4 v[92:95], v[47:48], off offset:-1024
+3 12 0 global_load_dwordx4 v[96:99], v[47:48], off
+4 16 0 global_load_dwordx4 v[100:103], v[47:48], off offset:1024
+5 20 0 global_load_dwordx4 v[104:107], v[51:52], off offset:-1024
+6 24 0 global_load_dwordx4 v[108:111], v[51:52], off
+22 104 0 s_waitcnt vmcnt(16) lgkmcnt(5)
+23 108 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[1:2], v[112:113], v[124:127]
+24 116 0 s_waitcnt lgkmcnt(4)
+25 120 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[1:2], v[120:121], v[128:131]
+26 128 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[3:4], v[114:115], v[124:127]
+27 136 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[3:4], v[122:123], v[128:131]
+30 160 0 s_waitcnt vmcnt(15) lgkmcnt(5)
+31 164 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[5:6], v[132:133], v[124:127]
+32 172 0 s_waitcnt lgkmcnt(4)
+33 176 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[5:6], v[136:137], v[128:131]
+34 184 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[7:8], v[134:135], v[124:127]
+35 192 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[7:8], v[138:139], v[128:131]
+36 220 20 s_waitcnt vmcnt(12) lgkmcnt(3)
+37 224 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[25:26], v[140:141], v[124:127]
+38 236 4 s_waitcnt lgkmcnt(2)
+39 240 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[25:26], v[144:145], v[128:131]
+40 248 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[27:28], v[142:143], v[124:127]
+41 256 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[27:28], v[146:147], v[128:131]
+42 284 20 s_waitcnt vmcnt(11) lgkmcnt(1)
+43 288 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[21:22], v[148:149], v[124:127]
+44 300 4 s_waitcnt lgkmcnt(0)
+45 304 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[21:22], v[152:153], v[128:131]
+47 316 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[23:24], v[150:151], v[124:127]
+48 324 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[23:24], v[154:155], v[128:131]
+60 384 8 global_load_dwordx4 v[1:4], v[21:22], off
+61 388 0 global_load_dwordx4 v[5:8], v[21:22], off offset:1024
+62 392 0 global_load_dwordx4 v[25:28], v[21:22], off offset:2048
+64 400 0 global_load_dwordx4 v[21:24], v[21:22], off offset:3072
+65 404 0 s_waitcnt vmcnt(14)
+77 460 8 ds_write_b16_d16_hi v76, v124
+78 468 0 ds_write_b16_d16_hi v76, v128 offset:2176
+84 504 8 ds_write_b16_d16_hi v76, v17 offset:544
+85 512 0 ds_write_b16_d16_hi v77, v19 offset:2176
+94 560 8 ds_write_b16_d16_hi v76, v17 offset:1088
+95 568 0 ds_write_b16_d16_hi v78, v19 offset:2176
+104 616 8 ds_write_b16_d16_hi v76, v17 offset:1632
+105 624 0 ds_write_b16_d16_hi v79, v18 offset:2176
+112 692 36 global_load_dwordx4 v[17:20], v[17:18], off
+128 772 16 s_addc_u32 s7, s7, s25
+130 796 16 s_lshl_b64 s[6:7], s[6:7], 2
+134 820 8 global_load_dwordx4 v[9:12], v[9:10], off
+136 828 0 global_load_dwordx4 v[13:16], v[13:14], off
+141 1156 308 s_waitcnt vmcnt(12)
+142 1160 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[88:89], v[112:113], v[124:127]
+143 1168 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[88:89], v[120:121], v[128:131]
+144 1176 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[90:91], v[114:115], v[124:127]
+145 1184 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[90:91], v[122:123], v[128:131]
+146 1192 0 s_waitcnt vmcnt(11)
+147 1196 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[92:93], v[132:133], v[124:127]
+148 1204 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[92:93], v[136:137], v[128:131]
+149 1212 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[94:95], v[134:135], v[124:127]
+150 1220 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[94:95], v[138:139], v[128:131]
+151 1228 0 s_waitcnt vmcnt(10)
+152 1232 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[96:97], v[140:141], v[124:127]
+153 1240 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[96:97], v[144:145], v[128:131]
+154 1248 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[98:99], v[142:143], v[124:127]
+155 1256 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[98:99], v[146:147], v[128:131]
+156 1264 0 s_waitcnt vmcnt(9)
+157 1268 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[100:101], v[148:149], v[124:127]
+158 1276 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[100:101], v[152:153], v[128:131]
+159 1284 0 v_mmac_f32_16x16x16_bf16 v[124:127], v[102:103], v[150:151], v[124:127]
+160 1292 0 v_mmac_f32_16x16x16_bf16 v[128:131], v[102:103], v[154:155], v[128:131]
+161 1300 0 s_waitcnt lgkmcnt(0)
+163 1592 284 s_barrier
+168 1660 44 s_waitcnt vmcnt(8) lgkmcnt(1)
+170 1668 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[104:105], v[88:89], v[96:99]
+171 1676 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[106:107], v[90:91], v[96:99]
+172 1692 8 s_waitcnt vmcnt(7) lgkmcnt(0)
+173 1696 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[108:109], v[92:93], v[96:99]
+174 1704 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[110:111], v[94:95], v[96:99]
+180 1748 8 ds_write_b16_d16_hi v85, v88
+184 1776 8 ds_write_b16_d16_hi v85, v88 offset:8
+188 1804 8 ds_write_b16_d16_hi v85, v88 offset:16
+191 1828 8 ds_write_b16_d16_hi v85, v88 offset:24
+192 1904 68 s_waitcnt lgkmcnt(0)
+198 1976 48 s_waitcnt lgkmcnt(2)
+199 1980 0 global_store_dwordx2 v[49:50], v[100:101], off offset:-32
+200 1992 8 s_waitcnt lgkmcnt(1)
+201 1996 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[104:105], v[88:89], v[96:99]
+202 2004 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[106:107], v[90:91], v[96:99]
+203 2016 4 s_waitcnt lgkmcnt(0)
+204 2020 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[108:109], v[92:93], v[96:99]
+205 2028 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[110:111], v[94:95], v[96:99]
+211 2072 8 ds_write_b16_d16_hi v85, v88
+215 2100 8 ds_write_b16_d16_hi v85, v88 offset:8
+219 2128 8 ds_write_b16_d16_hi v85, v88 offset:16
+222 2152 8 ds_write_b16_d16_hi v85, v88 offset:24
+223 2212 52 s_waitcnt lgkmcnt(0)
+229 2284 40 s_waitcnt lgkmcnt(2)
+230 2288 0 global_store_dwordx2 v[49:50], v[100:101], off
+231 2308 16 s_waitcnt lgkmcnt(1)
+232 2312 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[88:89], v[37:38], v[96:99]
+233 2320 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[90:91], v[39:40], v[96:99]
+235 2340 0 s_waitcnt lgkmcnt(1)
+236 2344 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[92:93], v[41:42], v[96:99]
+237 2352 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[94:95], v[43:44], v[96:99]
+244 2416 16 s_waitcnt lgkmcnt(1)
+245 2420 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[100:101], v[37:38], v[96:99]
+246 2428 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[102:103], v[39:40], v[96:99]
+252 2460 0 v_mmac_f32_16x16x16_bf16 v[37:40], v[88:89], v[29:30], v[37:40]
+253 2468 0 v_mmac_f32_16x16x16_bf16 v[116:119], v[100:101], v[29:30], v[116:119]
+254 2476 0 v_mmac_f32_16x16x16_bf16 v[37:40], v[90:91], v[31:32], v[37:40]
+255 2484 0 v_mmac_f32_16x16x16_bf16 v[116:119], v[102:103], v[31:32], v[116:119]
+256 2492 0 s_waitcnt lgkmcnt(0)
+257 2496 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[104:105], v[41:42], v[96:99]
+258 2504 0 v_mmac_f32_16x16x16_bf16 v[37:40], v[92:93], v[33:34], v[37:40]
+259 2512 0 v_mmac_f32_16x16x16_bf16 v[116:119], v[104:105], v[33:34], v[116:119]
+260 2520 0 v_mmac_f32_16x16x16_bf16 v[96:99], v[106:107], v[43:44], v[96:99]
+261 2528 0 v_mmac_f32_16x16x16_bf16 v[37:40], v[94:95], v[35:36], v[37:40]
+262 2536 0 v_mmac_f32_16x16x16_bf16 v[116:119], v[106:107], v[35:36], v[116:119]
+280 2620 4 global_load_dwordx4 v[37:40], v86, s[6:7]
+281 2624 0 global_load_dwordx4 v[41:44], v86, s[6:7] offset:1024
+282 2628 0 global_load_dwordx4 v[29:32], v86, s[2:3]
+283 2632 0 global_load_dwordx4 v[33:36], v86, s[2:3] offset:1024
+286 2656 8 ds_write_b16_d16_hi v67, v88
+289 2680 8 ds_write_b16_d16_hi v67, v88 offset:8
+292 2704 8 ds_write_b16_d16_hi v67, v88 offset:16
+295 2728 8 ds_write_b16_d16_hi v67, v88 offset:24
+298 2752 8 ds_write_b16_d16_hi v69, v88 offset:4224
+301 2776 8 ds_write_b16_d16_hi v70, v88 offset:4224
+304 2800 8 ds_write_b16_d16_hi v69, v88 offset:4240
+307 2824 8 ds_write_b16_d16_hi v67, v88 offset:4248
+310 2848 8 ds_write_b16_d16_hi v68, v88
+313 2872 8 ds_write_b16_d16_hi v68, v88 offset:8
+316 2896 8 ds_write_b16_d16_hi v68, v88 offset:16
+319 2920 8 ds_write_b16_d16_hi v68, v88 offset:24
+322 2944 8 ds_write_b16_d16_hi v71, v88 offset:4224
+325 2968 8 ds_write_b16_d16_hi v71, v88 offset:4232
+328 2992 8 ds_write_b16_d16_hi v68, v88 offset:4240
+333 3024 8 ds_write_b16_d16_hi v71, v88 offset:4248
+339 3068 16 s_mov_b32 s20, s14
+342 3100 16 s_add_i32 s14, s20, 1
+343 3116 12 s_cmp_lt_i32 s14, s21
+345 3124 0 s_waitcnt lgkmcnt(0)
+347 3236 104 s_barrier

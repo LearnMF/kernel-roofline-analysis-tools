@@ -1,0 +1,1229 @@
+{
+ "per_step_cycles": [
+  3755.486033519553,
+  3782.972067039106,
+  3314.7709497206706
+ ],
+ "categories": {
+  "issue:msg": 8.022346368715084,
+  "issue:waitcnt": 74.97206703910614,
+  "issue:salu": 82.70391061452516,
+  "stall:salu": 47.9925512104283,
+  "issue:valu": 526.5027932960894,
+  "issue:lds-write": 183.9851024208566,
+  "stall:lds-write": 41.40037243947859,
+  "issue:vmem-load": 22.78584729981378,
+  "issue:nop": 23.67970204841713,
+  "issue:mmac": 367.98510242085666,
+  "issue:lds-read": 9.55679702048417,
+  "issue:vmem-store": 24.0,
+  "lat:lds-read": 310.6666666666667,
+  "lat:lds-write": 156.0,
+  "issue:barrier": 12.0,
+  "lat:vmem-load": 1394.2346368715087,
+  "stall:vmem-load": 329.75791433891993,
+  "stall:lds-read": 1.4972067039106145
+ },
+ "top": [
+  [
+   "   1 global_load_dwordx4 v[88:91], v[47:48], off offset:-2048",
+   "lat:vmem-load",
+   1360.4469273743016,
+   ""
+  ],
+  [
+   " 193 ds_read_b64 v[100:101], v0",
+   "lat:lds-read",
+   136.0,
+   ""
+  ],
+  [
+   "   1 global_load_dwordx4 v[88:91], v[47:48], off offset:-2048",
+   "stall:vmem-load",
+   132.4245810055866,
+   ""
+  ],
+  [
+   "  60 global_load_dwordx4 v[1:4], v[21:22], off",
+   "stall:vmem-load",
+   98.487895716946,
+   ""
+  ],
+  [
+   " 191 ds_write_b16_d16_hi v85, v88 offset:24",
+   "lat:lds-write",
+   78.66666666666667,
+   ""
+  ],
+  [
+   " 222 ds_write_b16_d16_hi v85, v88 offset:24",
+   "lat:lds-write",
+   77.33333333333333,
+   ""
+  ],
+  [
+   " 164 ds_read2_b64 v[88:91], v84 offset1:4",
+   "lat:lds-read",
+   76.0,
+   ""
+  ],
+  [
+   " 224 ds_read_b64 v[100:101], v0",
+   "lat:lds-read",
+   73.33333333333333,
+   ""
+  ],
+  [
+   " 281 global_load_dwordx4 v[41:44], v86, s[6:7] offset:1024",
+   "stall:vmem-load",
+   25.89199255121043,
+   ""
+  ],
+  [
+   " 234 ds_read2_b64 v[100:103], v72 offset1:4",
+   "lat:lds-read",
+   25.333333333333332,
+   ""
+  ],
+  [
+   "   2 global_load_dwordx4 v[92:95], v[47:48], off offset:-1024",
+   "lat:vmem-load",
+   17.914338919925513,
+   ""
+  ],
+  [
+   " 282 global_load_dwordx4 v[29:32], v86, s[2:3]",
+   "stall:vmem-load",
+   17.728119180633147,
+   ""
+  ],
+  [
+   " 342 s_add_i32 s14, s20, 1",
+   "stall:salu",
+   16.0,
+   ""
+  ],
+  [
+   " 339 s_mov_b32 s20, s14",
+   "stall:salu",
+   16.0,
+   ""
+  ],
+  [
+   " 233 v_mmac_f32_16x16x16_bf16 v[96:99], v[90:91], v[39:40], v[96:99]",
+   "issue:mmac",
+   16.0,
+   ""
+  ],
+  [
+   " 211 ds_write_b16_d16_hi v85, v88",
+   "stall:lds-write",
+   16.0,
+   ""
+  ],
+  [
+   " 205 v_mmac_f32_16x16x16_bf16 v[96:99], v[110:111], v[94:95], v[96:99]",
+   "issue:mmac",
+   16.0,
+   ""
+  ],
+  [
+   " 174 v_mmac_f32_16x16x16_bf16 v[96:99], v[110:111], v[94:95], v[96:99]",
+   "issue:mmac",
+   16.0,
+   ""
+  ],
+  [
+   " 171 v_mmac_f32_16x16x16_bf16 v[96:99], v[106:107], v[90:91], v[96:99]",
+   "issue:mmac",
+   16.0,
+   ""
+  ],
+  [
+   " 280 global_load_dwordx4 v[37:40], v86, s[6:7]",
+   "stall:vmem-load",
+   14.808193668528864,
+   ""
+  ],
+  [
+   " 283 global_load_dwordx4 v[33:36], v86, s[2:3] offset:1024",
+   "stall:vmem-load",
+   13.661080074487895,
+   ""
+  ],
+  [
+   "  64 global_load_dwordx4 v[21:24], v[21:22], off offset:3072",
+   "stall:vmem-load",
+   12.320297951582868,
+   ""
+  ],
+  [
+   " 343 s_cmp_lt_i32 s14, s21",
+   "stall:salu",
+   12.0,
+   ""
+  ],
+  [
+   " 332 v_addc_co_u32_e32 v48, vcc, 0, v48, vcc",
+   "issue:valu",
+   12.0,
+   ""
+  ],
+  [
+   " 327 v_add3_u32 v88, v57, v88, s12",
+   "issue:valu",
+   12.0,
+   ""
+  ],
+  [
+   " 230 global_store_dwordx2 v[49:50], v[100:101], off",
+   "issue:vmem-store",
+   12.0,
+   ""
+  ],
+  [
+   " 218 v_add3_u32 v88, v90, v88, s12",
+   "issue:valu",
+   12.0,
+   ""
+  ],
+  [
+   " 214 v_add3_u32 v88, v89, v88, s12",
+   "issue:valu",
+   12.0,
+   ""
+  ],
+  [
+   " 199 global_store_dwordx2 v[49:50], v[100:101], off offset:-32",
+   "issue:vmem-store",
+   12.0,
+   ""
+  ],
+  [
+   " 190 v_add3_u32 v88, v99, v88, s12",
+   "issue:valu",
+   12.0,
+   ""
+  ],
+  [
+   " 187 v_add3_u32 v88, v90, v88, s12",
+   "issue:valu",
+   12.0,
+   ""
+  ],
+  [
+   " 183 v_add3_u32 v88, v89, v88, s12",
+   "issue:valu",
+   12.0,
+   ""
+  ],
+  [
+   " 179 v_add3_u32 v88, v88, v91, s12",
+   "issue:valu",
+   12.0,
+   ""
+  ],
+  [
+   " 300 v_add3_u32 v88, v64, v88, s12",
+   "issue:valu",
+   11.955307262569832,
+   ""
+  ],
+  [
+   " 294 v_add3_u32 v88, v62, v88, s12",
+   "issue:valu",
+   11.955307262569832,
+   ""
+  ],
+  [
+   " 306 v_add3_u32 v88, v66, v88, s12",
+   "issue:valu",
+   11.940409683426443,
+   ""
+  ],
+  [
+   " 303 v_add3_u32 v88, v65, v88, s12",
+   "issue:valu",
+   11.940409683426443,
+   ""
+  ],
+  [
+   " 315 v_add3_u32 v88, v53, v88, s12",
+   "issue:valu",
+   11.910614525139664,
+   ""
+  ],
+  [
+   " 291 v_add3_u32 v88, v61, v88, s12",
+   "issue:valu",
+   11.910614525139664,
+   ""
+  ],
+  [
+   " 288 v_add3_u32 v88, v60, v88, s12",
+   "issue:valu",
+   11.910614525139664,
+   ""
+  ],
+  [
+   " 318 v_add3_u32 v88, v54, v88, s12",
+   "issue:valu",
+   11.895716945996275,
+   ""
+  ],
+  [
+   " 312 v_add3_u32 v88, v46, v88, s12",
+   "issue:valu",
+   11.880819366852887,
+   ""
+  ],
+  [
+   " 297 v_add3_u32 v88, v63, v88, s12",
+   "issue:valu",
+   11.880819366852887,
+   ""
+  ],
+  [
+   " 309 v_add3_u32 v88, v45, v88, s12",
+   "issue:valu",
+   11.865921787709498,
+   ""
+  ],
+  [
+   " 237 v_mmac_f32_16x16x16_bf16 v[96:99], v[94:95], v[43:44], v[96:99]",
+   "issue:mmac",
+   10.666666666666666,
+   ""
+  ],
+  [
+   " 321 v_add3_u32 v88, v55, v88, s12",
+   "issue:valu",
+   10.614525139664805,
+   ""
+  ],
+  [
+   " 285 v_add3_u32 v88, v59, v88, s12",
+   "issue:valu",
+   10.30167597765363,
+   ""
+  ],
+  [
+   "   4 global_load_dwordx4 v[100:103], v[47:48], off offset:1024",
+   "lat:vmem-load",
+   9.66852886405959,
+   ""
+  ],
+  [
+   " 325 ds_write_b16_d16_hi v71, v88 offset:4232",
+   "stall:lds-write",
+   8.789571694599628,
+   ""
+  ],
+  [
+   " 340 s_mov_b64 vcc, s[0:1]",
+   "issue:salu",
+   8.0,
+   ""
+  ],
+  [
+   " 333 ds_write_b16_d16_hi v71, v88 offset:4248",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 328 ds_write_b16_d16_hi v68, v88 offset:4240",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 325 ds_write_b16_d16_hi v71, v88 offset:4232",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 322 ds_write_b16_d16_hi v71, v88 offset:4224",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 319 ds_write_b16_d16_hi v68, v88 offset:24",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 316 ds_write_b16_d16_hi v68, v88 offset:16",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 313 ds_write_b16_d16_hi v68, v88 offset:8",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 310 ds_write_b16_d16_hi v68, v88",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 307 ds_write_b16_d16_hi v67, v88 offset:4248",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 304 ds_write_b16_d16_hi v69, v88 offset:4240",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 301 ds_write_b16_d16_hi v70, v88 offset:4224",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 298 ds_write_b16_d16_hi v69, v88 offset:4224",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 295 ds_write_b16_d16_hi v67, v88 offset:24",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 292 ds_write_b16_d16_hi v67, v88 offset:16",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 289 ds_write_b16_d16_hi v67, v88 offset:8",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 286 ds_write_b16_d16_hi v67, v88",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 267 v_pk_fma_f32 v[45:46], v[45:46], v[158:159], v[37:38]",
+   "issue:valu",
+   8.0,
+   ""
+  ],
+  [
+   " 262 v_mmac_f32_16x16x16_bf16 v[116:119], v[106:107], v[35:36], v[116:119]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 261 v_mmac_f32_16x16x16_bf16 v[37:40], v[94:95], v[35:36], v[37:40]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 260 v_mmac_f32_16x16x16_bf16 v[96:99], v[106:107], v[43:44], v[96:99]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 259 v_mmac_f32_16x16x16_bf16 v[116:119], v[104:105], v[33:34], v[116:119]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 258 v_mmac_f32_16x16x16_bf16 v[37:40], v[92:93], v[33:34], v[37:40]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 257 v_mmac_f32_16x16x16_bf16 v[96:99], v[104:105], v[41:42], v[96:99]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 255 v_mmac_f32_16x16x16_bf16 v[116:119], v[102:103], v[31:32], v[116:119]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 254 v_mmac_f32_16x16x16_bf16 v[37:40], v[90:91], v[31:32], v[37:40]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 253 v_mmac_f32_16x16x16_bf16 v[116:119], v[100:101], v[29:30], v[116:119]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 252 v_mmac_f32_16x16x16_bf16 v[37:40], v[88:89], v[29:30], v[37:40]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 250 v_mov_b32_e32 v40, v119",
+   "issue:valu",
+   8.0,
+   ""
+  ],
+  [
+   " 246 v_mmac_f32_16x16x16_bf16 v[96:99], v[102:103], v[39:40], v[96:99]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 245 v_mmac_f32_16x16x16_bf16 v[96:99], v[100:101], v[37:38], v[96:99]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 242 v_mov_b64_e32 v[98:99], v[118:119]",
+   "issue:valu",
+   8.0,
+   ""
+  ],
+  [
+   " 232 v_mmac_f32_16x16x16_bf16 v[96:99], v[88:89], v[37:38], v[96:99]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 222 ds_write_b16_d16_hi v85, v88 offset:24",
+   "stall:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 219 ds_write_b16_d16_hi v85, v88 offset:16",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 215 ds_write_b16_d16_hi v85, v88 offset:8",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 211 ds_write_b16_d16_hi v85, v88",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 204 v_mmac_f32_16x16x16_bf16 v[96:99], v[108:109], v[92:93], v[96:99]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 202 v_mmac_f32_16x16x16_bf16 v[96:99], v[106:107], v[90:91], v[96:99]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 201 v_mmac_f32_16x16x16_bf16 v[96:99], v[104:105], v[88:89], v[96:99]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 188 ds_write_b16_d16_hi v85, v88 offset:16",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 184 ds_write_b16_d16_hi v85, v88 offset:8",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 180 ds_write_b16_d16_hi v85, v88",
+   "issue:lds-write",
+   8.0,
+   ""
+  ],
+  [
+   " 173 v_mmac_f32_16x16x16_bf16 v[96:99], v[108:109], v[92:93], v[96:99]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 170 v_mmac_f32_16x16x16_bf16 v[96:99], v[104:105], v[88:89], v[96:99]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 163 s_barrier",
+   "issue:barrier",
+   8.0,
+   ""
+  ],
+  [
+   " 160 v_mmac_f32_16x16x16_bf16 v[128:131], v[102:103], v[154:155], v[128:131]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 159 v_mmac_f32_16x16x16_bf16 v[124:127], v[102:103], v[150:151], v[124:127]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 158 v_mmac_f32_16x16x16_bf16 v[128:131], v[100:101], v[152:153], v[128:131]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 157 v_mmac_f32_16x16x16_bf16 v[124:127], v[100:101], v[148:149], v[124:127]",
+   "issue:mmac",
+   8.0,
+   ""
+  ],
+  [
+   " 155 v_mmac_f32_16x16x16_bf16 v[128:131], v[98:99], v[146:147], v[128:131]",
+   "issue:mmac",
+   7.947858472998138,
+   ""
+  ],
+  [
+   " 154 v_mmac_f32_16x16x16_bf16 v[124:127], v[98:99], v[142:143], v[124:127]",
+   "issue:mmac",
+   7.940409683426443,
+   ""
+  ],
+  [
+   " 153 v_mmac_f32_16x16x16_bf16 v[128:131], v[96:97], v[144:145], v[128:131]",
+   "issue:mmac",
+   7.940409683426443,
+   ""
+  ],
+  [
+   " 152 v_mmac_f32_16x16x16_bf16 v[124:127], v[96:97], v[140:141], v[124:127]",
+   "issue:mmac",
+   7.940409683426443,
+   ""
+  ],
+  [
+   " 150 v_mmac_f32_16x16x16_bf16 v[128:131], v[94:95], v[138:139], v[128:131]",
+   "issue:mmac",
+   7.895716945996275,
+   ""
+  ],
+  [
+   " 149 v_mmac_f32_16x16x16_bf16 v[124:127], v[94:95], v[134:135], v[124:127]",
+   "issue:mmac",
+   7.895716945996275,
+   ""
+  ],
+  [
+   " 148 v_mmac_f32_16x16x16_bf16 v[128:131], v[92:93], v[136:137], v[128:131]",
+   "issue:mmac",
+   7.895716945996275,
+   ""
+  ],
+  [
+   " 147 v_mmac_f32_16x16x16_bf16 v[124:127], v[92:93], v[132:133], v[124:127]",
+   "issue:mmac",
+   7.895716945996275,
+   ""
+  ],
+  [
+   " 145 v_mmac_f32_16x16x16_bf16 v[128:131], v[90:91], v[122:123], v[128:131]",
+   "issue:mmac",
+   7.791433891992551,
+   ""
+  ],
+  [
+   " 144 v_mmac_f32_16x16x16_bf16 v[124:127], v[90:91], v[114:115], v[124:127]",
+   "issue:mmac",
+   7.791433891992551,
+   ""
+  ],
+  [
+   " 143 v_mmac_f32_16x16x16_bf16 v[128:131], v[88:89], v[120:121], v[128:131]",
+   "issue:mmac",
+   7.791433891992551,
+   ""
+  ],
+  [
+   " 142 v_mmac_f32_16x16x16_bf16 v[124:127], v[88:89], v[112:113], v[124:127]",
+   "issue:mmac",
+   7.791433891992551,
+   ""
+  ],
+  [
+   " 279 s_addc_u32 s3, s11, s3",
+   "issue:salu",
+   7.724394785847299,
+   ""
+  ],
+  [
+   " 324 v_add3_u32 v88, v56, v88, s12",
+   "issue:valu",
+   7.605214152700186,
+   ""
+  ],
+  [
+   " 284 v_bfe_u32 v88, v59, 16, 1",
+   "issue:valu",
+   6.837988826815643,
+   ""
+  ],
+  [
+   " 221 v_add3_u32 v88, v99, v88, s12",
+   "issue:valu",
+   6.666666666666667,
+   ""
+  ],
+  [
+   "   3 global_load_dwordx4 v[96:99], v[47:48], off",
+   "lat:vmem-load",
+   6.204841713221602,
+   ""
+  ],
+  [
+   " 236 v_mmac_f32_16x16x16_bf16 v[96:99], v[92:93], v[41:42], v[96:99]",
+   "issue:mmac",
+   5.333333333333333,
+   ""
+  ],
+  [
+   " 281 global_load_dwordx4 v[41:44], v86, s[6:7] offset:1024",
+   "issue:vmem-load",
+   4.052141527001862,
+   ""
+  ],
+  [
+   " 282 global_load_dwordx4 v[29:32], v86, s[2:3]",
+   "issue:vmem-load",
+   4.044692737430168,
+   ""
+  ],
+  [
+   " 346 OTHER_MSG",
+   "issue:msg",
+   4.022346368715084,
+   ""
+  ],
+  [
+   " 280 global_load_dwordx4 v[37:40], v86, s[6:7]",
+   "issue:vmem-load",
+   4.01489757914339,
+   ""
+  ],
+  [
+   " 345 s_waitcnt lgkmcnt(0)",
+   "issue:waitcnt",
+   4.0,
+   ""
+  ],
+  [
+   " 344 s_cselect_b64 s[0:1], -1, 0",
+   "issue:salu",
+   4.0,
+   ""
+  ],
+  [
+   " 343 s_cmp_lt_i32 s14, s21",
+   "issue:salu",
+   4.0,
+   ""
+  ],
+  [
+   " 342 s_add_i32 s14, s20, 1",
+   "issue:salu",
+   4.0,
+   ""
+  ],
+  [
+   " 341 s_cbranch_vccnz 64983",
+   "issue:salu",
+   4.0,
+   ""
+  ],
+  [
+   " 339 s_mov_b32 s20, s14",
+   "issue:salu",
+   4.0,
+   ""
+  ],
+  [
+   " 338 v_addc_co_u32_e32 v52, vcc, 0, v52, vcc",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 337 v_add_co_u32_e32 v51, vcc, 0x2000, v51",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 336 v_addc_co_u32_e32 v50, vcc, v50, v88, vcc",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 335 v_add_co_u32_e32 v49, vcc, s8, v49",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 334 v_mov_b32_e32 v88, s9",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 331 v_add3_u32 v88, v58, v88, s12",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 330 v_add_co_u32_e32 v47, vcc, s13, v47",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 329 v_bfe_u32 v88, v58, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 326 v_bfe_u32 v88, v57, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 323 v_bfe_u32 v88, v56, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 320 v_bfe_u32 v88, v55, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 317 v_bfe_u32 v88, v54, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 314 v_bfe_u32 v88, v53, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 311 v_bfe_u32 v88, v46, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 308 v_bfe_u32 v88, v45, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 305 v_bfe_u32 v88, v66, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 302 v_bfe_u32 v88, v65, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 299 v_bfe_u32 v88, v64, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 296 v_bfe_u32 v88, v63, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 293 v_bfe_u32 v88, v62, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 290 v_bfe_u32 v88, v61, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 287 v_bfe_u32 v88, v60, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 283 global_load_dwordx4 v[33:36], v86, s[2:3] offset:1024",
+   "issue:vmem-load",
+   4.0,
+   ""
+  ],
+  [
+   " 278 s_add_u32 s2, s10, s2",
+   "issue:salu",
+   4.0,
+   ""
+  ],
+  [
+   " 277 s_lshl_b64 s[2:3], s[2:3], 1",
+   "issue:salu",
+   4.0,
+   ""
+  ],
+  [
+   " 276 s_addc_u32 s3, s3, s29",
+   "issue:salu",
+   4.0,
+   ""
+  ],
+  [
+   " 275 s_add_u32 s2, s2, s28",
+   "issue:salu",
+   4.0,
+   ""
+  ],
+  [
+   " 274 s_addc_u32 s7, s11, s7",
+   "issue:salu",
+   4.0,
+   ""
+  ],
+  [
+   " 273 s_add_u32 s6, s10, s6",
+   "issue:salu",
+   4.0,
+   ""
+  ],
+  [
+   " 272 s_lshl_b64 s[6:7], s[6:7], 1",
+   "issue:salu",
+   4.0,
+   ""
+  ],
+  [
+   " 271 s_addc_u32 s7, s3, s27",
+   "issue:salu",
+   4.0,
+   ""
+  ],
+  [
+   " 270 s_add_u32 s6, s2, s26",
+   "issue:salu",
+   4.0,
+   ""
+  ],
+  [
+   " 269 v_pk_fma_f32 v[55:56], v[55:56], v[158:159], v[116:117]",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 268 v_pk_fma_f32 v[57:58], v[57:58], v[162:163], v[118:119]",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 266 v_pk_fma_f32 v[53:54], v[53:54], v[162:163], v[39:40]",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 265 v_pk_fma_f32 v[63:64], v[63:64], v[156:157], v[96:97]",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 264 v_pk_fma_f32 v[65:66], v[65:66], v[160:161], v[98:99]",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 263 s_nop 0",
+   "issue:nop",
+   4.0,
+   ""
+  ],
+  [
+   " 256 s_waitcnt lgkmcnt(0)",
+   "issue:waitcnt",
+   4.0,
+   ""
+  ],
+  [
+   " 251 s_nop 1",
+   "issue:nop",
+   4.0,
+   ""
+  ],
+  [
+   " 249 v_mov_b32_e32 v39, v118",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 248 v_mov_b32_e32 v38, v117",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 247 v_mov_b32_e32 v37, v116",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 244 s_waitcnt lgkmcnt(1)",
+   "issue:waitcnt",
+   4.0,
+   ""
+  ],
+  [
+   " 231 s_waitcnt lgkmcnt(1)",
+   "issue:waitcnt",
+   4.0,
+   ""
+  ],
+  [
+   " 229 s_waitcnt lgkmcnt(2)",
+   "issue:waitcnt",
+   4.0,
+   ""
+  ],
+  [
+   " 223 s_waitcnt lgkmcnt(0)",
+   "issue:waitcnt",
+   4.0,
+   ""
+  ],
+  [
+   " 220 v_bfe_u32 v88, v99, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 217 v_fmac_f32_e32 v99, s16, v131",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 216 v_bfe_u32 v88, v90, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 213 v_fma_f32 v90, s16, v130, v98",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 212 v_bfe_u32 v88, v89, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 210 v_add3_u32 v88, v88, v91, s12",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 209 v_fma_f32 v89, s16, v129, v97",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 208 v_bfe_u32 v91, v88, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 207 v_fma_f32 v88, s16, v128, v96",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 206 s_nop 2",
+   "issue:nop",
+   4.0,
+   ""
+  ],
+  [
+   " 203 s_waitcnt lgkmcnt(0)",
+   "issue:waitcnt",
+   4.0,
+   ""
+  ],
+  [
+   " 200 s_waitcnt lgkmcnt(1)",
+   "issue:waitcnt",
+   4.0,
+   ""
+  ],
+  [
+   " 198 s_waitcnt lgkmcnt(2)",
+   "issue:waitcnt",
+   4.0,
+   ""
+  ],
+  [
+   " 192 s_waitcnt lgkmcnt(0)",
+   "issue:waitcnt",
+   4.0,
+   ""
+  ],
+  [
+   " 189 v_bfe_u32 v88, v99, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 186 v_fmac_f32_e32 v99, s16, v127",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 185 v_bfe_u32 v88, v90, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 182 v_fma_f32 v90, s16, v126, v98",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 181 v_bfe_u32 v88, v89, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 178 v_fma_f32 v89, s16, v125, v97",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 177 v_bfe_u32 v91, v88, 16, 1",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 176 v_fma_f32 v88, s16, v124, v96",
+   "issue:valu",
+   4.0,
+   ""
+  ],
+  [
+   " 175 s_nop 2",
+   "issue:nop",
+   4.0,
+   ""
+  ],
+  [
+   " 172 s_waitcnt vmcnt(7) lgkmcnt(0)",
+   "issue:waitcnt",
+   4.0,
+   ""
+  ],
+  [
+   " 169 s_nop 0",
+   "issue:nop",
+   4.0,
+   ""
+  ],
+  [
+   " 168 s_waitcnt vmcnt(8) lgkmcnt(1)",
+   "issue:waitcnt",
+   4.0,
+   ""
+  ]
+ ]
+}
