@@ -1,0 +1,7 @@
+PEAK l2 read 2.371 TB/s
+PEAK l2 write 1.978 TB/s
+PEAK hbm read 1.175 TB/s
+PEAK hbm write 1.047 TB/s
+PEAK lds read_b128 15.187 TB/s (126.6 B/cycle/CU)
+TAILVMEM dispatch 0: waves 1232 loads/wave 100.0 stores/wave 48.8 total 148.8
+TAILVMEM dispatch 1: waves 1228 loads/wave 100.0 stores/wave 48.8 total 148.8

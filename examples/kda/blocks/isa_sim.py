@@ -38,12 +38,15 @@ import os as _os
 # dwordx4 = 30: CU acceptance with few waves / CU (issue_burst_bench, 2 waves, SQTT); 22 at 32 waves (vmem_bench)
 TA_OCC = {"ld": {"dword": 12.0, "dwordx2": 21.0, "dwordx4": float(_os.environ.get("TA_X4", 30.0)), "ushort": 13.0, "short": 13.0},
           "st": {"dword": 15.0, "dwordx2": 29.0, "dwordx4": 59.0, "short": 11.0}}   # L2-resident contiguous rows
-BAR = {4: 57.0, 8: 65.0, 16: 94.0}
+BAR = {4: 10.0, 8: 16.0, 16: 45.0}   # s_barrier itself when waves arrive together: lds_bench BAR 57 / 65 / 94 minus
+                                       # the ~47-51-cycle loop overhead (rec_step_gen: empty 51 -> bar2 64 cycles)
 BRANCH = 8.0            # taken backward branch (assumption: pipeline refill)
 Q_WAVE = 16             # per-wave issue queue for VMEM / LDS (issue_burst_bench SQTT: ~16-20 issue at 4 cycles,
                         # then issue proceeds at the unit's processing rate; no hard in-flight limit up to 32)
 LDS_WAVE = {"ds_read2_b64": 16.0, "ds_read2st64_b64": 16.0, "ds_write_b16": 8.0, "ds_write_b16_d16_hi": 8.0}
                         # single-wave LDS rate (issue_burst_bench, 1 wave / CU); other forms: max(CU occupancy, 8)
+LDS_ISSUE = {"ds_write_b16": 8.0, "ds_write_b16_d16_hi": 8.0, "ds_write_b8": 8.0}
+                        # issue_burst_bench SQTT: a wave issues ds_write_b16 every 8 cycles from the first one (no queueing)
 ISSUE = 4.0             # every instruction occupies the wave's issue slot for 4 cycles (SQTT clks = 4)
 
 VREG = re.compile(r"\bv\[(\d+):(\d+)\]|\bv(\d+)\b")
@@ -258,7 +261,7 @@ def simulate(body, W=4, iters=16, vmem_lat=None, st_lat=430.0, trace=False, hbm_
             lq_leave[w] = pend + [s_cu]
             done = s_cu + max(occ, occ_w) + LDS_LAT
             lg_q[w].append(max(done, lg_q[w][-1] if lg_q[w] else 0.0))
-            t[w] = s_iss + ISSUE
+            t[w] = s_iss + LDS_ISSUE.get(opc, ISSUE)
         elif cls == "smem":
             lg_q[w].append(max(start + 200.0, lg_q[w][-1] if lg_q[w] else 0.0))
             t[w] = start + ISSUE

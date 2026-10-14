@@ -2,10 +2,10 @@
 
 | instance | hbm_frac | predicted us/step | measured us/step | error |
 |---|---:|---:|---:|---:|
-| fwd MODE 1 (fwd_h_o) | 0.267 | 2.087 | 2.571 | -19% |
-| recompute MODE 4 (fwd_h_bn) | 0.276 | 2.009 | 1.966 | +2% |
-| dhu 8-wave | 0.252 | 2.132 | 2.564 | -17% |
-| dhu 4-wave (P-24 throttled, 1 CTA/CU) | 0.314 | 2.517 | 3.031 | -17% |
+| fwd MODE 1 (fwd_h_o) | 0.267 | 2.096 | 2.571 | -18% |
+| recompute MODE 4 (fwd_h_bn) | 0.276 | 2.010 | 1.966 | +2% |
+| dhu 8-wave | 0.252 | 2.130 | 2.564 | -17% |
+| dhu 4-wave (P-24 throttled, 1 CTA/CU) | 0.314 | 2.514 | 3.031 | -17% |
 
 ## 2. bwd_tail TA cycles per wave (inventory x library costs, data from HBM) vs the card
 
