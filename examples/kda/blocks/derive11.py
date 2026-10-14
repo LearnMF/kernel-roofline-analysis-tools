@@ -28,6 +28,17 @@ REC = {"16384_12": [("fwd_h_v8o4#1", "sq_body_mode1.s", 4), ("fwd_h_v8o4#2", "sq
        "16384_48": [("dhu_v8b4#1", "sq_body_dhu4.s", 4)]}
 
 
+def residency(c):
+    """co-resident CTAs per CU from the resources: VGPR budget 768 per SIMD lane (R38: 3 waves at 200-256 VGPRs),
+    at most 10 waves per SIMD, 64 KB LDS per CU (the card's 'resident' field is capped at 3)."""
+    waves_cta = max(1, c["block"] // 64)
+    vg = -(-c["vgpr"] // 8) * 8
+    per_simd = min(10, 768 // max(vg, 8))
+    by_vgpr = per_simd * 4 // waves_cta
+    by_lds = 65536 // c["lds_c"] if c["lds_c"] else 64
+    return max(1, min(by_vgpr, by_lds, 16))
+
+
 def chunk(sh, card, name):
     c = CARDS[sh]["cards"].get(card)
     path = os.path.join(TRACES, name + ".json")
@@ -37,8 +48,9 @@ def chunk(sh, card, name):
     progs = [trace_sim.decode_prog(w) for w in tr["waves"]]
     hf = min(1.0, c["hbm_rd"] / max(1.0, trace_sim.loaded_bytes(progs) * c["ctas"]))
     n = math.ceil(c["ctas"] / 80)
-    cyc = trace_sim.simulate(progs, c["resident"], n, hf, min(80, c["ctas"]))
-    return cyc / 1500.0, c["t_us"], hf
+    res = residency(c)
+    cyc = trace_sim.simulate(progs, res, n, hf, min(80, c["ctas"]))
+    return cyc / 1500.0, c["t_us"], hf, res
 
 
 def rec(sh, card, body, W):
@@ -73,9 +85,9 @@ def main():
         for card, name in CHUNK:
             r = chunk(sh, card, name)
             if r:
-                p, m, hf = r
-                out.append(dict(shape=sh, kernel=card, kind="chunk", predicted=p, measured=m, error=p / m - 1))
-                print(f"| {card} | chunk (trace) | {p:.0f} | {m:.0f} | {100 * (p / m - 1):+.0f}% | {hf:.2f} |")
+                p, m, hf, res = r
+                out.append(dict(shape=sh, kernel=card, kind="chunk", predicted=p, measured=m, error=p / m - 1, res=res))
+                print(f"| {card} | chunk (trace, res {res}) | {p:.0f} | {m:.0f} | {100 * (p / m - 1):+.0f}% | {hf:.2f} |")
         for card, body, W in REC.get(sh, []):
             r = rec(sh, card, body, W)
             if r:
