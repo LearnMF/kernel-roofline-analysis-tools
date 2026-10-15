@@ -1,0 +1,14 @@
+BUILD_OK 21685234fefe
+8192_12 ft_r24 vs old : GATE PASS
+8192_12 ft_r24 vs hip : GATE PASS
+8192_48 ft_r24 vs old : GATE PASS
+8192_48 ft_r24 vs hip : GATE PASS
+8192_12_vlffd ft_r24 vs old : GATE PASS
+8192_12_vlffd ft_r24 vs hip : GATE PASS
+8192_48_vlc71 ft_r24 vs old : GATE PASS
+8192_48_vlc71 ft_r24 vs hip : GATE PASS
+== pytest torch_kda_test
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+29 passed, 1 warning in 9.05s
+FT_CHECK PASS
