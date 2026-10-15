@@ -1,0 +1,14 @@
+P-70 APPLIED
+P-70b APPLIED
+build_ok
+8192_12: GATE PASS 8192_12_keep-state: GATE PASS 8192_12_gate-extreme: GATE PASS vl_8192_12_ffd54f (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_12_ffd54f_keep-state (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_48_c7114f (0,63,4097,8192): GATE PASS vl_8192_48_c7114f_keep-state (0,63,4097,8192): GATE PASS GATE_ALL PASS 
+K=24: T=16384 H=12 KDA_G2_PIPE: fwd 1787 -> 1855 us (0.963x)   fwd+bwd 6731 -> 6898 us (0.976x)
+K=48: T=16384 H=12 KDA_G2_PIPE: fwd 1780 -> 1827 us (0.975x)   fwd+bwd 6741 -> 6872 us (0.981x)
+K=72: T=16384 H=12 KDA_G2_PIPE: fwd 1757 -> 1890 us (0.930x)   fwd+bwd 6712 -> 6934 us (0.968x)
+K=96: T=16384 H=12 KDA_G2_PIPE: fwd 1761 -> 2037 us (0.865x)   fwd+bwd 6708 -> 7090 us (0.946x)
+RCU=40 K=48: T=16384 H=12 KDA_G2_PIPE: fwd 1769 -> 2028 us (0.872x)   fwd+bwd 6712 -> 7082 us (0.948x)
+RCU=56 K=48: T=16384 H=12 KDA_G2_PIPE: fwd 1776 -> 1874 us (0.948x)   fwd+bwd 6733 -> 6922 us (0.973x)
+64K K=96: T=65536 H=12 KDA_G2_PIPE: fwd 5692 -> 5638 us (1.010x)   fwd+bwd 24372 -> 24404 us (0.999x)
+64K K=192: T=65536 H=12 KDA_G2_PIPE: fwd 5733 -> 5563 us (1.030x)   fwd+bwd 24408 -> 24340 us (1.003x)
+64K K=288: T=65536 H=12 KDA_G2_PIPE: fwd 5678 -> 5944 us (0.955x)   fwd+bwd 24347 -> 24723 us (0.985x)
+P70C_DONE
