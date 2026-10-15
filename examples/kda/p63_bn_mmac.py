@@ -84,11 +84,9 @@ body = sub(body, """                const v4bh va = ld8(vB + (16 * vt + m) * kPa
                 upd = mmac(va, kf1[rt], upd);""")
 body = sub(body, """        write_h(kb0, ht0);
         write_h(kb1, ht1);
-    }
-}""", """        write_h(kb0, ht0, i + 1 < c1 ? i + 1 : -1);   // kra P-63: h_{i+1} -> bN(h_{i+1})
+""", """        write_h(kb0, ht0, i + 1 < c1 ? i + 1 : -1);   // kra P-63: h_{i+1} -> bN(h_{i+1})
         write_h(kb1, ht1, i + 1 < c1 ? i + 1 : -1);
-    }
-}""")
+""")
 s = head + "g2_fwd_h_v8o4_kernel(FwdOParams p) {" + body + "// kra P-49: g2_fwd_h_v8o4_kernel with NVH" + tail
 for o, n in [
     ("case 2: if (kp) launch4(g2_fwd_h_v8o4_kernel<VL, 2, true, false, false, true, true>);",
