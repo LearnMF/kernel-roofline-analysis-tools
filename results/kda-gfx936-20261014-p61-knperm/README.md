@@ -54,6 +54,6 @@ P-61e 的第一版里，gn_kp 每个线程处理一组 16 个元素，耗时 14.
 
 **合入完成（2026-10-15）**：
 - bw7 对照备份 `g2_r5_bak_p61e`：GATE_ALL PASS（`merge/b61m.out`）；
-- flash-train 本地提交 `13181dc`，**未推送**，比远端多 2 个提交（`c5580f8` P-60、`13181dc` P-61e）：
+- flash-train `13181dc`，已推送到 `feat/kda-g2`（快进 `2f92ab3..13181dc`，包含 `c5580f8` P-60 和 `13181dc` P-61e）：
   - 新构建 `ft_site_r21` 与上一版 FT、与 hip_kda 在 4 组配置上 8/8 逐位一致，pytest 29 项通过；
   - X1 路径（`use_qk_l2norm_in_kernel=False`，会走 `g2_kp_relayout`）与上一版 FT 逐位一致，覆盖 8192:12 dense、8192:12 变长和 8192:48（`merge/ft_x1.out`）。
