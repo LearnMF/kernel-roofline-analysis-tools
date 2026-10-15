@@ -1,0 +1,28 @@
+P-71 APPLIED
+build_ok
+rec all                             452.2
+rec all +pub                        489.0
+rec A                               454.5
+rec A +pub                          487.9
+dav all hm                          282.2
+dav all cm                          475.1
+dav all cm+wait(ready)              505.3
+dav B hm                            521.4
+dav B cm                            679.4
+dav all blk                         337.1
+dav B blk                           527.2
+conc rec A | dav B blk              537.0     655.0
+conc rec A+pub | dav B blk+wait     533.7     767.4
+conc rec A | dav B hm               519.5     639.2
+conc rec A | dav B cm               685.0     862.6
+conc rec A+pub | dav B cm+wait      629.2     925.7
+cm2 default m: GATE PASS
+16K M=96 PUB=16: T=16384 H=12 KDA_G2_BPIPE: fwd 1821 -> 1820 us (1.001x)   fwd+bwd 6724 -> 6821 us (0.986x)
+16K M=96 PUB=32: T=16384 H=12 KDA_G2_BPIPE: fwd 1822 -> 1830 us (0.995x)   fwd+bwd 6734 -> 6836 us (0.985x)
+16K M=128 PUB=16: T=16384 H=12 KDA_G2_BPIPE: fwd 1829 -> 1822 us (1.004x)   fwd+bwd 6734 -> 6793 us (0.991x)
+16K M=128 PUB=32: T=16384 H=12 KDA_G2_BPIPE: fwd 1806 -> 1811 us (0.997x)   fwd+bwd 6722 -> 6786 us (0.990x)
+16K M=160 PUB=16: T=16384 H=12 KDA_G2_BPIPE: fwd 1828 -> 1819 us (1.005x)   fwd+bwd 6737 -> 6824 us (0.987x)
+16K M=160 PUB=32: T=16384 H=12 KDA_G2_BPIPE: fwd 1815 -> 1820 us (0.997x)   fwd+bwd 6722 -> 6864 us (0.979x)
+16K M=192 PUB=16: T=16384 H=12 KDA_G2_BPIPE: fwd 1829 -> 1824 us (1.003x)   fwd+bwd 6737 -> 6877 us (0.980x)
+16K M=192 PUB=32: T=16384 H=12 KDA_G2_BPIPE: fwd 1824 -> 1806 us (1.010x)   fwd+bwd 6731 -> 6889 us (0.977x)
+P71B_DONE
