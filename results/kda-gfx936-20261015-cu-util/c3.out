@@ -1,0 +1,13 @@
+C3 APPLIED
+build_ok
+NVH=2 vs production: GATE PASS
+NVH=1 vs production: GATE PASS
+== T=16384 H=12
+prod:  fwdh 514.5 us
+NVH=2: T=16384 H=12: prep 1015.2 us  fwdh 687.8 us  both_rev 1381.5 us  sum 1703.0  overlap 47% of the shorter
+NVH=1: T=16384 H=12: prep 1007.5 us  fwdh 642.9 us  both_rev 1381.0 us  sum 1650.4  overlap 42% of the shorter
+== T=65536 H=12
+prod:  fwdh 1710.7 us
+NVH=2: T=65536 H=12: prep 3669.4 us  fwdh 2388.4 us  both_rev 4749.8 us  sum 6057.8  overlap 55% of the shorter
+NVH=1: T=65536 H=12: prep 3665.9 us  fwdh 2459.3 us  both_rev 5431.9 us  sum 6125.2  overlap 28% of the shorter
+C3_DONE
