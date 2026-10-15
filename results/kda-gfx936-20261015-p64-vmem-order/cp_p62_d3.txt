@@ -1,0 +1,119 @@
+xthread_trace_3__g2_fwd_h_v8o4_kernel_se0_383017.json: 179 steps, 2283 cycles/step (attributed 2283)
+xthread_trace_3__g2_fwd_h_v8o4_kernel_se1_383017.json: 179 steps, 2313 cycles/step (attributed 2313)
+xthread_trace_3__g2_fwd_h_v8o4_kernel_se2_383017.json: 179 steps, 2384 cycles/step (attributed 2384)
+xthread_trace_3__g2_fwd_h_v8o4_kernel_se3_383017.json: 179 steps, 2278 cycles/step (attributed 2278)
+xthread_trace_3__g2_fwd_h_v8o4_kernel_se4_383017.json: 179 steps, 2297 cycles/step (attributed 2297)
+xthread_trace_3__g2_fwd_h_v8o4_kernel_se5_383017.json: 179 steps, 2339 cycles/step (attributed 2339)
+xthread_trace_3__g2_fwd_h_v8o4_kernel_se6_383017.json: 179 steps, 2296 cycles/step (attributed 2296)
+xthread_trace_3__g2_fwd_h_v8o4_kernel_se7_383017.json: 179 steps, 2300 cycles/step (attributed 2300)
+
+== critical path per step (mean of 8 CTAs): 2311 cycles
+  issue       1303   56.4%
+  lat          814   35.2%
+  stall        194    8.4%
+
+  lat:lds-read                     703   30.4%
+  issue:valu                       629   27.2%
+  issue:mmac                       257   11.1%
+  issue:lds-write                  100    4.3%
+  issue:waitcnt                     98    4.2%
+  stall:vmem-load                   79    3.4%
+  issue:salu                        71    3.1%
+  lat:lds-write                     59    2.5%
+  lat:vmem-load                     52    2.3%
+  issue:vmem-load                   50    2.2%
+  stall:vmem-store                  43    1.9%
+  issue:vmem-store                  35    1.5%
+  stall:salu                        31    1.4%
+  issue:lds-read                    27    1.2%
+  stall:lds-read                    23    1.0%
+  issue:barrier                     16    0.7%
+  issue:nop                         12    0.5%
+  stall:lds-write                    9    0.4%
+  issue:msg                          8    0.3%
+  stall:nop                          6    0.3%
+  stall:waitcnt                      2    0.1%
+
+== top 40 critical instructions (cycles/step)
+  lat:lds-read                 99   189 ds_read2_b64 v[101:104], v80 offset0:8 offset1:12
+  lat:lds-read                 71    74 ds_read2_b64 v[16:19], v69 offset0:16 offset1:20
+  lat:lds-read                 70    63 ds_read2_b64 v[20:23], v69 offset0:8 offset1:12
+  lat:lds-read                 68    84 ds_read2_b64 v[12:15], v69 offset0:24 offset1:28
+  lat:lds-read                 66    40 ds_read_u16 v93, v67 offset:4488
+  lat:lds-read                 63   202 ds_read2_b64 v[97:100], v68 offset1:4
+  lat:lds-read                 63   210 ds_read2_b64 v[32:35], v68 offset0:8 offset1:12
+  lat:lds-read                 60    51 ds_read2_b64 v[89:92], v69 offset1:4
+  lat:lds-write                59   296 ds_write_b64 v87, v[89:90]
+  lat:vmem-load                51   159 global_load_dwordx4 v[24:27], v[24:25], off
+  lat:lds-read                 47    27 ds_read_u16 v91, v67 offset:264
+  lat:lds-read                 47    15 ds_read_u16 v94, v65 offset:4488
+  lat:lds-read                 47     2 ds_read_u16 v91, v65 offset:264
+  stall:vmem-load              39   239 global_load_dwordx4 v[32:35], v85, s[6:7]
+  stall:vmem-store             32    13 global_store_dwordx2 v[91:92], v[89:90], off
+  stall:vmem-load              17   183 global_load_dwordx4 v[0:3], v[89:90], off
+  stall:salu                   16   179 s_lshl_b64 s[12:13], s[12:13], 2
+  stall:salu                   16   177 s_addc_u32 s13, s13, s25
+  issue:valu                   12   151 v_perm_b32 v26, v90, v26, s34
+  issue:valu                   12   120 v_lshrrev_b32_e32 v97, 16, v90
+  issue:valu                   12   105 v_lshrrev_b32_e32 v90, 16, v24
+  issue:vmem-store             12   154 global_store_dwordx2 v[46:47], v[24:25], off offset:-512
+  issue:valu                   12   148 v_lshrrev_b32_e32 v92, 16, v89
+  issue:valu                   12   158 v_addc_co_u32_e32 v25, vcc, v77, v25, vcc
+  issue:valu                   12   292 v_perm_b32 v89, v89, v91, s34
+  issue:lds-write              12   279 ds_write_b64 v63, v[89:90]
+  issue:valu                   12   278 v_pk_fma_f32 v[56:57], v[56:57], v[115:116], v[95:96]
+  issue:lds-write              12   266 ds_write_b64 v86, v[89:90]
+  issue:lds-write              12   255 ds_write_b64 v62, v[89:90]
+  issue:mmac                   12    79 v_mmac_f32_16x16x16_bf16 v[97:100], v[12:13], v[16:17], v[97:100]
+  issue:mmac                   12    69 v_mmac_f32_16x16x16_bf16 v[97:100], v[16:17], v[20:21], v[97:100]
+  issue:valu                   12   201 v_pk_fma_f32 v[50:51], v[50:51], v[109:110], v[97:98]
+  issue:valu                   12   265 v_perm_b32 v89, v89, v91, s34
+  issue:mmac                   12    88 v_mmac_f32_16x16x16_bf16 v[97:100], v[8:9], v[12:13], v[97:100]
+  issue:valu                   12   254 v_pk_fma_f32 v[48:49], v[48:49], v[113:114], v[107:108]
+  issue:valu                   12    37 v_addc_co_u32_e32 v92, vcc, v84, v93, vcc
+  stall:vmem-load              12   242 global_load_dwordx4 v[40:43], v85, s[2:3] offset:1024
+  issue:valu                   12    49 v_perm_b32 v90, v94, v90, s30
+  issue:valu                   12    24 v_perm_b32 v90, v95, v90, s30
+  issue:valu                   11   182 v_addc_co_u32_e32 v92, vcc, v79, v0, vcc
+
+== top opcodes on the critical path (cycles/step)
+  lat:lds-read             ds_read2_b64                   496.7
+  issue:mmac               v_mmac_f32_16x16x16_bf16       256.9
+  lat:lds-read             ds_read_u16                    206.8
+  issue:valu               v_perm_b32                     117.6
+  issue:valu               v_add3_u32                      98.6
+  issue:valu               v_bfe_u32                       98.2
+  issue:waitcnt            s_waitcnt                       98.0
+  stall:vmem-load          global_load_dwordx4             79.4
+  issue:lds-write          ds_write_b16                    64.6
+  issue:valu               v_mov_b32_e32                   62.7
+  lat:lds-write            ds_write_b64                    58.7
+  issue:valu               v_lshrrev_b32_e32               55.9
+  issue:valu               v_pk_fma_f32                    54.8
+  lat:vmem-load            global_load_dwordx4             52.1
+  issue:vmem-load          global_load_dwordx4             50.3
+  issue:valu               v_addc_co_u32_e32               50.2
+  stall:vmem-store         global_store_dwordx2            43.0
+  issue:vmem-store         global_store_dwordx2            35.3
+  issue:lds-write          ds_write_b64                    35.2
+  issue:valu               v_sub_f32_e32                   32.0
+  issue:valu               v_add_co_u32_e32                27.5
+  issue:salu               s_addc_u32                      23.6
+  stall:lds-read           ds_read2_b64                    23.3
+  issue:salu               s_lshl_b64                      19.7
+  issue:lds-read           ds_read_u16                     19.6
+  issue:valu               v_lshlrev_b32_e32               16.0
+  issue:valu               v_and_b32_e32                   16.0
+  issue:salu               s_add_u32                       15.7
+  issue:barrier            s_barrier                       15.7
+  stall:salu               s_lshl_b64                      15.7
+  stall:salu               s_addc_u32                      15.7
+  issue:nop                s_nop                           11.8
+  stall:lds-write          ds_write_b16                     9.0
+  issue:msg                OTHER_MSG                        7.9
+  issue:lds-read           ds_read2_b64                     7.8
+  stall:nop                s_nop                            5.8
+  issue:salu               s_mov_b32                        3.9
+  issue:salu               s_mov_b64                        3.9
+  issue:salu               s_and_b64                        3.9
+  stall:waitcnt            s_waitcnt                        1.9

@@ -153,6 +153,7 @@ def lat_mem(cl):
 
 tot = collections.Counter()
 by_pc = collections.Counter()
+by_op = collections.Counter()   # (category, opcode) -> cycles
 pc_asm = {}
 nsteps_all = 0
 step_cycles = []
@@ -250,6 +251,8 @@ for f in files:
     nsteps_all += 1
     for kk in list(by_pc):
         pass
+for (kk, cat), v in by_pc.items():
+    by_op[(cat, kk.split()[1] if kk and len(kk.split()) > 1 else "?")] += v
 for kk in list(tot):
     tot[kk] /= nsteps_all
 by_pc_step = {k: v / (nsteps_all * nst) for k, v in by_pc.items()}
@@ -266,6 +269,9 @@ for kk, v in tot.most_common():
 print(f"\n== top {a.top} critical instructions (cycles/step)")
 for (pc, key), v in sorted(by_pc_step.items(), key=lambda kv: -kv[1])[:a.top]:
     print(f"  {key:24s} {v:6.0f}  {str(pc)[:90]}")
+print(f"\n== top opcodes on the critical path (cycles/step)")
+for (cat, op), v in sorted(by_op.items(), key=lambda kv: -kv[1])[:a.top]:
+    print(f"  {cat:24s} {op:28s} {v / (nsteps_all * nst):7.1f}")
 if a.json:
     json.dump({"per_step_cycles": step_cycles, "categories": dict(tot),
                "top": [[pc, key, v, pc_asm.get(pc, "")] for (pc, key), v in
