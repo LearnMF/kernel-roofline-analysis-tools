@@ -1,0 +1,19 @@
+s4a_16k12 done
+s4a_8k48 done
+wu_16k12 done
+dhu4_16k48 done
+== dhu T=16384 H=48
+dhu_bn KDA_G2_R1A_DHU=1:   2323.7 us  (1.000x vs 1)  spread 2.6%
+dhu_bn KDA_G2_R1A_DHU=0:   2182.2 us  (1.065x vs 1)  spread 4.4%
+dhu_bn KDA_G2_DHU_THROTTLE_MIN_CTAS=192:   2342.4 us  (1.000x vs 192)  spread 2.9%
+dhu_bn KDA_G2_DHU_THROTTLE_MIN_CTAS=99999:   2716.7 us  (0.862x vs 192)  spread 7.0%
+[8-wave] dhu_bn KDA_G2_DHU_THROTTLE_MIN_CTAS=192:   2196.7 us  (1.000x vs 192)  spread 3.2%
+[8-wave] dhu_bn KDA_G2_DHU_THROTTLE_MIN_CTAS=99999:   2555.4 us  (0.860x vs 192)  spread 10.0%
+== dhu T=32768 H=48
+dhu_bn KDA_G2_R1A_DHU=1:   4507.3 us  (1.000x vs 1)  spread 2.6%
+dhu_bn KDA_G2_R1A_DHU=0:   4119.9 us  (1.094x vs 1)  spread 2.1%
+dhu_bn KDA_G2_DHU_THROTTLE_MIN_CTAS=192:   4524.8 us  (1.000x vs 192)  spread 3.1%
+dhu_bn KDA_G2_DHU_THROTTLE_MIN_CTAS=99999:   5628.3 us  (0.804x vs 192)  spread 6.9%
+[8-wave] dhu_bn KDA_G2_DHU_THROTTLE_MIN_CTAS=192:   4163.9 us  (1.000x vs 192)  spread 2.7%
+[8-wave] dhu_bn KDA_G2_DHU_THROTTLE_MIN_CTAS=99999:   5204.6 us  (0.800x vs 192)  spread 6.5%
+DIAG_DONE
