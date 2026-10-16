@@ -117,3 +117,8 @@ keep-state 改走 h 路线后：
   - torch 封装在 H ≤ 24 时默认开启 keep-state：每 token·head 多 1024 B，16K/12 实测快 3.5%；
   - 扩展接口 V2，提供只存 h 的 state 尺寸：多 512 B。
 - 两者都需要用户决定。
+
+**P-82b 合入**：
+- bw52 `g2_opt` `f256f7a`；
+- bw7（bw47 tanbo_mega_k3）与 bw46：指纹 `0032326ac884`，与 bw52 一致；
+- 对照合入前备份 `g2_r5_bak_p82b`：GATE_ALL PASS（含 32K/48）。
