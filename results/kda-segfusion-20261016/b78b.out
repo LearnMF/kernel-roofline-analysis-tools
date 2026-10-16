@@ -1,0 +1,11 @@
+P-78b APPLIED
+build_ok
+== T=16384 H=12
+KDA_G2_PREP_PADLDS=21000: outputs BITWISE vs 0
+fwd_prep KDA_G2_PREP_PADLDS=0:   1059.2 us  (1.000x vs 0)  spread 1.5%
+fwd_prep KDA_G2_PREP_PADLDS=21000:   1624.5 us  (0.652x vs 0)  spread 3.0%
+== T=16384 H=48
+KDA_G2_PREP_PADLDS=21000: outputs BITWISE vs 0
+fwd_prep KDA_G2_PREP_PADLDS=0:   4183.0 us  (1.000x vs 0)  spread 0.5%
+fwd_prep KDA_G2_PREP_PADLDS=21000:   6240.0 us  (0.670x vs 0)  spread 0.5%
+P78B_DONE

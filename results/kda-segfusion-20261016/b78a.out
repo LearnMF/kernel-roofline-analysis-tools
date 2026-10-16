@@ -1,0 +1,11 @@
+P-78a APPLIED
+build_ok
+== T=16384 H=12
+KDA_G2_S4B_PADLDS=8192: outputs BITWISE vs 0
+wy_s4_split KDA_G2_S4B_PADLDS=0:   1907.7 us  (1.000x vs 0)  spread 0.9%
+wy_s4_split KDA_G2_S4B_PADLDS=8192:   2262.4 us  (0.843x vs 0)  spread 1.2%
+== T=16384 H=48
+KDA_G2_S4B_PADLDS=8192: outputs BITWISE vs 0
+wy_s4_split KDA_G2_S4B_PADLDS=0:   8971.8 us  (1.000x vs 0)  spread 0.4%
+wy_s4_split KDA_G2_S4B_PADLDS=8192:   9932.6 us  (0.903x vs 0)  spread 0.8%
+P78A_DONE
