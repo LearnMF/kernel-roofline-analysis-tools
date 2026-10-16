@@ -1,0 +1,2 @@
+T=16384 H=48 KDA_G2_KEEP_STATE: fwd 6005 -> 7408 us (0.811x)   fwd+bwd 26572 -> 26348 us (1.008x)
+T=32768 H=48 KDA_G2_KEEP_STATE: fwd 11676 -> 14123 us (0.827x)   fwd+bwd 52352 -> 51665 us (1.013x)
