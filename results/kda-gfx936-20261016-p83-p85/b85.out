@@ -1,0 +1,19 @@
+P-85 APPLIED
+build_ok
+8192_12: GATE PASS 8192_12_keep-state: GATE PASS 8192_12_gate-extreme: GATE PASS 8192_48: GATE PASS 8192_48_keep-state: GATE PASS 8192_48_gate-extreme: GATE PASS 32768_48: GATE PASS 32768_48_keep-state: GATE PASS 32768_48_gate-extreme: GATE PASS vl_8192_12_ffd54f (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_12_ffd54f_keep-state (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_48_c7114f (0,63,4097,8192): GATE PASS vl_8192_48_c7114f_keep-state (0,63,4097,8192): GATE PASS GATE_ALL PASS fi3 8192_48: GATE PASS 
+cfg new: outputs BITWISE vs old
+T=16384 H=48      old: fwd    6185 us (1.000x)   fwd+bwd   26146 us (1.000x)
+T=16384 H=48      new: fwd    6180 us (1.001x)   fwd+bwd   25963 us (1.007x)
+cfg new: outputs BITWISE vs old
+T=32768 H=48      old: fwd   12802 us (1.000x)   fwd+bwd   50554 us (1.000x)
+T=32768 H=48      new: fwd   12741 us (1.005x)   fwd+bwd   50139 us (1.008x)
+cfg new: outputs BITWISE vs old
+T=65536 H=48      old: fwd   23111 us (1.000x)   fwd+bwd   93751 us (1.000x)
+T=65536 H=48      new: fwd   23132 us (0.999x)   fwd+bwd   93207 us (1.006x)
+cfg new: outputs BITWISE vs old
+T=8192 H=96      old: fwd    6455 us (1.000x)   fwd+bwd   29022 us (1.000x)
+T=8192 H=96      new: fwd    6415 us (1.006x)   fwd+bwd   28995 us (1.001x)
+cfg new: outputs BITWISE vs old
+T=16384 H=24      old: fwd    3564 us (1.000x)   fwd+bwd   12645 us (1.000x)
+T=16384 H=24      new: fwd    3559 us (1.001x)   fwd+bwd   12655 us (0.999x)
+P85_DONE

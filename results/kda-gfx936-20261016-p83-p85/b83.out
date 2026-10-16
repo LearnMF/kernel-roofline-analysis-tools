@@ -1,0 +1,20 @@
+P-83 APPLIED
+build_ok
+p3_wy_s4a_kernelILb0ELb1ELi1E:     .private_segment_fixed_size: 0     .vgpr_count:     223     .group_segment_fixed_size: 30464 
+p3_wy_s4a_kernelILb0ELb0ELi1E:     .private_segment_fixed_size: 0     .vgpr_count:     209     .group_segment_fixed_size: 30464 
+p3_wy_s4a_kernelILb0ELb1ELi0E:     .private_segment_fixed_size: 0     .vgpr_count:     152     .group_segment_fixed_size: 30464 
+p3_wy_s4a_kernelILb1ELb0ELi1E:     .private_segment_fixed_size: 0     .vgpr_count:     233     .group_segment_fixed_size: 30464 
+8192_12: GATE PASS 8192_12_keep-state: GATE PASS 8192_12_gate-extreme: GATE PASS 8192_48: GATE PASS 8192_48_keep-state: GATE PASS 8192_48_gate-extreme: GATE PASS vl_8192_12_ffd54f (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_12_ffd54f_keep-state (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_48_c7114f (0,63,4097,8192): GATE PASS vl_8192_48_c7114f_keep-state (0,63,4097,8192): GATE PASS GATE_ALL PASS fi3 8192_12: GATE PASS 
+wy_s4_split KDA_G2_S4A_PF=0:   1913.7 us  (1.000x vs 0)  spread 0.9%
+wy_s4_split KDA_G2_S4A_PF=1:   1866.8 us  (1.025x vs 0)  spread 1.3%
+T=16384 H=12 KDA_G2_S4A_PF: fwd 1870 -> 1868 us (1.001x)   fwd+bwd 6309 -> 6253 us (1.009x)
+wy_s4_split KDA_G2_S4A_PF=0:   7372.9 us  (1.000x vs 0)  spread 0.4%
+wy_s4_split KDA_G2_S4A_PF=1:   7145.4 us  (1.032x vs 0)  spread 0.3%
+T=65536 H=12 KDA_G2_S4A_PF: fwd 6122 -> 6116 us (1.001x)   fwd+bwd 22912 -> 22671 us (1.011x)
+wy_s4_split KDA_G2_S4A_PF=0:   8964.6 us  (1.000x vs 0)  spread 0.3%
+wy_s4_split KDA_G2_S4A_PF=1:   8668.7 us  (1.034x vs 0)  spread 0.2%
+T=16384 H=48 KDA_G2_S4A_PF: fwd 6187 -> 6151 us (1.006x)   fwd+bwd 26170 -> 25802 us (1.014x)
+wy_s4_split KDA_G2_S4A_PF=0:  11849.7 us  (1.000x vs 0)  spread 0.3%
+wy_s4_split KDA_G2_S4A_PF=1:  11426.3 us  (1.037x vs 0)  spread 2.0%
+T=8192 H=96 KDA_G2_S4A_PF: fwd 6030 -> 6071 us (0.993x)   fwd+bwd 28613 -> 28265 us (1.012x)
+P83_DONE
