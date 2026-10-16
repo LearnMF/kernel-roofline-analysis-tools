@@ -1,0 +1,22 @@
+P-75 APPLIED
+build_ok
+SS=1     .private_segment_fixed_size: 0     .vgpr_count:     121 
+SS=2     .private_segment_fixed_size: 0     .vgpr_count:     115 
+SS=3     .private_segment_fixed_size: 0     .vgpr_count:     121 
+== T=16384 H=12
+KDA_G2_DHU_SS=1: outputs BITWISE vs 0
+KDA_G2_DHU_SS=2: outputs BITWISE vs 0
+KDA_G2_DHU_SS=3: outputs BITWISE vs 0
+KDA_G2_DHU_SS=0: dhu    676.2 us  (1.000x vs 0)  spread 27.5%
+KDA_G2_DHU_SS=1: dhu    679.2 us  (0.996x vs 0)  spread 6.5%
+KDA_G2_DHU_SS=2: dhu    691.5 us  (0.978x vs 0)  spread 4.5%
+KDA_G2_DHU_SS=3: dhu    672.2 us  (1.006x vs 0)  spread 6.3%
+== T=65536 H=12
+KDA_G2_DHU_SS=1: outputs BITWISE vs 0
+KDA_G2_DHU_SS=2: outputs BITWISE vs 0
+KDA_G2_DHU_SS=3: outputs BITWISE vs 0
+KDA_G2_DHU_SS=0: dhu   2145.4 us  (1.000x vs 0)  spread 2.3%
+KDA_G2_DHU_SS=1: dhu   2134.6 us  (1.005x vs 0)  spread 2.8%
+KDA_G2_DHU_SS=2: dhu   2204.5 us  (0.973x vs 0)  spread 2.4%
+KDA_G2_DHU_SS=3: dhu   2100.5 us  (1.021x vs 0)  spread 3.4%
+P75_DONE
