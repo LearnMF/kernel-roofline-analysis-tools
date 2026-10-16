@@ -1,0 +1,25 @@
+P-82b APPLIED
+8192_12: GATE PASS 8192_12_keep-state: GATE PASS 8192_12_gate-extreme: GATE PASS 8192_48: GATE PASS 8192_48_keep-state: GATE PASS 8192_48_gate-extreme: GATE PASS 32768_48: GATE PASS 32768_48_keep-state: GATE PASS 32768_48_gate-extreme: GATE PASS vl_8192_12_ffd54f (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_12_ffd54f_keep-state (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_48_c7114f (0,63,4097,8192): GATE PASS vl_8192_48_c7114f_keep-state (0,63,4097,8192): GATE PASS GATE_ALL PASS 
+cfg on: outputs BITWISE vs off
+T=16384 H=24      off: fwd    3378 us (1.000x)   fwd+bwd   13050 us (1.000x)
+T=16384 H=24       on: fwd    3597 us (0.939x)   fwd+bwd   12686 us (1.029x)
+cfg on: outputs BITWISE vs off
+T=32768 H=48      off: fwd   11869 us (1.000x)   fwd+bwd   51389 us (1.000x)
+T=32768 H=48       on: fwd   12669 us (0.937x)   fwd+bwd   50406 us (1.020x)
+cfg on: outputs BITWISE vs off
+T=65536 H=48      off: fwd   21853 us (1.000x)   fwd+bwd   97908 us (1.000x)
+T=65536 H=48       on: fwd   23181 us (0.943x)   fwd+bwd   93565 us (1.046x)
+cfg on: outputs BITWISE vs off
+T=16384 H=48      off: fwd    6175 us (1.000x)   fwd+bwd   26127 us (1.000x)
+T=16384 H=48       on: fwd    6155 us (1.003x)   fwd+bwd   26120 us (1.000x)
+cfg ks_h: outputs BITWISE vs ks_mode2
+cfg k0: outputs BITWISE vs ks_mode2
+T=16384 H=12 ks_mode2: fwd    2126 us (1.000x)   fwd+bwd    6401 us (1.000x)
+T=16384 H=12     ks_h: fwd    1865 us (1.140x)   fwd+bwd    6287 us (1.018x)
+T=16384 H=12       k0: fwd    1791 us (1.187x)   fwd+bwd    6532 us (0.980x)
+cfg ks_h: outputs BITWISE vs ks_mode2
+cfg k0: outputs BITWISE vs ks_mode2
+T=16384 H=24 ks_mode2: fwd    3974 us (1.000x)   fwd+bwd   12712 us (1.000x)
+T=16384 H=24     ks_h: fwd    3536 us (1.124x)   fwd+bwd   12616 us (1.008x)
+T=16384 H=24       k0: fwd    3288 us (1.209x)   fwd+bwd   12954 us (0.981x)
+P82B_DONE

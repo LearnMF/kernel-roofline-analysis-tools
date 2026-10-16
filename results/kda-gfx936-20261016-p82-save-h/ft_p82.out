@@ -1,0 +1,40 @@
+BUILD_OK 8476dd81af6f
+8192_12_ks0 ft_r26 vs old : GATE PASS
+8192_12_ks0 ft_r26 vs hip : GATE PASS
+8192_48_ks0 ft_r26 vs old : GATE PASS
+8192_48_ks0 ft_r26 vs hip : GATE PASS
+8192_12_vlffd_ks0 ft_r26 vs old : GATE PASS
+8192_12_vlffd_ks0 ft_r26 vs hip : GATE PASS
+8192_48_vlc71_ks0 ft_r26 vs old : GATE PASS
+8192_48_vlc71_ks0 ft_r26 vs hip : GATE PASS
+32768_48_ks0 ft_r26 vs old : GATE PASS
+32768_48_ks0 ft_r26 vs hip : GATE PASS
+8192_12_ks1 ft_r26 vs old : GATE PASS
+8192_12_ks1 ft_r26 vs hip : GATE PASS
+8192_48_ks1 ft_r26 vs old : GATE PASS
+8192_48_ks1 ft_r26 vs hip : GATE PASS
+8192_12_vlffd_ks1 ft_r26 vs old : GATE PASS
+8192_12_vlffd_ks1 ft_r26 vs hip : GATE PASS
+8192_48_vlc71_ks1 ft_r26 vs old : GATE PASS
+8192_48_vlc71_ks1 ft_r26 vs hip : GATE PASS
+32768_48_ks1 ft_r26 vs old : GATE PASS
+32768_48_ks1 ft_r26 vs hip : GATE PASS
+x1_8192_12 (keep-state) r26 vs r25: GATE PASS
+x1_8192_12_vl (keep-state) r26 vs r25: GATE PASS
+x1_8192_48 (keep-state) r26 vs r25: GATE PASS
+== pytest torch_kda_test
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+29 passed, 1 warning in 8.35s
+FT_CHECK PASS
+cfg ks_h: outputs BITWISE vs ks_mode2
+cfg k0: outputs BITWISE vs ks_mode2
+FT T=16384 H=12 ks_mode2: fwd    1923 us (1.000x)   fwd+bwd    6706 us (1.000x)
+FT T=16384 H=12     ks_h: fwd    1812 us (1.061x)   fwd+bwd    6765 us (0.991x)
+FT T=16384 H=12       k0: fwd    1735 us (1.108x)   fwd+bwd    6943 us (0.966x)
+cfg ks_h: outputs BITWISE vs ks_mode2
+cfg k0: outputs BITWISE vs ks_mode2
+FT T=16384 H=24 ks_mode2: fwd    3733 us (1.000x)   fwd+bwd   13511 us (1.000x)
+FT T=16384 H=24     ks_h: fwd    3395 us (1.100x)   fwd+bwd   13574 us (0.995x)
+FT T=16384 H=24       k0: fwd    3098 us (1.205x)   fwd+bwd   13806 us (0.979x)
+FT82_DONE
