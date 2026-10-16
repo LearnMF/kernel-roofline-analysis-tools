@@ -1,0 +1,16 @@
+P-80a APPLIED
+build_ok
+== T=16384 H=12
+wu KDA_G2_WU_NOWB=0:    669.6 us  (1.000x vs 0)  spread 1.6%
+wu KDA_G2_WU_NOWB=1:    627.7 us  (1.067x vs 0)  spread 1.8%
+dhu_bn KDA_G2_DHU_WBT=0:    677.1 us  (1.000x vs 0)  spread 4.4%
+dhu_bn KDA_G2_DHU_WBT=1:    746.7 us  (0.907x vs 0)  spread 8.1%
+== T=65536 H=12
+wu KDA_G2_WU_NOWB=0:   2548.5 us  (1.000x vs 0)  spread 0.3%
+wu KDA_G2_WU_NOWB=1:   2382.7 us  (1.070x vs 0)  spread 0.3%
+dhu_bn KDA_G2_DHU_WBT=0:   2143.8 us  (1.000x vs 0)  spread 1.7%
+dhu_bn KDA_G2_DHU_WBT=1:   2470.7 us  (0.868x vs 0)  spread 1.4%
+== T=16384 H=48
+wu KDA_G2_WU_NOWB=0:   2658.2 us  (1.000x vs 0)  spread 0.6%
+wu KDA_G2_WU_NOWB=1:   2506.4 us  (1.061x vs 0)  spread 0.5%
+P80A_DONE
