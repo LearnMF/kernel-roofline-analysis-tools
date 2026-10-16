@@ -18,6 +18,8 @@ ap.add_argument("dir")
 ap.add_argument("--T", type=int, required=True)
 ap.add_argument("--H", type=int, required=True)
 ap.add_argument("--json", default=None)
+ap.add_argument("--pmc-iters", type=int, default=2, help="F+B iterations in each pmc run (warmup + measured)")
+ap.add_argument("--trace-iters", type=int, default=4, help="F+B iterations in the hip-trace run")
 a = ap.parse_args()
 TH = a.T * a.H
 MB = 1e6
@@ -26,7 +28,7 @@ ALG_R, ALG_W = 2576, 1548
 
 LMAP = [  # kernel-name regex -> launcher
     (r"g2_fwd_prep_a_kernel|g2_fwd_prep_b_kernel", "fwd_prep"),
-    (r"g2_fwd_h_v8o4_kernelILb0ELi1E|g2_fwd_h_v8o4_kernel<false, 1,", "fwd_h_o"),
+    (r"g2_fwd_h_v8o4w?_kernelILb0ELi[15]E|g2_fwd_h_v8o4w?_kernel<false, [15],", "fwd_h_o"),   # kra P-82: MODE 5
     (r"g2_fwd_h_v8o4_kernelILb0ELi4E|g2_fwd_h_v8o4_kernel<false, 4,|g2_gn_kp|g2_exp2", "fwd_h_bn"),
     (r"l2n", "l2n_apply"),
     (r"g2_gate_kernel|head_gate", "head_gate"),
@@ -74,11 +76,17 @@ def read_pmc(path, kind):
 
 
 def last_iter(rows):
+    """per-occurrence bytes averaged over the LAST iteration, and calls per iteration"""
     by = collections.defaultdict(list)
     for nm, b in rows:
         by[nm].append(b)
-    return {nm: sum(v[len(v) // 2:]) / max(1, len(v) - len(v) // 2) * 1 for nm, v in by.items()}, \
-        {nm: len(v) - len(v) // 2 for nm, v in by.items()}
+    out, ncall = {}, {}
+    for nm, v in by.items():
+        k = max(1, len(v) // a.pmc_iters)          # calls per iteration
+        last = v[-k:]
+        out[nm] = sum(last) / len(last)
+        ncall[nm] = k
+    return out, ncall
 
 
 rd, ncall = last_iter(read_pmc(f"{a.dir}/pmc_read.csv", "rd"))
@@ -111,7 +119,7 @@ for k in kern:
     x["kernels"].append(k)
 # hip-trace kernel times grouped by launcher (names in hipkernel.csv are demangled)
 ltime = collections.defaultdict(float)
-DEM = [(r"fwd_prep_a_kernel|fwd_prep_b_kernel", "fwd_prep"), (r"fwd_h_v8o4_kernel<false, 1,", "fwd_h_o"),
+DEM = [(r"fwd_prep_a_kernel|fwd_prep_b_kernel", "fwd_prep"), (r"fwd_h_v8o4w?_kernel<false, [15],", "fwd_h_o"),
        (r"fwd_h_v8o4_kernel<false, 4,|gn_kp|exp2", "fwd_h_bn"), (r"l2n", "l2n_apply"), (r"gate_kernel", "head_gate"),
        (r"wu_kernel", "wu"), (r"dav_kernel", "dav"), (r"dhu_", "dhu_bn"), (r"wy_s4a|wy_s4b", "wy_s4_split"),
        (r"bwd_tail", "bwd_tail")]
@@ -119,7 +127,7 @@ with open(f"{a.dir}/trace_1.hipkernel.csv") as f:
     for row in csv.DictReader(f):
         for rx, l in DEM:
             if re.search(rx, row["Name"]):
-                ltime[l] += float(row["TotalDurationNs"]) / 1e3 / 4    # iters 3 + warmup 1
+                ltime[l] += float(row["TotalDurationNs"]) / 1e3 / a.trace_iters
                 break
 order = ["fwd_prep", "fwd_h_o", "l2n_apply", "head_gate", "wu", "fwd_h_bn", "dav", "dhu_bn", "wy_s4_split", "bwd_tail"]
 print(f"== {a.dir}  T={a.T} H={a.H}  (MB; B/th = bytes per token*head)")

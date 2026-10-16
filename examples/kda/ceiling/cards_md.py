@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))   # repo root (kra)
 from kda_bound import bounds as algo_bounds                     # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
-RES = ROOT / "results" / "kda-ceiling-cards-20261013"
+RES = Path(__import__("os").environ.get("KRA_CARDS_RES", ROOT / "results" / "kda-ceiling-cards-20261013"))
 CARDS = json.load(open(RES / "cards.json"))
 
 MEASURED = {(16384, 48): 26.43, (16384, 24): 13.09, (16384, 12): 6.75,

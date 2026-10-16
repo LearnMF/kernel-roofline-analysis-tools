@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from parse_raw import parse_shape                                  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
-RES = ROOT / "results" / "kda-ceiling-cards-20261013"
+RES = Path(__import__("os").environ.get("KRA_CARDS_RES", ROOT / "results" / "kda-ceiling-cards-20261013"))
 RAW = RES / "raw"
 MACH = json.load(open(ROOT / "machines" / "gfx936-bw1000.json"))
 ISA = json.load(open(RAW / "isa_mix.json")) if (RAW / "isa_mix.json").exists() else {}
@@ -61,7 +61,7 @@ LAUNCHER_MEMBERS = {
     "dhu_bn": ["dhu_v8b4#1", "dhu_v8b#1", "dhu_v8b2#1"], "wy_s4_split": ["wy_s4a#1", "wy_s4b#1"],
     "bwd_tail": ["bwd_tail#1", "bwd_tail_reduce#1"],
 }
-RECURRENCE = {"fwd_h_v8o4#1": "with_o", "fwd_h_v8o4#2": "state", "dhu_v8b4#1": "state"}
+RECURRENCE = {"fwd_h_v8o4#1": "with_o", "fwd_h_v8o4#2": "state", "dhu_v8b4#1": "state", "dhu_v8b#1": "state"}
 
 
 def isa_of(short: str) -> dict:
