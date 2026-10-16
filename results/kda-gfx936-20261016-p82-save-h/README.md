@@ -46,3 +46,12 @@
 | G2，SAVE_H=1 | **1544** | **1.32** |
 
 说明：这个测试程序本身持有作为叶子张量的 q、k，所以 P-77b 保存的 qn、kn 在这里额外多算了 512 B。在 Megatron K3 里，q、k 是 conv 的输出，conv 不会保留它们，按 2026-10-13 的口径，SAVE_H=0 是 520 B，SAVE_H=1 是 1032 B，等于 FLA 默认。前向+反向的峰值不变（1.32 GiB，FLA 为 1.65 GiB）。
+
+## 合入记录（2026-10-16，带 H ≤ 20 门限的版本）
+
+| 位置 | 状态 |
+|---|---|
+| bw52 `g2_opt` `a41a5db` | 对照合入前备份 `g2_opt_bak_p82`：GATE_ALL PASS（10/10），FI=3 PASS；指纹 `aafc8fa027ea` |
+| bw7（bw47 tanbo_mega_k3）`/opt/kda_env/g2_r5` | 指纹一致（`aafc8fa027ea`）；对照 `g2_r5_bak_p82`：GATE_ALL PASS |
+| bw46 探针基线 | 已同步到 P-82，指纹 `aafc8fa027ea` |
+| flash-train | 未移植：可以复用现有 opaque `state` 端口来放 h，不需要改 ABI，但要改 FT 的 runner 和 torch 封装，另行安排 |
