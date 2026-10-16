@@ -1,0 +1,11 @@
+P-78a APPLIED
+P-79 APPLIED
+P-79c APPLIED
+build_ok
+== 16K/12 PADLDS=0
+wy_s4_split KDA_G2_S4B_OT=0:   1913.9 us  (1.000x vs 0)  spread 0.8%
+wy_s4_split KDA_G2_S4B_OT=3:   1905.8 us  (1.004x vs 0)  spread 0.5%
+== 16K/12 PADLDS=8192
+wy_s4_split KDA_G2_S4B_OT=0:   2266.7 us  (1.000x vs 0)  spread 1.0%
+wy_s4_split KDA_G2_S4B_OT=3:   2143.0 us  (1.058x vs 0)  spread 0.9%
+P79C_DONE
