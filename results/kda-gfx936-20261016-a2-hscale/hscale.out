@@ -1,0 +1,7 @@
+H=12 ctas=48: void g2::g2_dhu_v8b_kernel<1, true>(g2::=667.1us  void g2::g2_fwd_h_v8o4_kernel<false, 1, =519.6us  void g2::g2_fwd_h_v8o4_kernel<false, 4, =440.5us  
+H=16 ctas=64: void g2::g2_dhu_v8b_kernel<1, true>(g2::=768.6us  void g2::g2_fwd_h_v8o4_kernel<false, 1, =582.9us  void g2::g2_fwd_h_v8o4_kernel<false, 4, =493.7us  
+H=20 ctas=80: void g2::g2_dhu_v8b_kernel<1, true>(g2::=862.1us  void g2::g2_fwd_h_v8o4_kernel<false, 1, =667.8us  void g2::g2_fwd_h_v8o4_kernel<false, 4, =562.4us  
+H=24 ctas=96: void g2::g2_dhu_v8b_kernel<1, true>(g2::=1321.9us  void g2::g2_fwd_h_v8o4_kernel<false, 1, =965.9us  void g2::g2_fwd_h_v8o4_kernel<false, 4, =876.1us  
+H=32 ctas=128: void g2::g2_dhu_v8b_kernel<1, true>(g2::=1680.9us  void g2::g2_fwd_h_v8o4_kernel<false, 1, =1108.0us  void g2::g2_fwd_h_v8o4_kernel<false, 4, =1083.5us  
+H=40 ctas=160: void g2::g2_dhu_v8b_kernel<1, true>(g2::=2293.6us  void g2::g2_fwd_h_v8o4_kernel<false, 4, =1421.8us  void g2::g2_fwd_h_v8o4_kernel<false, 1, =1370.6us  
+HS_DONE
