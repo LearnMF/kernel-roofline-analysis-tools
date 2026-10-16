@@ -48,3 +48,16 @@
 - (a) 前向：hB 的批量读拆成两批，前一半在屏障 A 之前就能发出的部分先发（需要确认依赖关系），减少屏障后第一次读的等待；
 - (b) 重算：找出为什么 loadU(nxt) 会在同一步内被等待（可能是 vmcnt 的计数顺序问题，参见 R52），把它往前挪或加固定调度屏障；
 - (c) 前向：K 预取的发射受阻。
+
+## 4. Megatron 调用链里 KDA 收到的 cu_seqlens（2026-10-16 核实代码，`verified`）
+- **Megatron-LM-das** `4097af5`（HYGON-AI），`pretrain_gpt.py`：只有 batch 里带 `cu_seqlens` 时才会构造 `PackedSeqParams`。3rdparty Megatron-LM `571370c82`（core_r0.18.0）中，只有 `training/datasets/sft_dataset.py` 和 `core/datasets/data_schedule.py` 会产出 cu_seqlens；预训练用的 `GPTDataset` 和 `MockGPTDataset` 都不产出。
+- **Megatron-Bridge** `05fd6df97`，`kimi_k3_layers.py::_forward_kda`：`cu_seqlens = packed_seq_params.cu_seqlens_q if packed_seq_params is not None else None`，再经 `kimi_k3_ops.kda` 传给 `chunk_kda(cu_seqlens=…)`。
+- **结论**：
+  - **预训练**：每张卡、每个 micro-batch 只有 **1 段**，长度就是 seq_length；batch 维等于 micro_batch_size，长上下文时通常为 1。TP8 下 H=12，每个递推只有 48 个 CTA，CU 闲置的情况在真实预训练里同样存在，不是基准测试的偶然现象。`--reset-attention-mask` 只影响 softmax attention 的掩码，不会把文档边界传给 KDA，所以 KDA 的状态会跨文档延续。
+  - **SFT**：样本打包，段数等于每个 pack 里的样本数，取决于数据集，`unknown`。
+  - Moonshot 内部实际怎么训练 K3、CP>1 时 KDA 怎么处理：`unknown`。
+
+## 5. KDA 训练在 BW1000 上的算术强度（来自 kda_bound，C=64、d=128，P1 显存策略）
+- 算法必需量（每 token·head）：MMAC 504 kFLOP；显存读 2576 B、写 1548 B，合计 4124 B。所以**算术强度 ≈ 122 FLOP/B**。
+- 机器的屋脊点：bf16 MMAC 476 TFLOPS ÷ HBM 约 1.25 TB/s（读 1339、写 1100）≈ **380 FLOP/B**。
+- 16K/TP8 的算法下限：访存 0.65 ms，MMAC 约 0.21 ms，前者是后者的 3 倍。算法本身就是**受访存限制**的：即使字节降到必需量、80 个 CU 全部用上，MMAC 利用率最多也只有约 122/380 ≈ 32%。必需字节主要是每个 token 都要读写的输入、输出和梯度（q/k/v/g/o/do/dq/dk/dv/dg），加大 chunk 也减不掉。要进入受算力限制的区间，算术强度至少要提高约 3 倍，现有算法做不到。
