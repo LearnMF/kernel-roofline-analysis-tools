@@ -1,0 +1,1105 @@
+{
+ "total": 17688527616,
+ "ext_in": 1016094912,
+ "final_out": 1009803456,
+ "inter_w": 6357516288,
+ "inter_r": 7886340096,
+ "tensors": [
+  {
+   "id": "ext0",
+   "producer": null,
+   "seq": -1,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "bfloat16",
+   "external": true,
+   "reads": [
+    [
+     "fwd_prep",
+     201326592
+    ],
+    [
+     "l2n_apply",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "ext1",
+   "producer": null,
+   "seq": -1,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "bfloat16",
+   "external": true,
+   "reads": [
+    [
+     "fwd_prep",
+     201326592
+    ],
+    [
+     "l2n_apply",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "ext2",
+   "producer": null,
+   "seq": -1,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "bfloat16",
+   "external": true,
+   "reads": [
+    [
+     "fwd_prep",
+     201326592
+    ],
+    [
+     "wu",
+     201326592
+    ],
+    [
+     "wy_s4_split",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "ext3",
+   "producer": null,
+   "seq": -1,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "bfloat16",
+   "external": true,
+   "reads": [
+    [
+     "fwd_prep",
+     201326592
+    ],
+    [
+     "head_gate",
+     201326592
+    ],
+    [
+     "bwd_tail",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "ext4",
+   "producer": null,
+   "seq": -1,
+   "bytes": 192,
+   "shape": [
+    48
+   ],
+   "dtype": "float32",
+   "external": true,
+   "reads": [
+    [
+     "fwd_prep",
+     192
+    ],
+    [
+     "head_gate",
+     192
+    ],
+    [
+     "bwd_tail",
+     192
+    ]
+   ]
+  },
+  {
+   "id": "ext5",
+   "producer": null,
+   "seq": -1,
+   "bytes": 24576,
+   "shape": [
+    6144
+   ],
+   "dtype": "float32",
+   "external": true,
+   "reads": [
+    [
+     "fwd_prep",
+     24576
+    ],
+    [
+     "head_gate",
+     24576
+    ],
+    [
+     "bwd_tail",
+     24576
+    ]
+   ]
+  },
+  {
+   "id": "ext6",
+   "producer": null,
+   "seq": -1,
+   "bytes": 3145728,
+   "shape": [
+    1,
+    16384,
+    48
+   ],
+   "dtype": "float32",
+   "external": true,
+   "reads": [
+    [
+     "fwd_prep",
+     3145728
+    ],
+    [
+     "wu",
+     3145728
+    ],
+    [
+     "wy_s4_split",
+     3145728
+    ],
+    [
+     "bwd_tail",
+     3145728
+    ]
+   ]
+  },
+  {
+   "id": "fwd_prep.o0",
+   "producer": "fwd_prep",
+   "seq": 0,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    48,
+    256,
+    4,
+    8,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "fwd_h_o",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "fwd_prep.o1",
+   "producer": "fwd_prep",
+   "seq": 0,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    48,
+    256,
+    8,
+    4,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "fwd_h_o",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "fwd_prep.o2",
+   "producer": "fwd_prep",
+   "seq": 0,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    48,
+    256,
+    4,
+    8,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "fwd_h_o",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "fwd_prep.o3",
+   "producer": "fwd_prep",
+   "seq": 0,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    48,
+    256,
+    4,
+    8,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "fwd_h_o",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "fwd_prep.o4",
+   "producer": "fwd_prep",
+   "seq": 0,
+   "bytes": 100663296,
+   "shape": [
+    1,
+    48,
+    256,
+    4,
+    4,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "fwd_h_o",
+     100663296
+    ]
+   ]
+  },
+  {
+   "id": "fwd_prep.o5",
+   "producer": "fwd_prep",
+   "seq": 0,
+   "bytes": 100663296,
+   "shape": [
+    1,
+    16384,
+    48,
+    64
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "dav",
+     100663296
+    ]
+   ]
+  },
+  {
+   "id": "fwd_prep.o6",
+   "producer": "fwd_prep",
+   "seq": 0,
+   "bytes": 100663296,
+   "shape": [
+    1,
+    16384,
+    48,
+    64
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "wu",
+     100663296
+    ],
+    [
+     "wy_s4_split",
+     100663296
+    ]
+   ]
+  },
+  {
+   "id": "fwd_prep.o7",
+   "producer": "fwd_prep",
+   "seq": 0,
+   "bytes": 3145728,
+   "shape": [
+    1,
+    16384,
+    48
+   ],
+   "dtype": "float32",
+   "external": false,
+   "reads": [
+    [
+     "l2n_apply",
+     3145728
+    ],
+    [
+     "bwd_tail",
+     3145728
+    ]
+   ]
+  },
+  {
+   "id": "fwd_prep.o8",
+   "producer": "fwd_prep",
+   "seq": 0,
+   "bytes": 3145728,
+   "shape": [
+    1,
+    16384,
+    48
+   ],
+   "dtype": "float32",
+   "external": false,
+   "reads": [
+    [
+     "l2n_apply",
+     3145728
+    ],
+    [
+     "bwd_tail",
+     3145728
+    ]
+   ]
+  },
+  {
+   "id": "fwd_prep.o9",
+   "producer": "fwd_prep",
+   "seq": 0,
+   "bytes": 6291456,
+   "shape": [
+    1,
+    48,
+    256,
+    8,
+    4,
+    4
+   ],
+   "dtype": "float32",
+   "external": false,
+   "reads": [
+    [
+     "fwd_h_o",
+     6291456
+    ],
+    [
+     "fwd_h_bn",
+     6291456
+    ],
+    [
+     "dhu_bn",
+     6291456
+    ]
+   ]
+  },
+  {
+   "id": "fwd_h_o.o0",
+   "producer": "fwd_h_o",
+   "seq": 1,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": []
+  },
+  {
+   "id": "l2n_apply.o0",
+   "producer": "l2n_apply",
+   "seq": 2,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "wu",
+     201326592
+    ],
+    [
+     "wy_s4_split",
+     201326592
+    ],
+    [
+     "bwd_tail",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "l2n_apply.o1",
+   "producer": "l2n_apply",
+   "seq": 2,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "wu",
+     201326592
+    ],
+    [
+     "wy_s4_split",
+     201326592
+    ],
+    [
+     "bwd_tail",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "head_gate.o0",
+   "producer": "head_gate",
+   "seq": 3,
+   "bytes": 402653184,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "float32",
+   "external": false,
+   "reads": [
+    [
+     "wu",
+     402653184
+    ],
+    [
+     "wy_s4_split",
+     402653184
+    ]
+   ]
+  },
+  {
+   "id": "wu.o0",
+   "producer": "wu",
+   "seq": 4,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    48,
+    256,
+    4,
+    8,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "fwd_h_bn",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "wu.o1",
+   "producer": "wu",
+   "seq": 4,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    48,
+    256,
+    8,
+    4,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "dhu_bn",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "wu.o2",
+   "producer": "wu",
+   "seq": 4,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    48,
+    256,
+    4,
+    8,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "fwd_h_bn",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "wu.o3",
+   "producer": "wu",
+   "seq": 4,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    48,
+    256,
+    4,
+    8,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "dhu_bn",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "wu.o4",
+   "producer": "wu",
+   "seq": 4,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    48,
+    256,
+    8,
+    4,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "fwd_h_bn",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "wu.o5",
+   "producer": "wu",
+   "seq": 4,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    48,
+    256,
+    8,
+    4,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "dhu_bn",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "wu.o6",
+   "producer": "wu",
+   "seq": 4,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    256,
+    48,
+    4,
+    8,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "wy_s4_split",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "ext7",
+   "producer": null,
+   "seq": -1,
+   "bytes": 6291456,
+   "shape": [
+    1,
+    48,
+    256,
+    8,
+    4,
+    4
+   ],
+   "dtype": "float32",
+   "external": true,
+   "reads": [
+    [
+     "fwd_h_bn",
+     6291456
+    ]
+   ]
+  },
+  {
+   "id": "fwd_h_bn.o0",
+   "producer": "fwd_h_bn",
+   "seq": 5,
+   "bytes": 402653184,
+   "shape": [
+    1,
+    256,
+    48,
+    8,
+    8,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "wy_s4_split",
+     402653184
+    ]
+   ]
+  },
+  {
+   "id": "fwd_h_bn.o1",
+   "producer": "fwd_h_bn",
+   "seq": 5,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    48,
+    256,
+    4,
+    8,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "dav",
+     201326592
+    ],
+    [
+     "wy_s4_split",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "ext8",
+   "producer": null,
+   "seq": -1,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "bfloat16",
+   "external": true,
+   "reads": [
+    [
+     "dav",
+     201326592
+    ],
+    [
+     "wy_s4_split",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "dav.o0",
+   "producer": "dav",
+   "seq": 6,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    16384,
+    48,
+    64
+   ],
+   "dtype": "float32",
+   "external": false,
+   "reads": [
+    [
+     "wy_s4_split",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "dav.o1",
+   "producer": "dav",
+   "seq": 6,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    48,
+    256,
+    4,
+    8,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "dhu_bn",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "dav.o2",
+   "producer": "dav",
+   "seq": 6,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    48,
+    256,
+    8,
+    4,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "dhu_bn",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "dhu_bn.o0",
+   "producer": "dhu_bn",
+   "seq": 7,
+   "bytes": 402653184,
+   "shape": [
+    1,
+    256,
+    48,
+    8,
+    8,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "wy_s4_split",
+     402653184
+    ]
+   ]
+  },
+  {
+   "id": "dhu_bn.o1",
+   "producer": "dhu_bn",
+   "seq": 7,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    256,
+    48,
+    4,
+    8,
+    4,
+    16,
+    4
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": [
+    [
+     "wy_s4_split",
+     201326592
+    ]
+   ]
+  },
+  {
+   "id": "ext9",
+   "producer": null,
+   "seq": -1,
+   "bytes": 0,
+   "shape": [
+    0
+   ],
+   "dtype": "bfloat16",
+   "external": true,
+   "reads": [
+    [
+     "wy_s4_split",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "wy_s4_split.o0",
+   "producer": "wy_s4_split",
+   "seq": 8,
+   "bytes": 402653184,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "float32",
+   "external": false,
+   "reads": [
+    [
+     "bwd_tail",
+     402653184
+    ]
+   ]
+  },
+  {
+   "id": "wy_s4_split.o1",
+   "producer": "wy_s4_split",
+   "seq": 8,
+   "bytes": 402653184,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "float32",
+   "external": false,
+   "reads": [
+    [
+     "bwd_tail",
+     402653184
+    ]
+   ]
+  },
+  {
+   "id": "wy_s4_split.o2",
+   "producer": "wy_s4_split",
+   "seq": 8,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": []
+  },
+  {
+   "id": "wy_s4_split.o3",
+   "producer": "wy_s4_split",
+   "seq": 8,
+   "bytes": 402653184,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "float32",
+   "external": false,
+   "reads": [
+    [
+     "bwd_tail",
+     402653184
+    ]
+   ]
+  },
+  {
+   "id": "wy_s4_split.o4",
+   "producer": "wy_s4_split",
+   "seq": 8,
+   "bytes": 3145728,
+   "shape": [
+    1,
+    16384,
+    48
+   ],
+   "dtype": "float32",
+   "external": false,
+   "reads": [
+    [
+     "bwd_tail",
+     3145728
+    ]
+   ]
+  },
+  {
+   "id": "bwd_tail.o0",
+   "producer": "bwd_tail",
+   "seq": 9,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": []
+  },
+  {
+   "id": "bwd_tail.o1",
+   "producer": "bwd_tail",
+   "seq": 9,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": []
+  },
+  {
+   "id": "bwd_tail.o2",
+   "producer": "bwd_tail",
+   "seq": 9,
+   "bytes": 201326592,
+   "shape": [
+    1,
+    16384,
+    48,
+    128
+   ],
+   "dtype": "bfloat16",
+   "external": false,
+   "reads": []
+  },
+  {
+   "id": "bwd_tail.o3",
+   "producer": "bwd_tail",
+   "seq": 9,
+   "bytes": 192,
+   "shape": [
+    48
+   ],
+   "dtype": "float32",
+   "external": false,
+   "reads": []
+  },
+  {
+   "id": "bwd_tail.o4",
+   "producer": "bwd_tail",
+   "seq": 9,
+   "bytes": 24576,
+   "shape": [
+    6144
+   ],
+   "dtype": "float32",
+   "external": false,
+   "reads": []
+  },
+  {
+   "id": "bwd_tail.o5",
+   "producer": "bwd_tail",
+   "seq": 9,
+   "bytes": 3145728,
+   "shape": [
+    1,
+    16384,
+    48
+   ],
+   "dtype": "float32",
+   "external": false,
+   "reads": []
+  }
+ ]
+}
