@@ -27,3 +27,45 @@
 - 代价：前向多写 101 MB（16K/12），约 +60–90 µs，prep 受 VALU/TA 限制，写出能部分被掩盖。
 - 预计净收益：约 −70~−100 µs，约占 1–1.5%。
 - 风险：如果调用方在别处还持有 q、k，保存 qn、kn 就会多占约 100 MB/层（16K/TP8）的激活显存。这属于显存语义的变化，需要用户确认。
+
+---
+
+# P-77b：前向写出 qn/kn 并用它们替换 q/k 的保存（2026-10-16，用户同意，**合入**）
+
+**改法**（`examples/kda/p77b_save_qkn.py`；`KDA_G2_SAVE_QKN` 默认开，置 0 可退回原路径）：
+- prep_a 里每个 lane 本来就有 4 行 × 8 列的 `bf_rne(bf2f(x) · rstd)`，与 l2n_apply 的算式相同、用的是同一个 rstd。现在每行每个张量多发两条 8 B 写，按行主序 [T,H,128] 写出 qn、kn。
+- `fwd_prep` 增加参数 emit_qkn，打开时额外返回 qn、kn。
+- k3_g2 的前向保存 qn、kn 来代替 q、k，并置 ctx.qkn。反向检测到 ctx.qkn 就不再启动 l2n_apply；wu、s4、tail 一律不改。
+- 适用范围：R4 prep 路线（FI=4），kernel 内做 l2norm，并且后面要跑反向。
+
+**显存**：保存的字节不变（qn、kn 与 q、k 一样大）。在 Megatron-Bridge 的 K3 里，q、k 来自 FLA 的 ShortConvolution，它的 autograd 保存的是卷积的**输入** x（`fla/modules/conv/{triton,cuda,cp}/ops.py` 中的 `save_for_backward(x, weight, …)`），不保留 q、k，所以总显存不变。如果调用方自己还持有 q、k，就会每层多占 2·T·H·128·2 B（16K/TP8 约 100 MB）。
+
+**正确性**：全量门禁 GATE_ALL PASS（10/10，对照生产版 g2_r5），FI=3 PASS。
+
+**性能**（bw46 HCU7）：
+- 同进程内切换 `KDA_G2_SAVE_QKN`，wall 时间：
+
+| 形态 | 前向 | 前向+反向 |
+|---|---:|---:|
+| 16K/12 | 1740 → 1801 µs（0.966） | 6655 → 6544 µs（**1.017**，−111 µs） |
+| 64K/12 | 0.961 | 24040 → 23694 µs（**1.015**，−346 µs） |
+| 16K/48 | 0.934 | 26410 → 26242 µs（1.006） |
+| 8K/96 | 0.937 | 28975 → 28746 µs（1.008） |
+
+- 各 kernel（与生产版对比）：
+
+| 形态 | prep_a | l2n_apply |
+|---|---|---|
+| 16K/12 | 609 → 657 µs（+47 µs，多写 101 MB） | 去掉 −156 µs |
+| 64K/12 | +232 µs | 去掉 −624 µs |
+
+**flash-train 暂不移植**：FT 的 API 里，反向从调用方拿原始 q、k（`BackwardArgs.q/k`），l2n_apply 的结果暂存在 dq/dk 的输出缓冲里。要用 P-77b，前向必须新增 qn/kn 两个输出、反向要改为接收它们，这会改变 PR #556 的接口约定，需要另行决定。FT 内置的 `g2_fwd_prep` 声明保持旧签名；以后同步 kernel 源码时，要在调用处传 `nullptr, nullptr`。
+
+## 合入记录（2026-10-16）
+
+| 位置 | 状态 |
+|---|---|
+| bw52 `g2_opt` `524594f` | 对照合入前备份 `g2_opt_bak_p77b`：GATE_ALL PASS（10/10），FI=3 PASS |
+| bw7（bw47 容器 tanbo_mega_k3）`/opt/kda_env/g2_r5` | 指纹与 bw52 一致（`6e75c288088e`，取 g2_fwd_v8.cuh、g2_fwd_prep.cuh、g2_wu.cuh、g2_bindings.cpp、k3_g2.py、g2_ops.py 六个文件）；对照 `g2_r5_bak_p77b`：GATE_ALL PASS |
+| bw46 探针基线 `/opt/kda_env/g2_r5` | 同步到 P-77b，指纹 `6e75c288088e`，备份为 `g2_r5_bak_p77b` |
+| flash-train | 不移植：需要改 PR #556 的接口约定（见上文） |
