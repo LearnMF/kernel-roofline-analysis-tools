@@ -1,0 +1,11 @@
+P-82 APPLIED
+build_ok
+g2_wu_kernelILb0E:     .private_segment_fixed_size: 0     .vgpr_count:     219     .group_segment_fixed_size: 17408 
+g2_wu_kernelILb1E:     .private_segment_fixed_size: 0     .vgpr_count:     220     .group_segment_fixed_size: 26880 
+g2_fwd_h_v8o4_kernelILb0ELi5E:     .private_segment_fixed_size: 0     .vgpr_count:     174     .group_segment_fixed_size: 12800 
+8192_12: GATE PASS 8192_12_keep-state: GATE PASS 8192_12_gate-extreme: GATE PASS 8192_48: GATE PASS 8192_48_keep-state: GATE PASS 8192_48_gate-extreme: GATE PASS vl_8192_12_ffd54f (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_12_ffd54f_keep-state (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_48_c7114f (0,63,4097,8192): GATE PASS vl_8192_48_c7114f_keep-state (0,63,4097,8192): GATE PASS GATE_ALL PASS fi3 8192_12: GATE PASS 
+T=16384 H=12 KDA_G2_SAVE_H: fwd 1866 -> 1928 us (0.968x)   fwd+bwd 6613 -> 6358 us (1.040x)
+T=65536 H=12 KDA_G2_SAVE_H: fwd 5843 -> 6096 us (0.959x)   fwd+bwd 23660 -> 22889 us (1.034x)
+T=16384 H=48 KDA_G2_SAVE_H: fwd 6143 -> 6957 us (0.883x)   fwd+bwd 26109 -> 25981 us (1.005x)
+T=8192 H=96 KDA_G2_SAVE_H: fwd 6170 -> 7013 us (0.880x)   fwd+bwd 28724 -> 29298 us (0.980x)
+AB_DONE
