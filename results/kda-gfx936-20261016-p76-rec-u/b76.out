@@ -1,0 +1,19 @@
+P-76 APPLIED
+build_ok
+UV=1     .private_segment_fixed_size: 0     .vgpr_count:     141 
+UV=2     .private_segment_fixed_size: 0     .vgpr_count:     139 
+UV=1 gate: GATE_ALL PASS
+UV=2 gate: GATE_ALL PASS
+== T=16384 H=12
+KDA_G2_REC_UV=1: outputs BITWISE vs 0
+KDA_G2_REC_UV=2: outputs BITWISE vs 0
+fwd_h_bn KDA_G2_REC_UV=0:    455.5 us  (1.000x vs 0)  spread 9.7%
+fwd_h_bn KDA_G2_REC_UV=1:    496.5 us  (0.917x vs 0)  spread 10.7%
+fwd_h_bn KDA_G2_REC_UV=2:    471.4 us  (0.966x vs 0)  spread 15.0%
+== T=65536 H=12
+KDA_G2_REC_UV=1: outputs BITWISE vs 0
+KDA_G2_REC_UV=2: outputs BITWISE vs 0
+fwd_h_bn KDA_G2_REC_UV=0:   1514.8 us  (1.000x vs 0)  spread 2.5%
+fwd_h_bn KDA_G2_REC_UV=1:   1540.7 us  (0.983x vs 0)  spread 4.1%
+fwd_h_bn KDA_G2_REC_UV=2:   1542.2 us  (0.982x vs 0)  spread 3.4%
+P76_DONE
