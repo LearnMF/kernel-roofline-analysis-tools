@@ -1,0 +1,21 @@
+P-81a APPLIED
+build_ok
+== T=16384 H=12
+check bn:2=fwd_h_bn:0: BITWISE (1, 256, 12, 8, 8, 4, 16, 4) vs (1, 256, 12, 8, 8, 4, 16, 4)
+fwd_h_o     base:     518.4 us  (    +0.0 us vs base)  spread 7.2%
+fwd_h_o       bn:     605.8 us  (   +87.4 us vs base)  spread 6.5%
+wu     base:     667.0 us  (    +0.0 us vs base)  spread 0.5%
+wu     nop1:     636.2 us  (   -30.9 us vs base)  spread 2.1%
+== T=65536 H=12
+check bn:2=fwd_h_bn:0: BITWISE (1, 1024, 12, 8, 8, 4, 16, 4) vs (1, 1024, 12, 8, 8, 4, 16, 4)
+fwd_h_o     base:    1686.9 us  (    +0.0 us vs base)  spread 3.1%
+fwd_h_o       bn:    1980.6 us  (  +293.7 us vs base)  spread 1.9%
+wu     base:    2548.4 us  (    +0.0 us vs base)  spread 0.3%
+wu     nop1:    2423.4 us  (  -125.0 us vs base)  spread 0.9%
+== T=16384 H=48
+check bn:2=fwd_h_bn:0: BITWISE (1, 256, 48, 8, 8, 4, 16, 4) vs (1, 256, 48, 8, 8, 4, 16, 4)
+fwd_h_o     base:    1759.1 us  (    +0.0 us vs base)  spread 6.8%
+fwd_h_o       bn:    2231.8 us  (  +472.6 us vs base)  spread 7.2%
+wu     base:    2654.5 us  (    +0.0 us vs base)  spread 0.6%
+wu     nop1:    2631.9 us  (   -22.6 us vs base)  spread 1.0%
+P81A_DONE
