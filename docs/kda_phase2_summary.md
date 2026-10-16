@@ -55,3 +55,6 @@
   - 16K/TP8：当前 6.35 ms，算法下限 0.65 ms，差距约 10 倍。其中约 6 倍来自拆分方式带来的多余字节，约 1.7 倍来自执行效率。
 - **算子优化不考虑 Megatron 层面的配置**：全层重算、keep-state 的 auto 行为、activation offload 都属于框架配置。算子基准一律按普通前向+反向测（keep-state=0、不开 checkpoint）。keep-state 的数据（`results/kda-keepstate-20261016/`）只作为框架侧选项的参考。
 - **TP8 下 CU 闲置**：Megatron-LM-das/Bridge 预训练时，KDA 每个 micro-batch 只有 1 段（cu_seqlens=None），所以这是真实负载下的情况。在逐位一致、不多占显存的约束下，这是结构性的：空闲 CU 最多只能换回约 29% 的递推吞吐量，因为全卡访存延迟会随活跃 CU 数增加而上升。
+
+- **R58**（P-84，2026-10-16）：根据 SQTT 等待点设计探针前，必须先把等待点对到源代码位置（用 PC/ISA 映射，或 vm_wait_map），不能只凭“每个 wave 出现几次”去猜。P-84 就是把 phase 1 的 8 次等待误判成了 VNEW。
+- **R59**（P-84b）：一个循环里如果既有 global 读、又有 global 写，而指针没有 `__restrict__`，编译器就不会把下一轮的读提到本轮的写之前，每一轮都会单独付一次访存延迟。解决办法是先单独写一个循环把读全部发出，再进入计算循环。

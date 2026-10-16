@@ -86,3 +86,9 @@ s4a 单 kernel 快了约 8–14%。**合入**。
 | 16K/12 | 6010.9 → 5932.9 µs（**1.013**） | 1.105 | 1.041 | 不变 |
 | 16K/48 | 25799.7 → 25311.1 µs（**1.019**） | 1.116 | 1.022 | 2314 → 2184 µs（4-wave 换成 8-wave） |
 | 32K/48 | 46032 → 44021 µs（1.046，**离散度 4–12%，这一行不可信**：没改代码的 s4b 也变成了 1.075） | | | |
+
+## flash-train 同步
+
+- `ft_kdag2_git` 提交 `82f29f5`：vendored 的 g2_wy.cuh、g2_wu.cuh、g2_engine.cuh 已同步 P-83、P-84b、P-85，三项都默认开启，与检查过的那份构建逐字节一致。
+- `ft_p83.out`：新 FT（r27）对照旧 FT（r25）和 hip_kda，default 和 keep-state 两种模式、8K/12、8K/48、32K/48 以及两种 varlen 布局，全部 GATE PASS；X1 PASS；pytest 29 passed。
+- 只改 kernel 内部，没有改 ABI。
