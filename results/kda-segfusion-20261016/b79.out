@@ -1,0 +1,30 @@
+P-78a APPLIED
+P-79 APPLIED
+build_ok
+OT=1     .private_segment_fixed_size: 0     .vgpr_count:     236 
+OT=2     .private_segment_fixed_size: 0     .vgpr_count:     251 
+== T=16384 H=12 PADLDS=0
+KDA_G2_S4B_OT=1: outputs BITWISE vs 0
+KDA_G2_S4B_OT=2: outputs BITWISE vs 0
+wy_s4_split KDA_G2_S4B_OT=0:   1915.0 us  (1.000x vs 0)  spread 0.4%
+wy_s4_split KDA_G2_S4B_OT=1:   1923.4 us  (0.996x vs 0)  spread 0.3%
+wy_s4_split KDA_G2_S4B_OT=2:   1924.8 us  (0.995x vs 0)  spread 0.5%
+== T=16384 H=12 PADLDS=8192
+KDA_G2_S4B_OT=1: outputs BITWISE vs 0
+KDA_G2_S4B_OT=2: outputs BITWISE vs 0
+wy_s4_split KDA_G2_S4B_OT=0:   2297.3 us  (1.000x vs 0)  spread 0.8%
+wy_s4_split KDA_G2_S4B_OT=1:   2298.9 us  (0.999x vs 0)  spread 1.2%
+wy_s4_split KDA_G2_S4B_OT=2:   2290.1 us  (1.003x vs 0)  spread 1.0%
+== T=16384 H=48 PADLDS=0
+KDA_G2_S4B_OT=1: outputs BITWISE vs 0
+KDA_G2_S4B_OT=2: outputs BITWISE vs 0
+wy_s4_split KDA_G2_S4B_OT=0:   8984.3 us  (1.000x vs 0)  spread 2.0%
+wy_s4_split KDA_G2_S4B_OT=1:   9016.2 us  (0.996x vs 0)  spread 0.6%
+wy_s4_split KDA_G2_S4B_OT=2:   9005.9 us  (0.998x vs 0)  spread 2.1%
+== T=16384 H=48 PADLDS=8192
+KDA_G2_S4B_OT=1: outputs BITWISE vs 0
+KDA_G2_S4B_OT=2: outputs BITWISE vs 0
+wy_s4_split KDA_G2_S4B_OT=0:  10018.1 us  (1.000x vs 0)  spread 1.1%
+wy_s4_split KDA_G2_S4B_OT=1:   9995.7 us  (1.002x vs 0)  spread 0.6%
+wy_s4_split KDA_G2_S4B_OT=2:   9997.4 us  (1.002x vs 0)  spread 0.6%
+P79_DONE
