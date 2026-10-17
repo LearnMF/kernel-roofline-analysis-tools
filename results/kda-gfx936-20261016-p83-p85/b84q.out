@@ -1,0 +1,18 @@
+P-84c APPLIED
+build_ok
+g2_wu_kernelILb0ELb1ELb1E:     .private_segment_fixed_size: 0     .vgpr_count:     218     .group_segment_fixed_size: 26880 
+g2_wu_kernelILb0ELb1ELb0E:     .private_segment_fixed_size: 0     .vgpr_count:     217     .group_segment_fixed_size: 26880 
+8192_12: GATE PASS 8192_12_keep-state: GATE PASS 8192_12_gate-extreme: GATE PASS 8192_48: GATE PASS 8192_48_keep-state: GATE PASS 8192_48_gate-extreme: GATE PASS 32768_48: GATE PASS 32768_48_keep-state: GATE PASS 32768_48_gate-extreme: GATE PASS vl_8192_12_ffd54f (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_12_ffd54f_keep-state (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_48_c7114f (0,63,4097,8192): GATE PASS vl_8192_48_c7114f_keep-state (0,63,4097,8192): GATE PASS GATE_ALL PASS fi3 8192_12: GATE PASS 
+wu KDA_G2_WU_QS=0:    756.4 us  (1.000x vs 0)  spread 3.3%
+wu KDA_G2_WU_QS=1:    672.6 us  (1.125x vs 0)  spread 1.5%
+T=16384 H=12 KDA_G2_WU_QS: fwd 1864 -> 1858 us (1.003x)   fwd+bwd 6056 -> 5956 us (1.017x)
+wu KDA_G2_WU_QS=0:   2795.0 us  (1.000x vs 0)  spread 0.7%
+wu KDA_G2_WU_QS=1:   2445.9 us  (1.143x vs 0)  spread 0.6%
+T=65536 H=12 KDA_G2_WU_QS: fwd 5763 -> 5813 us (0.991x)   fwd+bwd 21296 -> 20913 us (1.018x)
+wu KDA_G2_WU_QS=0:   1517.2 us  (1.000x vs 0)  spread 0.5%
+wu KDA_G2_WU_QS=1:   1305.9 us  (1.162x vs 0)  spread 1.1%
+T=16384 H=24 KDA_G2_WU_QS: fwd 3395 -> 3390 us (1.001x)   fwd+bwd 11604 -> 11405 us (1.017x)
+wu KDA_G2_WU_QS=0:   5955.6 us  (1.000x vs 0)  spread 1.4%
+wu KDA_G2_WU_QS=1:   5671.4 us  (1.050x vs 0)  spread 1.2%
+T=32768 H=48 KDA_G2_WU_QS: fwd 12009 -> 11962 us (1.004x)   fwd+bwd 45040 -> 44328 us (1.016x)
+P84C_DONE
