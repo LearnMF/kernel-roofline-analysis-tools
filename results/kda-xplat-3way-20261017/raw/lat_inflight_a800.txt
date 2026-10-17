@@ -1,0 +1,23 @@
+device NVIDIA A800 80GB PCIe: SM/CU 108, L2 40960 KB, smem/SM 164 KB, smem/block max 48 KB, regs/SM 65536, clock 1410 MHz
+latency  ws     1 MB :   149.5 ns per dependent load
+latency  ws     4 MB :   149.6 ns per dependent load
+latency  ws    16 MB :   149.6 ns per dependent load
+latency  ws   256 MB :   272.4 ns per dependent load
+latency  ws  1024 MB :   269.8 ns per dependent load
+bw: blocks/SM  U  inflight_KB/SM  GB/s
+bw: 1 1       4      856
+bw: 1 2       8     1342
+bw: 1 4      16     1693
+bw: 1 8      32     1727
+bw: 2 1       8     1377
+bw: 2 2      16     1710
+bw: 2 4      32     1804
+bw: 2 8      64     1799
+bw: 4 1      16     1710
+bw: 4 2      32     1813
+bw: 4 4      64     1862
+bw: 4 8     128     1859
+bw: 8 1      32     1805
+bw: 8 2      64     1860
+bw: 8 4     128     1836
+bw: 8 8     256     1865

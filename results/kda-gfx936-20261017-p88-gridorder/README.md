@@ -26,3 +26,7 @@ tail、wu、prep、dav 都基本持平。TP1 时这部分比线性多出 5.6 ms�
 | 32K/96 | 45778 → 30236 µs（1.514） | **1.169** |
 
 **教训（R60）**：哪些 CTA 同时驻留，会决定 DRAM 和 TLB 的访问局部性，必须把 grid 顺序当成一个独立的调优维度。诊断时要看“同一个 kernel 按 head 数折算后的耗时是否随 H 上升”，单看一个形态是看不出来的。P-79 那批 kernel 内部的重排实验，碰不到这一层。
+
+## 合入（2026-10-17）
+- bw52 `g2_opt` `6bbdc76`；bw7、bw46 的 g2_wy.cuh 指纹 `aabab185e44a`（三处一致）。对照合入前备份：GATE_ALL PASS（8192:12、8192:48、32768:48、**8192:96**，含 keep-state、gate-extreme、varlen），FI=3 PASS。脚本是 `examples/kda/m88_apply.sh`，默认 `KDA_G2_S4_HF=1`。
+- flash-train：见下文。

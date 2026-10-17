@@ -1,0 +1,23 @@
+device BW1000 64G: SM/CU 80, L2 8192 KB, smem/SM 64 KB, smem/block max 64 KB, regs/SM 0, clock 1500 MHz
+latency  ws     1 MB :   139.6 ns per dependent load
+latency  ws     4 MB :   162.7 ns per dependent load
+latency  ws    16 MB :   257.9 ns per dependent load
+latency  ws   256 MB :   329.3 ns per dependent load
+latency  ws  1024 MB :   324.2 ns per dependent load
+bw: blocks/SM  U  inflight_KB/SM  GB/s
+bw: 1 1       4      787
+bw: 1 2       8     1170
+bw: 1 4      16      965
+bw: 1 8      32      975
+bw: 2 1       8     1217
+bw: 2 2      16     1226
+bw: 2 4      32     1210
+bw: 2 8      64     1221
+bw: 4 1      16     1241
+bw: 4 2      32     1223
+bw: 4 4      64     1212
+bw: 4 8     128     1206
+bw: 8 1      32     1114
+bw: 8 2      64     1168
+bw: 8 4     128     1216
+bw: 8 8     256     1174
