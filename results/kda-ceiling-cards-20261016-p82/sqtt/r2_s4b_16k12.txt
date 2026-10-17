@@ -1,0 +1,72 @@
+8 SE trace file(s), 1236 complete waves; wave-cycles 129653444
+  issue            31005788   23.9%
+  waitcnt          46725460   36.0%
+  barrier          14026304   10.8%
+  issue_delay      37895892   29.2%
+
+wait sites (top 30): % of wave-cycles, cycles, count, site = wait <- prev <- prev2
+   10.8%    14026304  x23484  s_barrier   <- OTHER_MSG   <- s_waitcnt lgkmcnt(0)
+    4.0%     5159844  x 2472  s_waitcnt vmcnt(3)   <- v_or_b32_e32 v201, 0x3600, v141   <- v_lshl_or_b32 v202, v155, 2, s72
+    4.0%     5158096  x 2472  s_waitcnt vmcnt(3)   <- v_lshl_or_b32 v200, v150, 2, s75   <- v_lshl_or_b32 v199, v142, 2, s75
+    4.0%     5124112  x 2472  s_waitcnt vmcnt(3)   <- v_lshl_or_b32 v193, v144, 2, s18   <- v_lshl_or_b32 v192, v141, 2, s18
+    3.8%     4945052  x 2472  s_waitcnt vmcnt(3)   <- v_lshl_or_b32 v199, v150, 2, s75   <- v_lshl_or_b32 v198, v142, 2, s75
+    2.2%     2886792  x 1545  s_waitcnt vmcnt(1)   <- s_mov_b32 s37, 0   <- s_cbranch_execz 5
+    2.2%     2856724  x 1236  s_waitcnt vmcnt(3)   <- v_lshl_or_b32 v4, v21, 7, v18   <- v_lshl_or_b32 v3, v20, 7, v18
+    1.3%     1685504  x  618  s_waitcnt vmcnt(0)   <- s_cbranch_execz 3   <- s_andn2_saveexec_b64 s[2:3], s[2:3]
+    0.7%      901468  x  309  s_waitcnt vmcnt(3)   <- v_or_b32_e32 v40, s58, v142   <- s_addc_u32 s1, s51, s31
+    0.6%      770096  x  309  s_waitcnt vmcnt(3)   <- v_or_b32_e32 v32, s58, v142   <- s_addc_u32 s1, s51, s31
+    0.6%      715040  x  309  s_waitcnt vmcnt(3)   <- v_or_b32_e32 v50, s58, v152   <- s_addc_u32 s31, s51, s31
+    0.5%      668828  x  309  s_waitcnt vmcnt(7)   <- v_lshlrev_b32_e32 v64, 2, v28   <- global_load_dwordx2 v[25:26], v12, s[2:3] offset:2560
+    0.5%      654148  x  309  s_waitcnt vmcnt(3)   <- s_addc_u32 s7, s51, s7   <- s_add_u32 s6, s50, s6
+    0.5%      641748  x 2472  s_waitcnt vmcnt(2)   <- ds_bpermute_b32 v210, v161, v28   <- ds_bpermute_b32 v209, v161, v27
+    0.5%      638840  x 2472  s_waitcnt vmcnt(1)   <- v_exp_f32_e32 v58, v58   <- v_exp_f32_e32 v57, v57
+    0.5%      603176  x 2472  s_waitcnt vmcnt(1)   <- v_exp_f32_e32 v26, v26   <- v_exp_f32_e32 v25, v25
+    0.4%      569732  x 2472  s_waitcnt vmcnt(2)   <- ds_bpermute_b32 v211, v161, v36   <- ds_bpermute_b32 v210, v161, v35
+    0.4%      546936  x  309  s_waitcnt vmcnt(1)   <- v_mov_b32_e32 v25, 0   <- s_cbranch_execz 5
+    0.4%      531824  x  309  s_waitcnt vmcnt(1)   <- v_mov_b32_e32 v17, 0   <- s_cbranch_execz 5
+    0.4%      530320  x 2472  s_waitcnt vmcnt(1)   <- v_exp_f32_e32 v40, v40   <- v_exp_f32_e32 v39, v39
+    0.4%      527948  x  309  s_waitcnt vmcnt(7)   <- v_lshlrev_b32_e32 v27, 2, v143   <- s_mov_b32 s28, 0xffff
+    0.4%      489428  x  309  s_waitcnt vmcnt(7)   <- v_lshlrev_b32_e32 v19, 2, v143   <- s_mov_b32 s28, 0xffff
+    0.4%      472480  x 2472  s_waitcnt vmcnt(0)   <- v_sub_f32_e32 v34, v22, v206   <- ds_read_b64 v[27:28], v198 offset:18432
+    0.3%      437992  x 2472  s_waitcnt vmcnt(1)   <- v_exp_f32_e32 v32, v32   <- v_exp_f32_e32 v31, v31
+    0.3%      427388  x 2472  s_waitcnt vmcnt(2)   <- ds_bpermute_b32 v206, v160, v22   <- ds_bpermute_b32 v204, v160, v20
+    0.3%      418664  x  309  s_waitcnt vmcnt(7)   <- v_lshlrev_b32_e32 v37, 2, v153   <- s_mov_b32 s28, 0xffff
+    0.3%      386696  x 2472  s_waitcnt vmcnt(2)   <- ds_bpermute_b32 v216, v166, v50   <- ds_bpermute_b32 v215, v166, v49
+    0.3%      382640  x  309  s_waitcnt vmcnt(1)   <- s_mov_b32 s28, 0   <- s_cbranch_execz 5
+    0.2%      252168  x 2472  s_waitcnt vmcnt(0)   <- v_mul_f32_e32 v217, v119, v137   <- v_mov_b64_e32 v[59:60], v[43:44]
+    0.2%      249716  x 2472  s_waitcnt lgkmcnt(1)   <- v_mov_b32_e32 v194, v19   <- v_mov_b32_e32 v195, v20
+
+wait charged to the drained memory instructions (top 30):
+    2.2%       2856724  x  1236  [vm] global_load_dwordx2 v[9:10], v[3:4], off
+    0.7%        901468  x   309  [vm] global_load_dwordx4 v[28:31], v42, s[28:29]
+    0.7%        878266  x  2472  [vm] global_load_dwordx2 v[139:140], v[29:30], off
+    0.7%        878266  x  2472  [vm] global_load_dwordx4 v[33:36], v[29:30], off
+    0.7%        868417  x  2472  [vm] global_load_dwordx2 v[143:144], v[39:40], off
+    0.7%        868417  x  2472  [vm] global_load_dwordx4 v[47:50], v[39:40], off
+    0.7%        856030  x  2472  [vm] global_load_dwordx2 v[139:140], v[15:16], off
+    0.7%        856030  x  2472  [vm] global_load_dwordx4 v[19:22], v[15:16], off
+    0.6%        826095  x  2472  [vm] global_load_dwordx2 v[139:140], v[21:22], off
+    0.6%        826095  x  2472  [vm] global_load_dwordx4 v[25:28], v[21:22], off
+    0.6%        770096  x   309  [vm] global_load_dwordx4 v[20:23], v34, s[28:29]
+    0.6%        727539  x  2163  [vm] global_store_dwordx4 v[51:52], v[39:42], off
+    0.6%        727539  x  2163  [vm] global_store_dwordx4 v[39:40], v[47:50], off
+    0.6%        727539  x  2163  [vm] global_store_dwordx4 v[39:40], v[43:46], off
+    0.6%        719612  x  2163  [vm] global_store_dwordx4 v[27:28], v[15:18], off
+    0.6%        719612  x  2163  [vm] global_store_dwordx4 v[15:16], v[23:26], off
+    0.6%        719612  x  2163  [vm] global_store_dwordx4 v[15:16], v[19:22], off
+    0.6%        715040  x   309  [vm] global_load_dwordx4 v[38:41], v52, s[28:29]
+    0.5%        711899  x  2163  [vm] global_store_dwordx4 v[41:42], v[33:36], off
+    0.5%        711899  x  2163  [vm] global_store_dwordx4 v[33:34], v[37:40], off
+    0.5%        711899  x  2163  [vm] global_store_dwordx4 v[33:34], v[29:32], off
+    0.5%        699786  x  2163  [vm] global_store_dwordx4 v[33:34], v[25:28], off
+    0.5%        699786  x  2163  [vm] global_store_dwordx4 v[25:26], v[29:32], off
+    0.5%        699786  x  2163  [vm] global_store_dwordx4 v[25:26], v[21:24], off
+    0.5%        654148  x   309  [vm] global_load_dwordx4 v[15:18], v111, s[12:13]
+    0.5%        641748  x  2472  [vm] global_load_dwordx4 v[29:32], v[21:22], off
+    0.5%        638840  x  2472  [vm] global_load_dwordx2 v[135:136], v[43:44], off
+    0.5%        632934  x  1854  [vm] global_load_dwordx4 v[21:24], v[111:112], off
+    0.5%        632934  x  1854  [vm] global_load_dwordx4 v[25:28], v[113:114], off
+    0.5%        626608  x  1854  [vm] global_load_dwordx4 v[7:10], v[111:112], off
+
+issue delay outside waits, by type: {'FLAT_RD': '16.4%', 'LDS': '3.3%', 'VALU_32': '3.0%', 'FLAT_WR': '2.3%', 'VALU_64': '1.3%', 'OTHER_MSG': '1.3%', 'SALU_32': '0.9%', 'MMOP_FP16': '0.3%'}
+issued instructions by type: {'VALU_32': 2102127, 'VALU_64': 1354038, 'LDS': 739128, 'IMMED': 514794, 'SALU_32': 262032, 'MMOP_FP16': 197760, 'MMOP_FP64_FP32': 197760, 'FLAT_RD': 128235, 'NEXT': 36462, 'FLAT_WR': 30900, 'OTHER_MSG': 24720, 'JUMP': 24102, 'SMEM_RD': 7416, 'SALU_64': 4944}
