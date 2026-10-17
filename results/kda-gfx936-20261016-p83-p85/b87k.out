@@ -1,0 +1,26 @@
+cfg h: outputs BITWISE vs base
+cfg kph: outputs BITWISE vs base
+T=8192 H=48     base: fwd    3079 us (1.000x)   fwd+bwd   11835 us (1.000x)
+T=8192 H=48        h: fwd    3399 us (0.906x)   fwd+bwd   11901 us (0.994x)
+T=8192 H=48      kph: fwd    3314 us (0.929x)   fwd+bwd   11841 us (1.000x)
+cfg h: outputs BITWISE vs base
+cfg kph: outputs BITWISE vs base
+T=16384 H=48     base: fwd    5863 us (1.000x)   fwd+bwd   23355 us (1.000x)
+T=16384 H=48        h: fwd    6652 us (0.881x)   fwd+bwd   22724 us (1.028x)
+T=16384 H=48      kph: fwd    6462 us (0.907x)   fwd+bwd   22514 us (1.037x)
+cfg h: outputs BITWISE vs base
+cfg kph: outputs BITWISE vs base
+T=4096 H=48     base: fwd    1823 us (1.000x)   fwd+bwd    6855 us (1.000x)
+T=4096 H=48        h: fwd    1945 us (0.937x)   fwd+bwd    6612 us (1.037x)
+T=4096 H=48      kph: fwd    1908 us (0.955x)   fwd+bwd    6563 us (1.044x)
+cfg h: outputs BITWISE vs base
+cfg kph: outputs BITWISE vs base
+T=16384 H=32     base: fwd    3733 us (1.000x)   fwd+bwd   17629 us (1.000x)
+T=16384 H=32        h: fwd    4017 us (0.929x)   fwd+bwd   16512 us (1.068x)
+T=16384 H=32      kph: fwd    3978 us (0.938x)   fwd+bwd   16458 us (1.071x)
+cfg h: outputs BITWISE vs base
+cfg kph: outputs BITWISE vs base
+T=8192 H=96     base: fwd    5488 us (1.000x)   fwd+bwd   25500 us (1.000x)
+T=8192 H=96        h: fwd    6358 us (0.863x)   fwd+bwd   24941 us (1.022x)
+T=8192 H=96      kph: fwd    6161 us (0.891x)   fwd+bwd   24700 us (1.032x)
+B87K_DONE
