@@ -1,0 +1,6 @@
+blocks/CU 1, 2 x 4 KB in flight per block: direct-to-LDS   964.1 GB/s | register-staged   903.5 GB/s
+blocks/CU 1, 4 x 4 KB in flight per block: direct-to-LDS  1253.0 GB/s | register-staged  1229.7 GB/s
+blocks/CU 1, 8 x 4 KB in flight per block: direct-to-LDS  1435.4 GB/s | register-staged  1435.3 GB/s
+blocks/CU 2, 2 x 4 KB in flight per block: direct-to-LDS  1216.3 GB/s | register-staged  1174.0 GB/s
+blocks/CU 2, 4 x 4 KB in flight per block: direct-to-LDS  1184.3 GB/s | register-staged  1204.2 GB/s
+blocks/CU 2, 8 x 4 KB in flight per block: direct-to-LDS  1237.5 GB/s | register-staged  1254.1 GB/s

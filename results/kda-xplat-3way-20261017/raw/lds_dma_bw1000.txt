@@ -1,0 +1,2 @@
+SZ= 4 B/lane: direct-to-LDS correct (mismatch 0/163840); 578.0 GB/s vs register path 767.6 GB/s
+SZ=16 B/lane: direct-to-LDS correct (mismatch 0/163840); 219.1 GB/s vs register path 459.1 GB/s
