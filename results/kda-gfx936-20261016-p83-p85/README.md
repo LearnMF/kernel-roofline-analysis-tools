@@ -92,3 +92,10 @@ s4a 单 kernel 快了约 8–14%。**合入**。
 - `ft_kdag2_git` 提交 `82f29f5`：vendored 的 g2_wy.cuh、g2_wu.cuh、g2_engine.cuh 已同步 P-83、P-84b、P-85，三项都默认开启，与检查过的那份构建逐字节一致。
 - `ft_p83.out`：新 FT（r27）对照旧 FT（r25）和 hip_kda，default 和 keep-state 两种模式、8K/12、8K/48、32K/48 以及两种 varlen 布局，全部 GATE PASS；X1 PASS；pytest 29 passed。
 - 只改 kernel 内部，没有改 ABI。
+
+## 第二轮探针（2026-10-17，进行中）
+
+- **P-83b**（`examples/kda/p83b_s4a_afs.py`）：AFS 版 dA 阶段直接复用 P-83 已经放在寄存器里的 A 块（pav），不再重新读。VGPR 222，没有 scratch。
+  - 门禁：8K/12 的 GATE_ALL PASS（含 keep-state、gate-extreme、varlen）。
+  - 性能：wy_s4_split 在 16K/12 为 1862.0 → 1829.3 µs（1.018），64K/12 为 7143.4 → 7009.8 µs（1.019）；16K/12 前向+反向 1.011（前向本身也显示 1.014，说明这次测量有约 1% 噪声）。64K/12 的前向+反向待补。
+- **P-84c**（`examples/kda/p84c_wu_qs.py`）：wu 的 phase 3 在没有 Kn 的分支里（saved-h / keep-state）改用带过来的 exp2f(g)，并先发出全部 q 读取，同时补上 slab 覆写前漏掉的屏障。VGPR 217/218，没有 scratch。门禁和 A/B 在 bw46 上跑到一半时，跳板机 bw-zz 的 ControlMaster 会话过期（需要密钥加 OTP 双因子），连接中断。远端任务用 `docker exec -d` 启动，不受影响，结果写在 `/public/home/tanbo/xplat/b84q.out`。
