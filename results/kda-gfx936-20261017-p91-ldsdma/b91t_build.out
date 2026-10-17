@@ -1,0 +1,4 @@
+P-91 APPLIED (tri)
+build_ok
+    .private_segment_fixed_size: 0     .vgpr_count:     230     .group_segment_fixed_size: 26880 
+B91T_DONE

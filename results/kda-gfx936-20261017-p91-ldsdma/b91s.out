@@ -1,0 +1,20 @@
+P-91 APPLIED (pad only)
+build_ok p91pad
+P-91 APPLIED
+build_ok p91
+    .private_segment_fixed_size: 0     .vgpr_count:     226     .group_segment_fixed_size: 26880 
+lds-dma instructions: 24
+8192_12: GATE PASS 8192_12_keep-state: GATE PASS 8192_12_gate-extreme: GATE PASS 8192_48: GATE PASS 8192_48_keep-state: GATE PASS 8192_48_gate-extreme: GATE PASS 8192_96: GATE PASS 8192_96_keep-state: GATE PASS 8192_96_gate-extreme: GATE PASS vl_8192_12_ffd54f (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_12_ffd54f_keep-state (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_48_c7114f (0,63,4097,8192): GATE PASS vl_8192_48_c7114f_keep-state (0,63,4097,8192): GATE PASS GATE_ALL PASS pad1cta 8192_48: GATE PASS 
+== pad=0 16384/12
+p3_wy_s4b_kernel#1                    1222.5    1196.7  1.0215     0.92%    1.26%  5/5
+TOTAL common kernels                  5616.7    5594.2  1.0040
+== pad=0 16384/48
+p3_wy_s4b_kernel#1                    5134.2    5042.9  1.0181     3.81%    0.46%  5/5
+TOTAL common kernels                 23365.9   23280.5  1.0037
+== pad=12288 16384/12
+p3_wy_s4b_kernel#1                    1694.0    1637.4  1.0346     0.50%    0.37%  5/5
+TOTAL common kernels                  6093.3    6029.0  1.0107
+== pad=12288 16384/48
+p3_wy_s4b_kernel#1                    6795.9    6753.0  1.0063     1.50%    2.52%  5/5
+TOTAL common kernels                 25049.6   24969.5  1.0032
+P91_DONE

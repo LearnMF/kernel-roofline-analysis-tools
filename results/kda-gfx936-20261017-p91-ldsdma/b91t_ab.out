@@ -1,0 +1,8 @@
+8192_12: GATE PASS 8192_12_keep-state: GATE PASS 8192_12_gate-extreme: GATE PASS 8192_48: GATE PASS 8192_48_keep-state: GATE PASS 8192_48_gate-extreme: GATE PASS vl_8192_12_ffd54f (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_12_ffd54f_keep-state (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_48_c7114f (0,63,4097,8192): GATE PASS vl_8192_48_c7114f_keep-state (0,63,4097,8192): GATE PASS GATE_ALL PASS 
+== 1 CTA/CU: register staging (A) vs tri DMA (B) 16384/12
+p3_wy_s4b_kernel#1                    1693.9    1704.0  0.9941     0.76%    0.71%  5/5
+TOTAL common kernels                  6090.3    6097.9  0.9988
+== 1 CTA/CU: register staging (A) vs tri DMA (B) 16384/48
+p3_wy_s4b_kernel#1                    6829.5    6868.2  0.9944     0.97%    1.31%  5/5
+TOTAL common kernels                 25029.3   25108.2  0.9969
+P91T_DONE

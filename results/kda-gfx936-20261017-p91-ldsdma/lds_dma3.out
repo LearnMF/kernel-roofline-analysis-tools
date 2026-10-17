@@ -1,0 +1,3 @@
+T1 busy=0: DMA#1 (M0=X) wrong elems 0, DMA#2 (M0=Y) wrong elems 0 over 200 runs; X[0]=1000 Y[0]=5000
+T1 busy=1: DMA#1 (M0=X) wrong elems 0, DMA#2 (M0=Y) wrong elems 0 over 200 runs; X[0]=1000 Y[0]=5000
+T2 offset:1024: first written LDS float index 256 (0 = offset ignored for LDS, 256 = applied), value there 1256 (1000 = global offset ignored, 1256 = applied)
