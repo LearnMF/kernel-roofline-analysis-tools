@@ -30,3 +30,17 @@ tail、wu、prep、dav 都基本持平。TP1 时这部分比线性多出 5.6 ms�
 ## 合入（2026-10-17）
 - bw52 `g2_opt` `6bbdc76`；bw7、bw46 的 g2_wy.cuh 指纹 `aabab185e44a`（三处一致）。对照合入前备份：GATE_ALL PASS（8192:12、8192:48、32768:48、**8192:96**，含 keep-state、gate-extreme、varlen），FI=3 PASS。脚本是 `examples/kda/m88_apply.sh`，默认 `KDA_G2_S4_HF=1`。
 - flash-train：见下文。
+
+## P-89：把 head 维变化最快的 grid 推广到其它按 chunk 并行的 kernel——**否决**（`examples/kda/p89_hf_all.py`，bw46 HCU4）
+
+门禁：所有开关同时打开时，GATE_ALL PASS（含 8192:96），FI=3 PASS。前向+反向（每个开关单独在同一进程内切换，比值大于 1 表示更快）：
+
+| kernel | 16K/12 | 16K/48 | 16K/96 |
+|---|---:|---:|---:|
+| wu | 0.951 | 0.801 | 0.671 |
+| dav | 0.971 | 0.895 | 0.861 |
+| tail | 1.003 | 0.979 | 1.008 |
+| prep（a 和 b） | 0.929（前向 0.814） | 0.800（前向 0.556） | 0.756（前向 0.445） |
+| gate | 0.999 | 1.004 | 1.001 |
+
+只有 s4a/s4b 能从 head 维变化最快的 grid 中受益；wu、dav、prep 反而大幅变慢，tail 和 gate 没有变化。所以 grid 顺序必须按 kernel 逐个实测（R60），不能一刀切。其它 kernel 保持 chunk 维变化最快。

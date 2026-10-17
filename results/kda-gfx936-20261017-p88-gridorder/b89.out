@@ -1,0 +1,19 @@
+P-89 APPLIED
+build_ok
+8192_12: GATE PASS 8192_12_keep-state: GATE PASS 8192_12_gate-extreme: GATE PASS 8192_48: GATE PASS 8192_48_keep-state: GATE PASS 8192_48_gate-extreme: GATE PASS 8192_96: GATE PASS 8192_96_keep-state: GATE PASS 8192_96_gate-extreme: GATE PASS vl_8192_12_ffd54f (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_12_ffd54f_keep-state (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_48_c7114f (0,63,4097,8192): GATE PASS vl_8192_48_c7114f_keep-state (0,63,4097,8192): GATE PASS GATE_ALL PASS fi3 8192_12: GATE PASS 
+T=16384 H=12 KDA_G2_HF_WU: fwd 1885 -> 1879 us (1.003x)   fwd+bwd 5926 -> 6233 us (0.951x)
+T=16384 H=12 KDA_G2_HF_DAV: fwd 1914 -> 1907 us (1.003x)   fwd+bwd 5947 -> 6127 us (0.971x)
+T=16384 H=12 KDA_G2_HF_TAIL: fwd 1899 -> 1886 us (1.007x)   fwd+bwd 5938 -> 5918 us (1.003x)
+T=16384 H=12 KDA_G2_HF_PREP: fwd 1950 -> 2394 us (0.814x)   fwd+bwd 6005 -> 6461 us (0.929x)
+T=16384 H=12 KDA_G2_HF_GATE: fwd 1876 -> 1888 us (0.994x)   fwd+bwd 5909 -> 5918 us (0.999x)
+T=16384 H=48 KDA_G2_HF_WU: fwd 7048 -> 7049 us (1.000x)   fwd+bwd 23721 -> 29632 us (0.801x)
+T=16384 H=48 KDA_G2_HF_DAV: fwd 6984 -> 7015 us (0.996x)   fwd+bwd 23788 -> 26573 us (0.895x)
+T=16384 H=48 KDA_G2_HF_TAIL: fwd 6988 -> 6976 us (1.002x)   fwd+bwd 23749 -> 24271 us (0.979x)
+T=16384 H=48 KDA_G2_HF_PREP: fwd 7133 -> 12835 us (0.556x)   fwd+bwd 24033 -> 30048 us (0.800x)
+T=16384 H=48 KDA_G2_HF_GATE: fwd 7057 -> 7000 us (1.008x)   fwd+bwd 23685 -> 23595 us (1.004x)
+T=16384 H=96 KDA_G2_HF_WU: fwd 12099 -> 12088 us (1.001x)   fwd+bwd 49063 -> 73116 us (0.671x)
+T=16384 H=96 KDA_G2_HF_DAV: fwd 12032 -> 12070 us (0.997x)   fwd+bwd 48192 -> 55969 us (0.861x)
+T=16384 H=96 KDA_G2_HF_TAIL: fwd 11946 -> 11826 us (1.010x)   fwd+bwd 47841 -> 47463 us (1.008x)
+T=16384 H=96 KDA_G2_HF_PREP: fwd 11911 -> 26741 us (0.445x)   fwd+bwd 47728 -> 63102 us (0.756x)
+T=16384 H=96 KDA_G2_HF_GATE: fwd 11788 -> 11720 us (1.006x)   fwd+bwd 47329 -> 47281 us (1.001x)
+P89_DONE
