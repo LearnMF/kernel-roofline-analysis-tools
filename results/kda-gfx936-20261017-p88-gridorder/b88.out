@@ -1,0 +1,19 @@
+P-88 APPLIED
+build_ok
+8192_12: GATE PASS 8192_12_keep-state: GATE PASS 8192_12_gate-extreme: GATE PASS 8192_48: GATE PASS 8192_48_keep-state: GATE PASS 8192_48_gate-extreme: GATE PASS 8192_96: GATE PASS 8192_96_keep-state: GATE PASS 8192_96_gate-extreme: GATE PASS vl_8192_12_ffd54f (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_12_ffd54f_keep-state (0,1000,1063,1064,5000,8192): GATE PASS vl_8192_48_c7114f (0,63,4097,8192): GATE PASS vl_8192_48_c7114f_keep-state (0,63,4097,8192): GATE PASS GATE_ALL PASS fi3 8192_12: GATE PASS 
+wy_s4_split KDA_G2_S4_HF=0:  23308.8 us  (1.000x vs 0)  spread 0.2%
+wy_s4_split KDA_G2_S4_HF=1:  15011.7 us  (1.553x vs 0)  spread 0.4%
+T=16384 H=96 KDA_G2_S4_HF: fwd 11830 -> 11648 us (1.016x)   fwd+bwd 56085 -> 47215 us (1.188x)
+wy_s4_split KDA_G2_S4_HF=0:  11418.5 us  (1.000x vs 0)  spread 0.1%
+wy_s4_split KDA_G2_S4_HF=1:   7559.8 us  (1.510x vs 0)  spread 1.5%
+T=8192 H=96 KDA_G2_S4_HF: fwd 6055 -> 6076 us (0.997x)   fwd+bwd 28164 -> 24178 us (1.165x)
+wy_s4_split KDA_G2_S4_HF=0:   8635.6 us  (1.000x vs 0)  spread 0.3%
+wy_s4_split KDA_G2_S4_HF=1:   7418.2 us  (1.164x vs 0)  spread 1.7%
+T=16384 H=48 KDA_G2_S4_HF: fwd 6999 -> 6955 us (1.006x)   fwd+bwd 25102 -> 23493 us (1.068x)
+wy_s4_split KDA_G2_S4_HF=0:   1825.4 us  (1.000x vs 0)  spread 0.6%
+wy_s4_split KDA_G2_S4_HF=1:   1647.3 us  (1.108x vs 0)  spread 1.1%
+T=16384 H=12 KDA_G2_S4_HF: fwd 1865 -> 1881 us (0.991x)   fwd+bwd 6079 -> 5914 us (1.028x)
+wy_s4_split KDA_G2_S4_HF=0:  45778.1 us  (1.000x vs 0)  spread 0.1%
+wy_s4_split KDA_G2_S4_HF=1:  30236.4 us  (1.514x vs 0)  spread 0.3%
+T=32768 H=96 KDA_G2_S4_HF: fwd 24130 -> 24079 us (1.002x)   fwd+bwd 114221 -> 97732 us (1.169x)
+P88_DONE
