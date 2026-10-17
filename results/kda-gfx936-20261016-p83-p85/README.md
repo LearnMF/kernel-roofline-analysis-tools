@@ -149,3 +149,4 @@ P-84c 补回的是 P-82 带来的副作用：wu 在这个分支里会重新读�
 - H=96 结果有正有负，不启用。
 - 显存：多出来的就是已经批准过的每 token·head 512 B（总量等于 FLA 默认）。TP2 下每层每卡多 16K × 48 × 512 B ≈ 400 MB。
 - **kp 扩展不做**：在 saved-h 基础上只多 0.4–1.1%，却要让 hip_kda 里 6 处 kp 判断都改成同时看 H 和 NT，还要加编译宏防止 flash-train 跟着变（flash-train 没有 saved-h，单开 kp 是 0.994）。投入产出比太低，记作备选。
+- **P-87 合入**：bw52 `g2_opt`（见 git log），bw7、bw46 指纹 `03b085b5100e`；对照合入前备份：GATE_ALL PASS（含 32K/48），FI=3 PASS。flash-train 不受影响（没有 saved-h 路线）。
