@@ -1,0 +1,19 @@
+== 8192/12: B1' vs production
+o         bf16  identical 100.000%  1 ulp  0.000%  2 ulp 0.0000%  >2 ulp 0.0000%  max 0 ulp  rel_l2(diff) 0.000e+00
+dq        bf16  identical 71.043%  1 ulp 27.051%  2 ulp 0.8421%  >2 ulp 1.0637%  max 28035 ulp  rel_l2(diff) 2.807e-03
+dk        bf16  identical 71.191%  1 ulp 27.010%  2 ulp 0.7989%  >2 ulp 1.0004%  max 27998 ulp  rel_l2(diff) 2.805e-03
+dv        bf16  identical 100.000%  1 ulp  0.000%  2 ulp 0.0000%  >2 ulp 0.0000%  max 0 ulp  rel_l2(diff) 0.000e+00
+dg        bf16  identical 100.000%  1 ulp  0.000%  2 ulp 0.0000%  >2 ulp 0.0000%  max 0 ulp  rel_l2(diff) 0.000e+00
+dbeta     torch.float32   differing          0/98304      rel_l2(diff) 0.000e+00
+dA_log    torch.float32   differing          0/12         rel_l2(diff) 0.000e+00
+ddt_bias  torch.float32   differing          0/1536       rel_l2(diff) 0.000e+00
+== 16384/48: B1' vs production
+o         bf16  identical 100.000%  1 ulp  0.000%  2 ulp 0.0000%  >2 ulp 0.0000%  max 0 ulp  rel_l2(diff) 0.000e+00
+dq        bf16  identical 71.012%  1 ulp 27.058%  2 ulp 0.8538%  >2 ulp 1.0762%  max 28269 ulp  rel_l2(diff) 2.809e-03
+dk        bf16  identical 71.165%  1 ulp 27.016%  2 ulp 0.8075%  >2 ulp 1.0115%  max 28294 ulp  rel_l2(diff) 2.809e-03
+dv        bf16  identical 100.000%  1 ulp  0.000%  2 ulp 0.0000%  >2 ulp 0.0000%  max 0 ulp  rel_l2(diff) 0.000e+00
+dg        bf16  identical 100.000%  1 ulp  0.000%  2 ulp 0.0000%  >2 ulp 0.0000%  max 0 ulp  rel_l2(diff) 0.000e+00
+dbeta     torch.float32   differing          0/786432     rel_l2(diff) 0.000e+00
+dA_log    torch.float32   differing          0/48         rel_l2(diff) 0.000e+00
+ddt_bias  torch.float32   differing          0/6144       rel_l2(diff) 0.000e+00
+ULP93_DONE
