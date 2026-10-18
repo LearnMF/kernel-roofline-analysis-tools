@@ -1,0 +1,10 @@
+P-92 APPLIED
+0
+build_ok
+== 1 CTA/CU both: register path (A) vs P-92 (B) 16384/12
+p3_wy_s4b_kernel#1                    1688.5    1571.4  1.0745     0.65%    0.25%  5/5
+TOTAL common kernels                  6082.7    5961.8  1.0203
+== 1 CTA/CU both: register path (A) vs P-92 (B) 16384/48
+p3_wy_s4b_kernel#1                    6625.3    6071.8  1.0911     2.10%    0.21%  5/5
+TOTAL common kernels                 23679.0   23098.1  1.0251
+P92N_DONE
