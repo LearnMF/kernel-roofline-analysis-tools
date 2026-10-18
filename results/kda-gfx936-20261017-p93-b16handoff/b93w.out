@@ -1,0 +1,31 @@
+P-93 APPLIED
+build_ok
+== acc g2_r5 T=4096 H=12
+{"tag": "s2fp32", "T": 4096, "H": 12, "o_ours_vs_ref": 0.005017, "o_fla_vs_ref": 0.005037, "dq_ours_vs_ref": 0.004568, "dq_fla_vs_ref": 0.004588, "dk_ours_vs_ref": 0.005168, "dk_fla_vs_ref": 0.005191, "dv_ours_vs_ref": 0.004472, "dv_fla_vs_ref": 0.0045, "dg_ours_vs_ref": 0.005431, "dg_fla_vs_ref": 0.006169, "dbeta_ours_vs_ref": 0.004845, "dbeta_fla_vs_ref": 0.004861, "dA_log_ours_vs_ref": 0.00341, "dA_log_fla_vs_ref": 0.004257, "ddt_bias_ours_vs_ref": 0.004997, "ddt_bias_fla_vs_ref": 0.006511}
+S2_FP32_GATE PASS
+== acc g2_p93 T=4096 H=12
+{"tag": "s2fp32", "T": 4096, "H": 12, "o_ours_vs_ref": 0.005017, "o_fla_vs_ref": 0.005037, "dq_ours_vs_ref": 0.00486, "dq_fla_vs_ref": 0.004588, "dk_ours_vs_ref": 0.005427, "dk_fla_vs_ref": 0.005191, "dv_ours_vs_ref": 0.004472, "dv_fla_vs_ref": 0.0045, "dg_ours_vs_ref": 0.010305, "dg_fla_vs_ref": 0.006169, "dbeta_ours_vs_ref": 0.004845, "dbeta_fla_vs_ref": 0.004861, "dA_log_ours_vs_ref": 0.003373, "dA_log_fla_vs_ref": 0.004257, "ddt_bias_ours_vs_ref": 0.017104, "ddt_bias_fla_vs_ref": 0.006511}
+S2_FP32_GATE FAIL
+== acc g2_r5 T=8192 H=12
+{"tag": "s2fp32", "T": 8192, "H": 12, "o_ours_vs_ref": 0.005005, "o_fla_vs_ref": 0.005027, "dq_ours_vs_ref": 0.004573, "dq_fla_vs_ref": 0.004592, "dk_ours_vs_ref": 0.005179, "dk_fla_vs_ref": 0.005206, "dv_ours_vs_ref": 0.00445, "dv_fla_vs_ref": 0.004475, "dg_ours_vs_ref": 0.005411, "dg_fla_vs_ref": 0.006115, "dbeta_ours_vs_ref": 0.004838, "dbeta_fla_vs_ref": 0.004843, "dA_log_ours_vs_ref": 0.008465, "dA_log_fla_vs_ref": 0.007719, "ddt_bias_ours_vs_ref": 0.005513, "ddt_bias_fla_vs_ref": 0.006581}
+S2_FP32_GATE PASS
+== acc g2_p93 T=8192 H=12
+{"tag": "s2fp32", "T": 8192, "H": 12, "o_ours_vs_ref": 0.005005, "o_fla_vs_ref": 0.005027, "dq_ours_vs_ref": 0.004864, "dq_fla_vs_ref": 0.004592, "dk_ours_vs_ref": 0.00544, "dk_fla_vs_ref": 0.005206, "dv_ours_vs_ref": 0.00445, "dv_fla_vs_ref": 0.004475, "dg_ours_vs_ref": 0.01007, "dg_fla_vs_ref": 0.006115, "dbeta_ours_vs_ref": 0.004838, "dbeta_fla_vs_ref": 0.004843, "dA_log_ours_vs_ref": 0.007282, "dA_log_fla_vs_ref": 0.007719, "ddt_bias_ours_vs_ref": 0.016153, "ddt_bias_fla_vs_ref": 0.006581}
+S2_FP32_GATE FAIL
+== acc g2_r5 T=4096 H=48
+{"tag": "s2fp32", "T": 4096, "H": 48, "o_ours_vs_ref": 0.005023, "o_fla_vs_ref": 0.00505, "dq_ours_vs_ref": 0.004549, "dq_fla_vs_ref": 0.004573, "dk_ours_vs_ref": 0.005102, "dk_fla_vs_ref": 0.005126, "dv_ours_vs_ref": 0.004479, "dv_fla_vs_ref": 0.004509, "dg_ours_vs_ref": 0.005425, "dg_fla_vs_ref": 0.006113, "dbeta_ours_vs_ref": 0.004833, "dbeta_fla_vs_ref": 0.004852, "dA_log_ours_vs_ref": 0.003964, "dA_log_fla_vs_ref": 0.004151, "ddt_bias_ours_vs_ref": 0.005484, "ddt_bias_fla_vs_ref": 0.006463}
+S2_FP32_GATE PASS
+== acc g2_p93 T=4096 H=48
+{"tag": "s2fp32", "T": 4096, "H": 48, "o_ours_vs_ref": 0.005023, "o_fla_vs_ref": 0.00505, "dq_ours_vs_ref": 0.004842, "dq_fla_vs_ref": 0.004573, "dk_ours_vs_ref": 0.005364, "dk_fla_vs_ref": 0.005126, "dv_ours_vs_ref": 0.004479, "dv_fla_vs_ref": 0.004509, "dg_ours_vs_ref": 0.010237, "dg_fla_vs_ref": 0.006113, "dbeta_ours_vs_ref": 0.004833, "dbeta_fla_vs_ref": 0.004852, "dA_log_ours_vs_ref": 0.007181, "dA_log_fla_vs_ref": 0.004151, "ddt_bias_ours_vs_ref": 0.016148, "ddt_bias_fla_vs_ref": 0.006463}
+S2_FP32_GATE FAIL
+== perf 16384/12 (A = production fp32 handoff, B = bf16 handoff)
+p3_wy_s4b_kernel#1                    1162.2    1073.8  1.0823     8.38%    3.09%  5/5
+g2_bwd_tail_kernel#1                   609.9     464.8  1.3122     1.97%    3.48%  5/5
+g2_bwd_tail_reduce_kernel#1             14.7      14.7  1.0000     2.17%    1.63%  5/5
+TOTAL common kernels                  5356.5    5091.3  1.0521
+== perf 16384/48 (A = production fp32 handoff, B = bf16 handoff)
+p3_wy_s4b_kernel#1                    4756.9    4242.5  1.1212     3.54%    3.64%  5/5
+g2_bwd_tail_kernel#1                  2395.5    1833.9  1.3062     1.40%    6.47%  5/5
+g2_bwd_tail_reduce_kernel#1             17.0      17.0  0.9953     1.89%    2.82%  5/5
+TOTAL common kernels                 21513.4   20547.0  1.0470
+P93_DONE

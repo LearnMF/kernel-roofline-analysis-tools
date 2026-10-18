@@ -1,0 +1,22 @@
+P-93 APPLIED (dq/dk only)
+build_ok
+== acc g2_p93q T=4096 H=12
+{"tag": "s2fp32", "T": 4096, "H": 12, "o_ours_vs_ref": 0.005017, "o_fla_vs_ref": 0.005037, "dq_ours_vs_ref": 0.00486, "dq_fla_vs_ref": 0.004588, "dk_ours_vs_ref": 0.005427, "dk_fla_vs_ref": 0.005191, "dv_ours_vs_ref": 0.004472, "dv_fla_vs_ref": 0.0045, "dg_ours_vs_ref": 0.005431, "dg_fla_vs_ref": 0.006169, "dbeta_ours_vs_ref": 0.004845, "dbeta_fla_vs_ref": 0.004861, "dA_log_ours_vs_ref": 0.00341, "dA_log_fla_vs_ref": 0.004257, "ddt_bias_ours_vs_ref": 0.004997, "ddt_bias_fla_vs_ref": 0.006511}
+S2_FP32_GATE PASS
+== acc g2_p93q T=8192 H=12
+{"tag": "s2fp32", "T": 8192, "H": 12, "o_ours_vs_ref": 0.005005, "o_fla_vs_ref": 0.005027, "dq_ours_vs_ref": 0.004864, "dq_fla_vs_ref": 0.004592, "dk_ours_vs_ref": 0.00544, "dk_fla_vs_ref": 0.005206, "dv_ours_vs_ref": 0.00445, "dv_fla_vs_ref": 0.004475, "dg_ours_vs_ref": 0.005411, "dg_fla_vs_ref": 0.006115, "dbeta_ours_vs_ref": 0.004838, "dbeta_fla_vs_ref": 0.004843, "dA_log_ours_vs_ref": 0.008465, "dA_log_fla_vs_ref": 0.007719, "ddt_bias_ours_vs_ref": 0.005513, "ddt_bias_fla_vs_ref": 0.006581}
+S2_FP32_GATE PASS
+== acc g2_p93q T=4096 H=48
+{"tag": "s2fp32", "T": 4096, "H": 48, "o_ours_vs_ref": 0.005023, "o_fla_vs_ref": 0.00505, "dq_ours_vs_ref": 0.004842, "dq_fla_vs_ref": 0.004573, "dk_ours_vs_ref": 0.005364, "dk_fla_vs_ref": 0.005126, "dv_ours_vs_ref": 0.004479, "dv_fla_vs_ref": 0.004509, "dg_ours_vs_ref": 0.005425, "dg_fla_vs_ref": 0.006113, "dbeta_ours_vs_ref": 0.004833, "dbeta_fla_vs_ref": 0.004852, "dA_log_ours_vs_ref": 0.003964, "dA_log_fla_vs_ref": 0.004151, "ddt_bias_ours_vs_ref": 0.005484, "ddt_bias_fla_vs_ref": 0.006463}
+S2_FP32_GATE PASS
+== perf 16384/12 (A = production fp32 handoff, B = bf16 handoff)
+p3_wy_s4b_kernel#1                    1214.6    1155.0  1.0517     0.90%    0.77%  5/5
+g2_bwd_tail_kernel#1                   619.8     537.0  1.1542     0.27%    0.40%  5/5
+g2_bwd_tail_reduce_kernel#1             14.6      14.9  0.9839     1.64%    2.15%  5/5
+TOTAL common kernels                  5605.4    5464.6  1.0258
+== perf 16384/48 (A = production fp32 handoff, B = bf16 handoff)
+p3_wy_s4b_kernel#1                    5101.5    4789.0  1.0652     4.73%    2.08%  5/5
+g2_bwd_tail_kernel#1                  2561.2    2170.8  1.1798     0.28%    0.06%  5/5
+g2_bwd_tail_reduce_kernel#1             17.1      17.4  0.9817     0.47%    0.92%  5/5
+TOTAL common kernels                 23343.6   22620.9  1.0319
+P93Q_DONE

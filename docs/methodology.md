@@ -173,3 +173,15 @@ python -m kra pmc --out OUT --marker spin_kernel -- <app>   # 两次运行：--p
 ## 5. 阈值
 
 所有判定阈值在 [`kra/thresholds.json`](../kra/thresholds.json)，每项标注来源（NV Triage Guide、KernelPro、AutoKernel、团队约定）以及 `hcu_calibrated`。目前除噪声门槛外都尚未经 HCU 校准，KDA 是第一个校准样本。
+
+## 6. 第三阶段补充（2026-10-17，详见 `docs/kda_phase3_summary.md`）
+
+- **按 head 数折算**：同一个 kernel，按每 12 个 head 折算后的耗时如果随 H 上升，先怀疑同时驻留的 CTA 集合和访问局部性有关（R60）。
+- **等待点对到源代码行**：SQTT 的等待点必须用 `map_waits.py`（带 `-g` 的 ISA，按 `.loc` 匹配）对到具体源代码行，再设计探针（R58）。
+- **gfx9 的 vmcnt 是一个按顺序计数的计数器**：寄存器读、LDS-DMA、显存写都共用它。只有当循环里所有的显存读都改走 DMA、并且手工管理全部等待时，才能得到真正的异步（R61/R62）。
+- **跨平台对比的测量规范**：
+  - 设备时间每个形态 5 个进程，要求离散度 ≤ 3%；
+  - 避开慢卡（bw52 的 HCU2、HCU4）；
+  - 先用 `hy-smi --showuse` 确认卡上没有其他用户；
+  - 跨版本的比值只在同一会话、同一张卡上交替测量；
+  - FLA 的对照数据跨会话复测一次，差异要在 ±0.5% 以内。
