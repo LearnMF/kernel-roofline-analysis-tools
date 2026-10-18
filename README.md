@@ -9,6 +9,7 @@
 - 下一步该做什么：局部调优、减少工作量，还是重构？如果已经到顶，依据是什么？
 
 文档：
+- **团队介绍** [docs/playbook_intro.md](docs/playbook_intro.md)：用 30–40 分钟介绍 playbook，并以 KDA 为例说明为什么已经到上限；
 - **通用理论指导（唯一）** [docs/playbook.md](docs/playbook.md)（v3）：先认清算子、选对视角；四层上限模型（算法必需、接口、资源、实测）；每轮的流程；怎么选方向；判停准则；方法论效率的度量；跨平台对照；规则库 R1–R62；
 - 测量口径 [docs/methodology.md](docs/methodology.md)；
 - 设计 [docs/design.md](docs/design.md)；

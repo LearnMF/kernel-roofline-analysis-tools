@@ -4,6 +4,7 @@
 > - 每个数怎么测、口径是什么：`methodology.md`
 > - 工具怎么搭：`design.md`
 > - 完整案例：Kimi K3 的 KDA 算子，见附录 A 的文档索引
+> - 给团队的入门介绍：`playbook_intro.md`
 >
 > **v2 → v3 的变化**：
 > - 增加“先认清算子、选对视角”；
