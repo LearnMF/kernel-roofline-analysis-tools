@@ -12,7 +12,7 @@
 - **通用理论指导（唯一）** [docs/playbook.md](docs/playbook.md)（v3）：先认清算子、选对视角；四层上限模型（算法必需、接口、资源、实测）；每轮的流程；怎么选方向；判停准则；方法论效率的度量；跨平台对照；规则库 R1–R62；
 - 测量口径 [docs/methodology.md](docs/methodology.md)；
 - 设计 [docs/design.md](docs/design.md)；
-- KDA 完整案例：汇报版 [docs/kda_report.md](docs/kda_report.md)、回顾 [docs/kda_retrospective.md](docs/kda_retrospective.md)、三个阶段总结 `docs/kda_phase{1,2,3}_summary.md`、协作任务说明 `docs/tasks/`；
+- KDA 完整案例：汇报版 [docs/kda_report.md](docs/kda_report.md)、回顾 [docs/kda_retrospective.md](docs/kda_retrospective.md)、问答 [docs/kda_qa_intensity_platforms.md](docs/kda_qa_intensity_platforms.md)、三个阶段总结 `docs/kda_phase{1,2,3}_summary.md`、协作任务说明 `docs/tasks/`；
 - 分类法 [kra/taxonomy.json](kra/taxonomy.json)；
 - 阈值及其来源 [kra/thresholds.json](kra/thresholds.json)。
 
