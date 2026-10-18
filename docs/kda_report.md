@@ -2,6 +2,7 @@
 
 > 本文是面向汇报的版本。顺序是：先讲 KDA 算子本身的特点，以及因此选用的分析视角；再讲方法依据的原理；然后是进展、现在的位置，以及“为什么说已经到顶”。
 > 详细数据和原始记录见 `docs/kda_retrospective.md`、`docs/kda_phase3_summary.md`，以及 `results/` 下各目录。
+> 本文是 `docs/playbook.md`（v3，通用方法论）在 KDA 上的应用案例。
 
 ## 一页结论
 
