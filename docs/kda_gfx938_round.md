@@ -1267,3 +1267,24 @@ Equal work (8192 CTAs, T x H = 524288), clean run of section 70:
 - Rule R64 (gfx938): pick each kernel's CTA order by its stream families.  Row-major only -> head-fastest; row-major
   in plus head-major natives -> diagonal; never head-fastest when the kernel writes head-major natives.  Check every
   kernel by per-head normalisation (equal T x H, different H) whenever H is a power of two >= 32.
+
+## 74. 24 shapes on a02c016 (build o4), same protocol as section 70 (nmz5 GPU 0, host load 7-17)
+| T | H = 64 | H = 32 | H = 16 | H = 8 |
+|---|---|---|---|---|
+| 1K | 0.854 | 0.858 | 0.815 | 0.839 |
+| 2K | 0.905 | 0.910 | 0.873 | 0.908 |
+| 4K | 0.873 | 0.957 | 0.937 | 0.993 |
+| 8K | 0.957 | 0.973 | 0.987 | **1.047** |
+| 16K | 0.972 | 0.990 | **1.012** | **1.093** |
+| 32K | 0.985 | **1.028** | **1.031** | **1.118** |
+(gfx938 / H20, fwd + bwd device time.)
+- **gfx938 / H20: 0.942 (f7f2170) -> 0.952 (24 shapes); forward 0.846, backward 0.988.**  a02c016 vs f7f2170 across
+  the two runs: H = 64 1.036-1.057 (1K: 1.007), H = 32 1.010-1.030, H = 16 1.00.  H = 8 at T <= 4K read 0.95-0.98
+  here, but the interleaved ABBA of the same pair gave 0.995-0.998 there (H = 8 takes none of the new orders):
+  cross-run noise.
+- Backward is at or above H20 for T >= 4K at every H >= 16 (1.01-1.07); the forward stays 0.70-0.84 at H >= 32
+  (prep_a VALU, prep_b TA, fwd_h writeback; sections 53-66, 71-72).
+- Next candidates, by size: (1) the forward prep at H <= 32 is VALU / TA bound with A-class trims exhausted
+  (needs B-class restructuring of prep_a's gate / weighting, or a different prep split); (2) bwd_tail's serial
+  512-add CTA dA sum on wave 0 (~1/4 of its instructions on one wave; a tree is B class, more accurate,
+  estimated +0.3-0.5% end to end); (3) per-head normalisation of wu (+10% at H = 64 with its P-95 diagonal order).
