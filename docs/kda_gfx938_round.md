@@ -1315,3 +1315,21 @@ Equal work (8192 CTAs, T x H = 524288), clean run of section 70:
 - Note: with 5 GPUs measuring at once, kbench's per-iteration totals drift between processes (the same a02c016
   build read 11.1-12.4 ms at 8192/64 on different GPUs); kernel times stay consistent.  End-to-end effects of
   parallel A/Bs are therefore computed as kernel time saved / the clean single-GPU total (section 74).
+
+## 76. Forward split: whole-chain ceiling (in progress)
+- d563aa6 pushed (a02c016..d563aa6).
+- Cards re-collected on d563aa6 (results/kda-gfx938-cards-20261030-t2), forward kernels only:
+| shape | forward t | card floor | t / floor | floors (us) |
+|---|---:|---:|---:|---|
+| 8192/64 | 3255 | 2666 | 1.22 | prep_a VALU 946, prep_b TA 688, fwd_h TA 1032 |
+| 2048/16 | 259 | 183 | 1.42 | prep_a VALU 59, prep_b TA 43, fwd_h TA 81 |
+| 16384/8 | 979 | 795 | 1.23 | prep_a VALU 235, prep_b TA 164, fwd_h (16-col) TA 395 |
+| 32768/16 | 2958 | 2656 | 1.11 | prep_a VALU 942, prep_b TA 635, fwd_h TA 1080 |
+  Inside the current split, 11-29% of the forward is left above the card floors.
+- Hand-off-free ceiling ("hfree", timing only): one runtime-zero flag gates every hand-off access between the three
+  forward kernels (prep_a stores QgA / Kn / Kb / R / Gn; prep_b loads R / Kb and stores AqkA / Wn / Un; fwd_h loads
+  Wn / Kn / QgA / AqkA / Un / Gn); compute and the required inputs / outputs stay.  It bounds every re-split.
+  - First build void: the flag was a `volatile` global, i.e. a vector load plus a wait in front of every gated access
+    (forward 0.3-0.95x).  Rebuilt with a `__constant__` flag read by readfirstlane (uniform scalar branch).
+  - Measurement pending: the jump host dropped mid-run, then another user's VLA training (train_lingbotvla.py)
+    took all 8 nmz5 GPUs (49% VRAM, 44-100% busy); our runs were stopped to keep the numbers clean.
