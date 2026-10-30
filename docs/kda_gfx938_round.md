@@ -1288,3 +1288,30 @@ Equal work (8192 CTAs, T x H = 524288), clean run of section 70:
   (needs B-class restructuring of prep_a's gate / weighting, or a different prep split); (2) bwd_tail's serial
   512-add CTA dA sum on wave 0 (~1/4 of its instructions on one wave; a tree is B class, more accurate,
   estimated +0.3-0.5% end to end); (3) per-head normalisation of wu (+10% at H = 64 with its P-95 diagonal order).
+
+## 75. bwd_tail tree sum (P-938t2, B class, local commit) and the prep_a gate / weighting ceilings
+- a02c016 pushed to the fork (f7f2170..a02c016).
+- **P-938t2**: bwd_tail's per-CTA dA_log partial (512 fp32 terms in LDS) was one lane's 512-add dependent chain on
+  wave 0 (~1/4 of the instructions bwd_tail executes on the production route).  Now wave 0 sums 64 lane runs of 8
+  (column-strided) and a fixed shfl-xor tree (a + b == b + a: all lanes agree; deterministic).  gfx938 only,
+  KDA_B2_TREE=0 restores the chain.
+  - Bitwise vs a02c016: 75 of 84 tensors identical; the 9 dA_log differ (as intended).
+  - FP64 oracle (13 cases: 4096/12 x 10 seeds, 8192/48, 16384/12, 32768/4): both deterministic; every tensor but
+    A_log identical; A_log error ratio 0.9999-1.0001 (geomean 1.00001, 11 of 13 marginally above).  The summation
+    order is not where dA_log's error comes from (bf16 dg / the gate chain dominate), so "a tree is more accurate"
+    does not show; the change is neutral to 1e-4 relative.  Rule 4 (Megatron loss) not run: a 1e-5 relative change
+    of one reduced gradient is far below that setup's run-to-run spread (section 69).
+  - bwd_tail 1.09-1.15x (ABBA, 6 shapes), 7-47 us, +0.4-0.7% end to end.
+- prep_a ceilings for a B-class rewrite of the gate and the weighting (timing only, kernel time, ABBA vs a02c016):
+| removed entirely | prep_a | end to end at 8192/64 |
+|---|---|---|
+| cs: the sigmoid (B1 path) | 1.03-1.06x | <= 0.4% |
+| cg: the Kahan compensation of the gate scan | 1.01-1.03x | <= 0.3% |
+| ce: every exp2 of QgA / Kb / Kn, P1a, P1b | 1.09-1.11x | <= 1.0% |
+| all three | 1.13-1.15x | <= 1.1% |
+  Even free gate and weighting arithmetic buys at most 13-15% of prep_a (about 1% end to end); any real rewrite gets
+  a fraction of that.  **Not pursued.**  The rest of prep_a is loads / stores, the LDS exchange, conversions and MMAC,
+  and at H = 64 prep_a is not VALU bound at all (section 72).
+- Note: with 5 GPUs measuring at once, kbench's per-iteration totals drift between processes (the same a02c016
+  build read 11.1-12.4 ms at 8192/64 on different GPUs); kernel times stay consistent.  End-to-end effects of
+  parallel A/Bs are therefore computed as kernel time saved / the clean single-GPU total (section 74).
