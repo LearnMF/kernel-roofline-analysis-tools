@@ -1331,5 +1331,26 @@ Equal work (8192 CTAs, T x H = 524288), clean run of section 70:
   Wn / Kn / QgA / AqkA / Un / Gn); compute and the required inputs / outputs stay.  It bounds every re-split.
   - First build void: the flag was a `volatile` global, i.e. a vector load plus a wait in front of every gated access
     (forward 0.3-0.95x).  Rebuilt with a `__constant__` flag read by readfirstlane (uniform scalar branch).
-  - Measurement pending: the jump host dropped mid-run, then another user's VLA training (train_lingbotvla.py)
-    took all 8 nmz5 GPUs (49% VRAM, 44-100% busy); our runs were stopped to keep the numbers clean.
+  - Measured on a quiet nmz5 (ABBA, warm-up, one GPU per shape pair; kernel time, t2 -> hfree):
+| shape | prep_a | prep_b | fwd_h | forward saved | of fwd+bwd |
+|---|---|---|---|---|---|
+| 2048/16 | 1.18x | 1.40x | 1.18x | 48 us (18%) | 5% |
+| 2048/64 | 1.23x | 1.67x | 1.55x | 267 us (30%) | 9% |
+| 4096/32 | 1.21x | 1.58x | 1.46x | 230 us (27%) | 8% |
+| 4096/8 | 1.18x | 1.40x | 0.97x | 29 us (10%) | 3% |
+| 8192/64 | 1.24x | **1.80x** | 1.46x | **976 us (30%)** | 8% |
+| 8192/16 | 1.22x | 1.59x | 1.00x | 129 us (16%) | 4% |
+| 16384/32 | 1.21x | 1.74x | 1.36x | 838 us (27%) | 7% |
+| 16384/8 | 1.20x | 1.58x | 0.95x | 99 us (10%) | 3% |
+| 32768/64 | 1.22x | 1.64x | 1.26x | 2762 us (24%) | 6% |
+| 32768/16 | 1.21x | 1.69x | 0.94x | 436 us (15%) | 4% |
+  Reading: (1) a free hand-off would make the gfx938 forward faster than H20's at H = 64 (8192/64: 2265 vs 2445 us);
+  the forward gap is the hand-off traffic, not the arithmetic.  (2) prep_b is 40-45% hand-off (R / Kb loads, AqkA /
+  Wn / Un stores), prep_a 15-20% (its stores), fwd_h 26-35% at H >= 32 and ~0 at H <= 16 (there fwd_h is chain
+  bound with 32-64 CTAs).  (3) The whole re-split ceiling is 3-9% of fwd+bwd; any real split captures part of it.
+- First capture, **P-938wd (commit 06e8f2c, pushed)**: fwd_h's K-side reads are issued by all 4 V-slab CTAs of a head.  The
+  wide variant (2 CTAs per head, P-49, bit-identical) was gated to NT >= 512 from gfx936 data and only checked on
+  gfx938 at 2048/16 and 4096/32.  At H = 64 it wins at every NT: fwd_h 1.04-1.16x (knob sweep), 1.09-1.15x (ABBA),
+  fwd+bwd 1.016-1.032x; at H = 32 (64 CTAs) 0.74-0.79x.  Rule: gfx938, H >= 64 -> wide at every NT.  Gate 84/84.
+- Lesson (R65): a gate measured on one card / one shape range is a hypothesis on the next; and a deletion ceiling
+  that names a kernel's hand-off reads (here 30-55% of fwd_h) points at the existing variants first.
