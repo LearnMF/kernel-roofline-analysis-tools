@@ -1422,3 +1422,29 @@ ABBA, kernel time (one build, env A vs B; GPU 1-3 in parallel):
 - Reading of sections 78-79: inside the kernels the stores are already overlapped well enough that a better store
   form (2.5x in isolation) buys nothing; what the deletion ceilings measure is the write *traffic* (bytes through HBM
   / the TA queue), which only fewer bytes remove.
+
+## 80. The capacity -> reuse -> concurrency check on gfx938 vs gfx936 (Little's law per kernel)
+- Capacity: L2 8 MB and LDS 64 KB per CU on both cards; HBM read 1.34 -> 2.01 TB/s, HBM latency 385 -> 442 ns
+  (574-577 cycles on both).  Bytes in flight needed at the HBM peak: 515 KB (6.4 KB per CU, 80 CUs) -> 890 KB (12.4 KB
+  per CU, 72 CUs): about 2x per CU.
+- Reuse: L2 / HBM bytes per kernel are 0.84-1.0 for the streaming kernels (prep_a, gate, bwd_tail: every byte used
+  once, nothing left to reuse inside them), 1.39-1.55 for dhu / fwd_h (K-side tiles shared through L2; halved again
+  by P-938wd).  The remaining reuse is between kernels (the hand-offs, sections 76-77).
+- Concurrency (32768/16, implied in-flight = achieved HBM rate x latency, share of what the peak needs):
+| kernel | waves / SIMD 936 -> 938 | in-flight share 936 -> 938 |
+|---|---|---|
+| s4b | 2 -> 2 | 59% -> **38%** |
+| fwd_h | 3 -> 3 | 61% -> 47% |
+| dhu | 2 -> 2 (1 CTA / CU) | 59% -> 47% |
+| prep_a | 3 -> 3 | 60% -> 44% (VALU bound) |
+| bwd_tail | 3 -> 3 | 77% -> 55% (VALU bound) |
+| wu / s4a | 2 -> 3 (P-938 residency work) | 70 / 74% -> 63 / 62% |
+| prep_b | 3 -> 3 | 77% -> 66% |
+  The waves in flight did not grow with the bandwidth; bytes in flight grew 1.3-1.8x (faster issue), the need 2x.  At
+  2048/16 (few CTAs) the share is 30-46%: one reason the T <= 2K shapes trail most.  (Runtime-reported regsPerBlock:
+  gfx938 131072 vs gfx936 196608 -- to be confirmed by a microbench before drawing conclusions.)
+- Ranking, saving if every kernel reached max(HBM at 75% of peak, its TA / VALU / LDS / chain floor):
+  2048/16 32% (s4b 9.6%, wu 5.3%, prep_a 4.5%), 8192/64 21% (s4b 10.0%, fwd_h 2.2%, prep_a 2.0%, wu 1.9%, dhu 1.9%),
+  16384/8 21% (s4b 8.9%), 32768/16 17% (s4b 10.4%).  **s4b is first everywhere** (2 CTAs per CU, VGPR 241, LDS 32 KB;
+  1 -> 2 CTAs gave 1.53-1.56x, section 24; 2 -> 3 needs VGPR <= 168 and LDS <= 21.8 KB).  Order of work: dhu residency
+  (cheap: the gfx936 P-24 throttle forces 1 CTA / CU at >= 192 CTAs), then the s4b 3-CTA rewrite, wu, small-T splits.
