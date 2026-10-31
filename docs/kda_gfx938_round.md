@@ -1400,3 +1400,25 @@ ABBA, kernel time (one build, env A vs B; GPU 1-3 in parallel):
   32 B-piece stores were overlapped with the solve; moving them behind a barrier as full rows bought nothing.
   Reverted.  Rule (R66): a store form that is slow in isolation is a candidate only if a deletion ceiling shows the
   store on the critical path (fwd_h's o: cB2 1.13-1.16x, section 66; prep_b's Aqk / Akk: not established).
+
+## 79. 24 shapes on 06e8f2c; the o-store deletion ceiling; P-938ow (no gain)
+- 24 shapes (same protocol as sections 70 / 74, nmz5 GPU 0, quiet): **gfx938 / H20 = 0.973 (forward 0.872, backward
+  1.007); 10 of 24 shapes at or above H20.**  06e8f2c vs a02c016: H = 64 1.02-1.07 at T <= 4K and 32K (8K-16K within
+  run noise), H = 8 1.01-1.11 (P-938t2), others 1.01-1.04.
+| T | H = 64 | H = 32 | H = 16 | H = 8 |
+|---|---|---|---|---|
+| 1K | 0.871 | 0.877 | 0.847 | 0.928 |
+| 2K | 0.920 | 0.924 | 0.894 | 0.982 |
+| 4K | 0.938 | 0.966 | 0.951 | 1.019 |
+| 8K | 0.953 | 0.980 | 1.000 | 1.065 |
+| 16K | 0.940 | 1.016 | 1.023 | 1.102 |
+| 32K | 1.006 | 1.020 | 1.058 | 1.126 |
+  The backward is at or above H20 from T = 4K; the forward is 0.72-0.97 (H >= 32: 0.72-0.87).
+- No-o ceiling (fwd_h without the o stores, timing only): fwd_h 1.08-1.17x at H = 64, 1.10-1.18x at H = 32, 1.09x at
+  16384/8 (H = 16: 0.85-0.89x, i.e. noise / chain effects).  The o stores are on fwd_h's critical path.
+- **P-938ow** (wide fwd_h: o staged per wave as 8 rows x 64 columns, emitted as whole 128 B rows, 8 lanes x 16 B):
+  bit-identical at H = 64, but fwd_h 0.97-1.04x (6 shapes).  (The first build dropped the NVH = 1 o path through a
+  dangling `else` after `if constexpr`; the gate caught it at the H = 8 cases.)  Reverted.
+- Reading of sections 78-79: inside the kernels the stores are already overlapped well enough that a better store
+  form (2.5x in isolation) buys nothing; what the deletion ceilings measure is the write *traffic* (bytes through HBM
+  / the TA queue), which only fewer bytes remove.
