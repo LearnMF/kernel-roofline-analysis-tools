@@ -1448,3 +1448,13 @@ ABBA, kernel time (one build, env A vs B; GPU 1-3 in parallel):
   16384/8 21% (s4b 8.9%), 32768/16 17% (s4b 10.4%).  **s4b is first everywhere** (2 CTAs per CU, VGPR 241, LDS 32 KB;
   1 -> 2 CTAs gave 1.53-1.56x, section 24; 2 -> 3 needs VGPR <= 168 and LDS <= 21.8 KB).  Order of work: dhu residency
   (cheap: the gfx936 P-24 throttle forces 1 CTA / CU at >= 192 CTAs), then the s4b 3-CTA rewrite, wu, small-T splits.
+
+## 81. dhu residency (P-938dt, local commit) and the s4b 3-CTA budget
+- dhu throttle (P-24, 1 CTA / CU from 192 CTAs) re-swept on gfx938 at H = 64, kernel time with the throttle off:
+  1024/64 1.13x, 2048/64 1.01x, 4096/64 0.97x, 8192/64 0.92x, 16384/64 0.93x, 32768/64 0.84x.  The L2 sharing of the
+  4 V-slab CTAs pays from 64 chunks on.  **P-938dt**: gfx938 throttles only at NT >= 64.  dhu 1.086x at 1024/64,
+  1.017x at 2048/64, unchanged from 4096/64; gate 84/84.
+- s4b to 3 CTAs per CU needs LDS <= 21.8 KB (now 32768 B: tables 13056 + gM 256 + cs 1024 + h / dh staging 2 x 8 KB +
+  dwTs 2048; the prologue's dA / dAqk MLS staging also uses all 32 KB) and VGPR <= 168 (now 241).  Single-buffered
+  h / dh staging frees 8 KB at no latency cost (section 64) -> 24.6 KB; 2.8 KB more and a 73-VGPR cut remain.
+  The alternative with the same per-CU LDS is an 8-wave CTA at VGPR <= 128 (4 waves per SIMD).
