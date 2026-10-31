@@ -1354,3 +1354,28 @@ Equal work (8192 CTAs, T x H = 524288), clean run of section 70:
   fwd+bwd 1.016-1.032x; at H = 32 (64 CTAs) 0.74-0.79x.  Rule: gfx938, H >= 64 -> wide at every NT.  Gate 84/84.
 - Lesson (R65): a gate measured on one card / one shape range is a hypothesis on the next; and a deletion ceiling
   that names a kernel's hand-off reads (here 30-55% of fwd_h) points at the existing variants first.
+
+## 77. Re-split option A (w / u computed inside fwd_h): ceiling -> not pursued
+Option A: prep_b stops after Aqk / solve / Akk (no pass 0 / 1: no Kb / v reads, no Wn / Un stores); fwd_h computes
+w = Ainv . Kb and its u slab = Ainv . (v beta) per chunk from an Ainv tile (8 KB per chunk-head) plus the Kb / v tiles
+it would read instead of Wn / Un.  Timing-only build "pa" on 06e8f2c, deliberately **optimistic** for A:
+- prep_b side: the existing G2_PREPB_STOP=3 (returns after solve + Akk).
+- fwd_h side (wide kernel, the H >= 64 and H <= 8 routes): +8 KB Ainv load per CTA per step from distinct memory,
+  +32 MMAC (w, 2 K-tiles x 4 row blocks x 4 j) + 4 x NVH MMAC (u) per wave per step, results folded into the next
+  step's W / u registers (so GEMM1 waits for them).  Not modelled (all extra cost for a real A): redistributing w
+  across waves through LDS (16 KB per step), transposing v beta into a B operand, prep_a / prep_b writing Kb^T and
+  Ainv in operand layouts.  VGPR (MODE 5): NVH 4 214 -> 228, NVH 1 148 -> 178; no scratch.
+ABBA, kernel time (one build, env A vs B; GPU 1-3 in parallel):
+| shape | prep_b saved (STOP=3) | fwd_h added (plusA) | net forward | fwd+bwd (combined run) |
+|---|---|---|---|---|
+| 2048/64 | -100 us (1.90x) | +20 us (0.95x) | -80 us | 1.027x |
+| 8192/64 | -385 us (1.96x) | +154 us (0.88x) | -231 us | 1.021x |
+| 16384/64 | -535 us | +407 us (0.84x) | -128 us | 1.006x |
+| 4096/8 | -26 us | +94 us (0.58x) | +68 us | **0.938x** |
+| 16384/8 | -87 us | +370 us (0.57x) | +283 us | **0.923x** |
+- At H <= 8 fwd_h is chain bound: the added MMAC sits on the serial step.  At H = 16 / 32 fwd_h runs the 4-slab kernel
+  (wide loses 0.74-0.79x there), so w would be recomputed 4x.  At H = 64 the optimistic gain is 2-2.6% and the
+  unmodelled LDS exchange / layout writes come out of it.  **Not built.**
+- What the ceiling does show: prep_b's pass 0 / 1 (Kb -> Wn, v beta -> Un) are ~49% of prep_b at H = 64; with section
+  76, the hand-off cost of the gfx938 forward sits in the stores (TA write ~2.7x the read cost per byte) of the
+  three-kernel structure, and no re-split tried here (fusion: residency; A: redundant w + chain) removes them cheaper.
