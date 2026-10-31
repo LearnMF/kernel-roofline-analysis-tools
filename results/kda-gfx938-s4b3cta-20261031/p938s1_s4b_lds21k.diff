@@ -1,0 +1,140 @@
+diff --git a/src/primitive/hygon/kda/g2/g2_wy.cuh b/src/primitive/hygon/kda/g2/g2_wy.cuh
+index 3351380..9f028ad 100644
+--- a/src/primitive/hygon/kda/g2/g2_wy.cuh
++++ b/src/primitive/hygon/kda/g2/g2_wy.cuh
+@@ -1148,6 +1148,25 @@ p3_wy_s4a_kernel(WyS4AParams p_) {
+ // segment B: s4_tail<ST=4> verbatim except dwT read from global (pitch kBT), dak/akB
+ // from the global dA, db from db_part, single-buffered intra tables (the WAR closed by
+ // a second end-of-iteration barrier instead of the second table buffer).
++// kra P-938s1 (gfx938): S4B1 = 21248 B of LDS (3 CTAs per CU possible): h / dh staging and the cs partials single
++// buffered (tile kt+1 is loaded at the top of kt and written after the first barrier -- the same load -> LDS distance
++// as the double buffer's kt+2), unpadded tables with the 4-float groups XOR-swizzled by row, and the dwT operand read
++// straight into registers at the top of kt instead of the dwTs tile.  Layout / staging only -- bit-identical.
++#if defined(__gfx938__) && !defined(KDA_S4B1)
++#define KDA_S4B1 1
++#endif
++#ifndef KDA_S4B1
++#define KDA_S4B1 0
++#endif
++#if KDA_S4B1
++struct S4BSmem {
++    float TA[16 * 64], TQ[16 * 64], TK[16 * 64];
++    float gM[4][16];
++    float cs1[1][4][16], cs2[1][4][16];
++    bf16 stg[1][2][8 * 256];
++};
++__device__ __forceinline__ int s4b_tix(int r, int c) { return r * 64 + ((((c >> 2) ^ (r & 15))) << 2) + (c & 3); }
++#else
+ struct S4BSmem {
+     float TA[16 * ipi::TS], TQ[16 * ipi::TS], TK[16 * ipi::TS];
+     float gM[4][16];
+@@ -1155,6 +1174,8 @@ struct S4BSmem {
+     bf16 stg[2][2][8 * 256];
+     bf16 dwTs[16 * 64];          // kra P-29: dwT tile of step kt, column groups XOR-swizzled by row
+ };
++__device__ __forceinline__ int s4b_tix(int r, int c) { return r * ipi::TS + c; }
++#endif
+ 
+ template <int A, int M>
+ __device__ __forceinline__ void s4b_tail(const WyS4BParams& p, S4BSmem& sm, const v4bh (&aa)[4],
+@@ -1185,7 +1206,7 @@ __device__ __forceinline__ void s4b_tail(const WyS4BParams& p, S4BSmem& sm, cons
+     f4 aqA[A + 1], aqB[4 - A], akB[4 - A];
+ #if G2_MLS938
+     // MLS reads whole 64 B row segments: only for 256 B-aligned tile bases (CTA-uniform); otherwise per-lane loads
+-    if (M != 2 && ((reinterpret_cast<uintptr_t>(dAg) | reinterpret_cast<uintptr_t>(aq_)) & 255) == 0) {
++    if (!KDA_S4B1 && M != 2 && ((reinterpret_cast<uintptr_t>(dAg) | reinterpret_cast<uintptr_t>(aq_)) & 255) == 0) {
+         // kra P-938t: full chunk.  dA and dAqk (64 x 64 fp32, row pitch RA) -> LDS by MLS once per CTA (the whole
+         // S4BSmem is free here), then the rows (dak, aqA) and the column gathers (akB, aqB) are read from LDS.
+         // Tile t (wave A loads t = 2A, 2A + 1): rows 32 (t >> 2).., floats 16 (t & 3)..; LDS: dAqk at 0, dA at 16 KB.
+@@ -1277,8 +1298,9 @@ __device__ __forceinline__ void s4b_tail(const WyS4BParams& p, S4BSmem& sm, cons
+     const int4* hg4 = reinterpret_cast<const int4*>(hb);
+     const int4* dhg4 = reinterpret_cast<const int4*>(dhb);
+     int4* stg4 = reinterpret_cast<int4*>(&sm.stg[0][0][0]);
++    constexpr int NBUF = KDA_S4B1 ? 1 : 2;              // staging buffers; the prefetch distance equals NBUF
+     #pragma unroll
+-    for (int t0 = 0; t0 < 2; ++t0) {
++    for (int t0 = 0; t0 < NBUF; ++t0) {
+         stg4[(t0 * 2 + 0) * 256 + threadIdx.x] = hg4[t0 * 256 + threadIdx.x];
+         stg4[(t0 * 2 + 1) * 256 + threadIdx.x] = dhg4[t0 * 256 + threadIdx.x];
+     }
+@@ -1287,18 +1309,24 @@ __device__ __forceinline__ void s4b_tail(const WyS4BParams& p, S4BSmem& sm, cons
+     float dbacc = 0.f;
+     #pragma unroll 1
+     for (int kt = 0; kt < 8; ++kt) {
+-        const int buf = kt & 1, kc = 16 * kt;
++        const int buf = KDA_S4B1 ? 0 : (kt & 1), kc = 16 * kt;
++#if KDA_S4B1
++        v4bh dwo[4];                                       // kra P-938s1: the epilogue's dwT B operands, issued first
++        #pragma unroll
++        for (int st = 0; st < 4; ++st) dwo[st] = ld8(dwTg + (kc + pm) * kBT + 4 * (4 * st + q));
++#else
+         // kra P-29: this kt's dwT tile, one 8 B load per thread (issued first: oldest in vmcnt)
+         const int dwr = threadIdx.x >> 4, dwc = threadIdx.x & 15;
+         const v4bh dwv = ld8(dwTg + (kc + dwr) * kBT + 4 * dwc);
++#endif
+         int4 pfh, pfd;
+         const bf16* sh = &sm.stg[buf][0][0];
+         const bf16* sdh = &sm.stg[buf][1][0];
+         auto HB = [&](int vt) { return ld8(sh + vt * 256 + l * 4); };
+         auto DHB = [&](int vt) { return ld8(sdh + vt * 256 + l * 4); };
+-        if (kt + 2 < 8) {
+-            pfh = hg4[(kt + 2) * 256 + threadIdx.x];
+-            pfd = dhg4[(kt + 2) * 256 + threadIdx.x];
++        if (kt + NBUF < 8) {
++            pfh = hg4[(kt + NBUF) * 256 + threadIdx.x];
++            pfd = dhg4[(kt + NBUF) * 256 + threadIdx.x];
+         }
+         const f4 gv = ld16f(g_ + rog + kc);
+         const v4bh kk = rok ? ld8(k_ + ro + kc) : v4bh{0, 0, 0, 0};
+@@ -1361,16 +1389,18 @@ __device__ __forceinline__ void s4b_tail(const WyS4BParams& p, S4BSmem& sm, cons
+         #pragma unroll
+         for (int e = 0; e < 4; ++e) {
+             const float kf = bf2f(kk[e]), qf = bf2f(qq[e]);
+-            const int o = (4 * e + q) * TS + row;
++            const int o = s4b_tix(4 * e + q, row);
+             sm.TA[o] = kf * en[e];
+             sm.TQ[o] = qf * ep[e];
+             sm.TK[o] = kf * beta_t * ep[e];
+         }
+         #pragma unroll
+         for (int e = 0; e < 4; ++e) sm.gM[A][4 * e + q] = g8[e];   // kra P-40: every lane, same value
++#if !KDA_S4B1
+         *reinterpret_cast<v4bh*>(&sm.dwTs[dwr * 64 + 4 * (dwc ^ dwr)]) = dwv;   // kra P-29
++#endif
+         lds_barrier();
+-        if (kt + 2 < 8) {                          // tile kt+2 -> the buffer tile kt freed
++        if (kt + NBUF < 8) {                       // tile kt+NBUF -> the buffer tile kt freed
+             stg4[(buf * 2 + 0) * 256 + threadIdx.x] = pfh;
+             stg4[(buf * 2 + 1) * 256 + threadIdx.x] = pfd;
+         }
+@@ -1378,14 +1408,18 @@ __device__ __forceinline__ void s4b_tail(const WyS4BParams& p, S4BSmem& sm, cons
+         f4 acc = {0.f, 0.f, 0.f, 0.f};
+         #pragma unroll
+         for (int st = 0; st < 4; ++st)
++#if KDA_S4B1
++            acc = mmac(aa[st], dwo[st], acc);
++#else
+             acc = mmac(aa[st], ld8(&sm.dwTs[pm * 64 + 4 * ((4 * st + q) ^ pm)]), acc);   // kra P-29
++#endif
+ 
+         f4 cq0 = {0.f, 0.f, 0.f, 0.f}, cq1 = cq0, ck0 = cq0, ck1 = cq0, ct0 = cq0, ct1 = cq0;
+         {
+         const float gm_n = sm.gM[A][m];
+         #pragma unroll
+         for (int b = 0; b <= A; ++b) {
+-            f4 t = *reinterpret_cast<const f4*>(&sm.TA[m * TS + 16 * b + 4 * q]);
++            f4 t = *reinterpret_cast<const f4*>(&sm.TA[s4b_tix(m, 16 * b + 4 * q)]);
+             if (b < A) t *= ex2_diff(gm_n, sm.gM[b][m]);
+             cq0 = mm8(lo2(aqA[b]), lo2(t), cq0);
+             ck0 = mm8(lo2(dak[b]), lo2(t), ck0);
+@@ -1394,8 +1428,8 @@ __device__ __forceinline__ void s4b_tail(const WyS4BParams& p, S4BSmem& sm, cons
+         }
+         #pragma unroll
+         for (int b = A; b < 4; ++b) {
+-            f4 tq = *reinterpret_cast<const f4*>(&sm.TQ[m * TS + 16 * b + 4 * q]);
+-            f4 tk = *reinterpret_cast<const f4*>(&sm.TK[m * TS + 16 * b + 4 * q]);
++            f4 tq = *reinterpret_cast<const f4*>(&sm.TQ[s4b_tix(m, 16 * b + 4 * q)]);
++            f4 tk = *reinterpret_cast<const f4*>(&sm.TK[s4b_tix(m, 16 * b + 4 * q)]);
+             if (b > A) {
+                 const float s = ex2_diff(sm.gM[b][m], gm_n);
+                 tq *= s;

@@ -1458,3 +1458,20 @@ ABBA, kernel time (one build, env A vs B; GPU 1-3 in parallel):
   dwTs 2048; the prologue's dA / dAqk MLS staging also uses all 32 KB) and VGPR <= 168 (now 241).  Single-buffered
   h / dh staging frees 8 KB at no latency cost (section 64) -> 24.6 KB; 2.8 KB more and a 73-VGPR cut remain.
   The alternative with the same per-CU LDS is an 8-wave CTA at VGPR <= 128 (4 waves per SIMD).
+
+## 82. s4b to 3 CTAs per CU: step 1 (LDS) works, step 2 (VGPR cap) loses 3x
+- P-938dt pushed (06e8f2c..3317476).
+- **Step 1, P-938s1** (gfx938-only S4BSmem): h / dh staging and the cs partials single-buffered (tile kt+1 loaded at the
+  top of kt, written after the first barrier: the double buffer's load -> LDS distance), tables unpadded with the
+  4-float groups XOR-swizzled by row, the dwT operand read straight into registers at the top of kt (no dwTs tile),
+  the prologue's 32 KB dA / dAqk MLS staging (P-938t) replaced by the per-lane path.  LDS 32768 -> **21248 B** (3 CTAs
+  per CU possible), VGPR 241 -> 249, gate 84/84.  s4b 0.97-1.00x (6 shapes) at the unchanged 2 CTAs per CU (the lost
+  P-938t / P-29 gains).  Patch kept: results/kda-gfx938-s4b3cta-20261031/p938s1_s4b_lds21k.diff (not committed).
+- **Step 2**: + amdgpu_num_vgpr(168) -> VGPR 168, scratch 324 B (dense) / 428 B (varlen); bit-identical, but **s4b
+  0.32-0.34x, fwd+bwd 0.63-0.67x**.  The spills sit in the kt loop (every kt reloads the persistent operand set from
+  scratch), far beyond what the third CTA hides.  (A waves_per_eu(3, 3) request made the compiler aim at 84 VGPRs with
+  844-1168 B of scratch: its occupancy model for gfx938 does not match the measured residency.)
+- s4b's VGPR is mostly the per-CTA persistent operand set (dak / aqA / aqB / akB ~48, ado / avn 32, aa 8) plus the
+  kt loop's live set; 168 needs that set moved out of registers, and there is no LDS left at 3 CTAs (597 B).  The
+  remaining structural route is an 8-wave CTA at 2 CTAs per CU (4 waves per SIMD, VGPR <= 128, LDS <= 32 KB) with
+  the V (vt) operands and the pass K / Q partials split across wave pairs (+ an LDS reduction per kt).
