@@ -1379,3 +1379,24 @@ ABBA, kernel time (one build, env A vs B; GPU 1-3 in parallel):
 - What the ceiling does show: prep_b's pass 0 / 1 (Kb -> Wn, v beta -> Un) are ~49% of prep_b at H = 64; with section
   76, the hand-off cost of the gfx938 forward sits in the stores (TA write ~2.7x the read cost per byte) of the
   three-kernel structure, and no re-split tried here (fusion: residency; A: redundant w + chain) removes them cheaper.
+
+## 78. Store cost per access form on gfx938 (examples/kda/gfx938/st_forms.hip) and P-938aq
+8192 CTAs x 256 threads, 512 MB of useful bytes per launch, residency 2 / 3 / wave-limited (dynamic LDS pad):
+| form | GB/s | TA busy (M cycles) | write requests |
+|---|---:|---:|---:|
+| 16 / 8 / 4 B per lane, contiguous (1 KB / 512 / 256 B per wave store) | 1660-1850 | 25.6 | 8.39M (64 B each) |
+| 16 B per lane, 256 B row segments, row stride 16 KB | 1660-1770 | 25.9 | 8.39M |
+| 16 B per lane, 128 B row segments, row stride 8 KB | 1240-1280 | 37.9 | 8.39M |
+| 8 B per lane, 64 B row segments | 940-1010 | 48.7 | 8.39M |
+| 8 B per lane, 32 B row segments, 4 consecutive stores complete each 128 B row (prep_b Aqk / Akk, fwd_h o) | **730** | 68.6 | 16.78M (32 B each) |
+| 2 B per lane, scattered | 1160-1310 | 38.0 | 8.39M |
+| nontemporal variants | no gain | -- | -- |
+- A store costs per 64 B write request (TA ~3 cycles each) and per line it touches; writing whole lines (or >= 256 B
+  row segments) runs at the HBM write peak.  32 B row pieces cost 2.5x per byte.
+- Production write requests per call (PMC TCP_TCC_WRITE_REQ_sum, 8192/64) vs written bytes: prep_a 63 B / request,
+  dhu / dav / gate 64, bwd_tail 44-52, fwd_h (wide) 48, s4b 47, prep_b 45, s4a 39, wu 36.
+- **P-938aq** (prep_b: Aqk rows held until after the solve, Aqk + Akk staged per wave in the dead solve tiles and
+  emitted as whole 128 B rows, 8 lanes x 16 B): bit-identical (84/84), but prep_b 0.96-1.01x (ABBA, 6 shapes).  The
+  32 B-piece stores were overlapped with the solve; moving them behind a barrier as full rows bought nothing.
+  Reverted.  Rule (R66): a store form that is slow in isolation is a candidate only if a deletion ceiling shows the
+  store on the critical path (fwd_h's o: cB2 1.13-1.16x, section 66; prep_b's Aqk / Akk: not established).
