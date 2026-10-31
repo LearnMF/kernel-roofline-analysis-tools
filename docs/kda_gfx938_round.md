@@ -1475,3 +1475,23 @@ ABBA, kernel time (one build, env A vs B; GPU 1-3 in parallel):
   kt loop's live set; 168 needs that set moved out of registers, and there is no LDS left at 3 CTAs (597 B).  The
   remaining structural route is an 8-wave CTA at 2 CTAs per CU (4 waves per SIMD, VGPR <= 128, LDS <= 32 KB) with
   the V (vt) operands and the pass K / Q partials split across wave pairs (+ an LDS reduction per kt).
+
+## 83. Small shapes (T = 1K / 2K): per kernel vs H20, and wave quantization
+Per kernel at 1K / 2K (fwd_kern / bwd_kern, 3317476 vs h20-5 FLA; the grad-accumulation elementwise kernels excluded):
+| shape | fwd H20 / g938 | bwd H20 / g938 |
+|---|---|---|
+| 1024/64 | 340 / 433 (0.78) | 1218 / 1210 (1.01) |
+| 1024/32 | 184 / 231 (0.80) | 668 / 682 (0.98) |
+| 1024/16 | 111 / 137 (0.81) | 360 / 409 (**0.88**) |
+| 1024/8 | 81 / 89 (0.91) | 226 / 247 (0.92) |
+| 2048/32 | 358 / 407 (0.88) | 1241 / 1191 (1.04) |
+| 2048/8 | 136 / 145 (0.93) | 417 / 427 (0.98) |
+- Forward at small T is the general forward gap (prep_a alone is ~2x FLA's gate + intra_sub at 1K: 176 vs 97 us at
+  1024/64, 58 vs 29 at 1024/16); the backward falls behind only at small T and small H.
+- Wave quantization: a (chunk, head) grid at 1024/16 has 256 CTAs; at 3 CTAs per CU (216 slots: prep_a, wu, s4a) it
+  takes 2 rounds (59% of the second round empty), s4b at 2 per CU (144 slots) 2 rounds; 1024/32 / 2048/16 (512 CTAs)
+  take 3 rounds.  Doubling the work from 1024/16 to 2048/16 costs wu 1.55x, prep_a 1.76x, s4b 1.83x instead of 2x.
+  1024/8 / 2048/8 (128 / 256 CTAs) under-fill the 72 CUs.  H = 8 recurrences (fwd_h, dhu) are chain bound.
+- The backward kernels form a dependency chain (gate -> wu -> gn -> dav -> dhu -> s4a / s4b -> bwd_tail), so running
+  kernels concurrently to fill the tails is not available.  Levers: more CTAs per CU at small grids (LDS / VGPR), or
+  CTA splitting (half the rows / columns per CTA) when the grid is below ~2 rounds.
