@@ -1592,3 +1592,23 @@ Candidate dataflows (what each removes, what it costs, the ceiling that must pas
 Order: F1 budget probe (compile only, minutes) -> F2 occupancy / timing probe -> F4 per-chunk step-time
 microbench.  Any candidate goes on only if its ceiling clears the 1.27x forward target at 8192/64 and does not lose
 at H = 8.
+
+## 90. Forward redesign, first pass: none of F1-F4 can reach the 1.27x forward target at 8192/64
+- F1 (prep_a + prep_b in one kernel) was already built and measured (sections 56-57, P-938f): bit-identical but
+  0.75-0.90x (VGPR 185, 2 CTAs) and 0.72-0.85x for the R-only fusion at 3 CTAs (VGPR 157).  SQTT: the fused CTA costs
+  the sum of the two latencies; prep_b's latency-bound part loses its 4th CTA.  Its hand-off ceiling (R / Kb loads and
+  stores removed) is only 1.4-3.7% end to end.  Dead.
+- F2 (8-wave CTA, producer waves build R / Kb, consumer waves solve) only overlaps the two stages if the CTA pipelines
+  chunks, which needs two R buffers (2 x 20 KB) + the Kb tile: 1 CTA (8 waves, 2 per SIMD) per CU, the same residency
+  loss that sank F1.  Dead on the budget.
+- F4 (per-head persistent forward) at H = 64: the grid is 64 CTAs on 72 CUs (8 idle), and the intra-chunk prep work
+  must run on those 64 CUs.  Today prep_a + prep_b = 1964 us x 72 CUs = 141 ms-CU at 3-4 CTAs per CU; on 64 CUs that
+  is 2209 us before any recurrence work and before the occupancy loss of 1 CTA per CU -- 90% of H20's whole forward
+  (2445 us).  The recurrence shares the same CUs (fwd_h 1150 us at ~1.8 CTAs per CU).  Splitting a head over 2 V-slab
+  CTAs duplicates the prep work.  At H <= 32 the grid (<= 32 CTAs) under-fills the GPU outright.  Dead.
+- F3 rides on F1 / F2.
+- What the first pass shows: the forward's *work* (prep_a VALU, prep TA issue, the recurrence) already fills the
+  machine; section 76's hand-off-free forward (2265 us) is a bound no dataflow reaches, because every way of removing
+  hand-offs gives up parallelism (fewer CTAs per CU, or fewer CTAs).  Closing the 1.27x needs less work per chunk:
+  fewer VALU / transcendental operations in prep_a (B-class arithmetic: 2^g factorisations, precision of the gated
+  operands) or a different chunk algorithm -- not a different split of the same work.
