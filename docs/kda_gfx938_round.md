@@ -1878,3 +1878,18 @@ be -1.  Combined (d5ac572 = de11e84 + the three kept) vs de11e84, ABBA fwd+bwd o
   1.028-1.062x, fwd+bwd 0.997-1.012x (9 shapes; the small T shapes gain most: 1024/16 1.011, 2048/8 1.012).
 - P-938sa scorecard: kept bwd_tail, dhu, wu, prep_a; rejected s4b (TA-bound), fwd_h (chain schedule), gate (neutral).
   Untried: s4a, dav (both TA-bound like s4b: low expectation), prep_b (no 64-bit address ops in its main body).
+
+## 106. Packed fp32 in prep_a: the compiler already packs the pairable work; wu's row-load ceiling
+- 5ebce6f pushed (d5ac572..5ebce6f).
+- prep_a (production instance) VALU mix: v_mul_f32 309, v_sub_f32 287, v_exp_f32 241, v_lshlrev_b32 229 (bf16 ->
+  fp32 unpack), v_mov_b64 170, v_cvt_pk_bf16_f32 160, v_pk_mul_f32 144, v_pk_add_f32 113, v_add_f32 105, fmac / fma
+  138.  Rewriting the gate scan / carry Kahan steps as ext_vector_type(2) changed nothing (same 839 scalar + 257 packed
+  ops): the SLP vectorizer had already packed them, and the 170 v_mov_b64 are the register shuffles it pays for the
+  existing packed ops.  The remaining scalar ops are the exp2 arguments (G - ref) and products interleaved with
+  v_exp_f32 per element, where packing needs pair moves around every SFU op.  Estimated <= 2-3% of prep_a, <= 0.3% of
+  the total; not pursued (bwd_tail's 1130 scalar ops are the same pattern).
+- wu row loads (k / v / q / g, the 14 wa() sites) deleted (timing only): wu 1.087-1.201x, fwd+bwd 1.007-1.024x
+  (9 shapes).  That bounds what better latency hiding of those loads can give.  MLS staging needs a 16 KB row tile
+  per phase while wu's LDS is already 18 KB at 3 CTAs per CU (16 KB on the small-grid layout); the register route is
+  a cross-phase software pipeline (issue the next phase's k / g row loads during the current MMAC phase) within the
+  VGPR headroom (132 now, 168 keeps 3 CTAs).  Expected: part of the 0.7-2.4% ceiling.
