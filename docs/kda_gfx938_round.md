@@ -1562,3 +1562,33 @@ stores, not in the input loads.
   ours do not.
 - With sections 78 (store forms), 87 (MLS inputs) and 88 (lit), the cheap gfx938-specific data-path levers are each
   <= 1% end to end on the current dataflow.
+
+## 89. Forward redesign: start (design + ceilings only, no production code)
+Goal: forward >= H20 at every shape.  Today forward / H20 = 0.72-0.97 (H >= 32: 0.72-0.87); 8192/64: 3115 us vs
+2445 us, i.e. the forward must get >= 1.27x there.  Section 76: with every hand-off free the forward is 2265 us, so a
+dataflow that removes most hand-offs without losing residency would be enough; nothing smaller is (sections 77-88).
+
+Forward traffic per token-head (B; K = V = 128, 64-token chunks):
+| tensor | producer -> consumer | write | read | kind |
+|---|---|---:|---:|---|
+| R (20 fp32 16x16 blocks / chunk) | prep_a -> prep_b | 320 | 320 | hand-off |
+| Kb (k beta 2^g, bf16) | prep_a -> prep_b | 256 | 256 | hand-off |
+| QgA, Kn (bf16) | prep_a -> fwd_h | 512 | 512 (x2 V-slab CTAs at H >= 64, x4 otherwise, mostly L2) | hand-off |
+| Gn (chunk gate) | prep_a -> fwd_h | ~8 | ~8 | hand-off |
+| Wn, Un (bf16) | prep_b -> fwd_h | 512 | 512 | hand-off |
+| AqkA (bf16) | prep_b -> fwd_h | 128 | 128 | hand-off |
+| Aqk, Akk (bf16) | prep_b -> backward | 256 | -- | saved |
+| HbN (h per chunk, bf16) | fwd_h -> backward | 512 | -- | saved |
+| o (bf16) | fwd_h -> user | 256 | -- | output |
+Hand-offs: 1736 B written + 1736+ B read per token-head; saved + outputs: 1024 B.
+
+Candidate dataflows (what each removes, what it costs, the ceiling that must pass first):
+| id | dataflow | removes | cost / risk | first ceiling |
+|---|---|---|---|---|
+| F1 | prep_a + prep_b in one kernel (solve on the R blocks still in LDS) | R, Kb: 576 W + 576 R | residency: the 2026-10 fusions ran at 0.72-0.90x (VGPR / LDS) | compile-only VGPR / LDS budget of the fused body at 3 CTAs / CU (<= 168 VGPR, <= 21.8 KB) |
+| F2 | F1 with an 8-wave CTA: waves 0-3 build R / Kb, waves 4-7 solve and emit, R in LDS | same as F1 | LDS: R 20 KB + Kb 16 KB tile; 2 CTAs / CU = 16 waves | timing: prep_a + prep_b at 2 CTAs x 8 waves (dynamic-LDS probe) vs today's 3 + 4 CTAs x 4 waves |
+| F3 | F1 + emit w / u directly in fwd_h's operand layout, fwd_h reads them once per V slab | Wn / Un write format conversions | small (section 77: re-layout ceilings < 1%) | none: only with F1 / F2 |
+| F4 | per-head persistent forward (producer waves build chunk i+1, consumer waves run the recurrence of chunk i, hand-off in LDS; FA3-style) | all hand-offs (1736 W + R) | grid = H (or 2H) CTAs: 64-128 at H = 64, 8-16 at H = 8 -> only for H >= 64; prep work per V slab duplicated | timing model: per-chunk step time must stay <= 19 us at 8192/64 on one CU (2445 us / 128 chunks) |
+Order: F1 budget probe (compile only, minutes) -> F2 occupancy / timing probe -> F4 per-chunk step-time
+microbench.  Any candidate goes on only if its ceiling clears the 1.27x forward target at 8192/64 and does not lose
+at H = 8.
