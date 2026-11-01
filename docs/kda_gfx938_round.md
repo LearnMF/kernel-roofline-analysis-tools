@@ -1691,3 +1691,23 @@ w5 build, KRA_MACHINE=gfx938-bw1102.json).  Theory bound: kda_bound.py with a ne
 - Reading for the structural rewrite: the target is s4b first (28% of the time, the worst in-flight and the worst TA
   cost per byte), and its rewrite has to change the operand layouts (producers emitting s4b's operands in whole-line /
   MLS-friendly fragment order) together with residency -- residency alone (sections 82, 85) was not reachable.
+
+## 94. s4b operand / output inventory and layout ceilings
+Per CTA (chunk i, head hh, 4 waves, wave A = rows 16A..16A+15), per kt (8 per CTA, 16 K columns each):
+| access | layout today | per-instruction footprint |
+|---|---|---|
+| h / dh tiles (prefetch) | native, int4 per lane | 4 KB contiguous each -- ideal |
+| dwT tile | native, 8 B per lane | 2 KB contiguous |
+| k, q (bf16, row-major [T, H, 128]) | row slices | 16 rows x 32 B |
+| g, gn (fp32, row-major) | row slices | 16 rows x 64 B |
+| dq, dk (bf16, s4b -> bwd_tail, P-938q) | row slices | 16 rows x 32 B (the 0.73 TB/s form of section 78) |
+| dg (fp32, s4b -> bwd_tail) | row slices | 16 rows x 64 B |
+Timing-only ceilings on de11e84 (ABBA, 6 shapes):
+- per-kt row loads (k, q, g, gn) skipped: s4b 1.055-1.10x, fwd+bwd 1.014-1.024x;
+- **per-kt row stores (dq, dk, dg) skipped: s4b 1.16-1.22x, fwd+bwd 1.037-1.053x.**
+- The stores are the larger layout cost (the gfx938 store path has ~10% headroom over HBM write, section 78/79).
+  Per kt a CTA produces 64 rows x 16 columns, so in the row-major layout no store can be longer than 32 B (bf16) /
+  64 B (fp32) per row.  dq / dk / dg are an internal s4b -> bwd_tail hand-off (bwd_tail writes the user-visible
+  gradients), so their layout is free: a chunk-native layout ([chunk-head][kt][64 rows][16 columns], 2 KB bf16 /
+  4 KB fp32 blocks) makes every s4b store a contiguous block.  Next: P-938nb = that layout + bwd_tail reading it,
+  A-class (bit-identical), measured against this ceiling.
