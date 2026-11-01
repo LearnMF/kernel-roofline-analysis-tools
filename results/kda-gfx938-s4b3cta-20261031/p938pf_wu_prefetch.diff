@@ -1,0 +1,67 @@
+diff --git a/src/primitive/hygon/kda/g2/g2_wu.cuh b/src/primitive/hygon/kda/g2/g2_wu.cuh
+index d96b5f3..e7e884f 100644
+--- a/src/primitive/hygon/kda/g2/g2_wu.cuh
++++ b/src/primitive/hygon/kda/g2/g2_wu.cuh
+@@ -450,6 +450,23 @@ __global__ void __launch_bounds__(256) g2_wu_kernel(WuParams p_) {
+             // Kn (B form): emitted in phase 3 through the LDS tile (kra L16)
+         }
+         if (p.stop == 1) return;
++#if G2_WU_LEAN
++        // kra P-938pf: cross-phase prefetch -- phase 2's v quads are issued before phase 1's w MMAC (and phase 3's first
++        // q / g half before phase 2's u MMAC) so their latency overlaps the MMAC phase.  Same loads, same values.
++        constexpr bool PF = !L16;                         // the 16 KB layout needs <= 128 VGPRs (4 CTAs per CU)
++        v4bh vpf[8];
++        if (PF && p.vB == nullptr) {
++            #pragma unroll
++            for (int it_ = 0; it_ < 8; ++it_) {
++                const int t = tid + 256 * it_;
++                const int j = t >> 5, vq = (t & 31) << 2;
++                vpf[it_] = g2_row_ok<M>(j, cl) ? *reinterpret_cast<const v4bh*>(wa(p.v, j, vq)) : v4bh{0, 0, 0, 0};
++            }
++        }
++#else
++        constexpr bool PF = false;
++        v4bh vpf[8];
++#endif
+         mmac_phase(p.Wn, p.Wb, nullptr, 2);
+         if (p.stop == 2 || p.stop == 3) return;
+ 
+@@ -461,8 +478,8 @@ __global__ void __launch_bounds__(256) g2_wu_kernel(WuParams p_) {
+             const int t = tid + 256 * it_;
+             const int j = t >> 5, vq = (t & 31) << 2;
+             const size_t so = sbase + (size_t)j * rstride + vq;
+-            const v4bh vv = g2_row_ok<M>(j, cl) ? *reinterpret_cast<const v4bh*>(wa(p.v, j, vq))
+-                                                 : v4bh{0, 0, 0, 0};
++            const v4bh vv = PF ? vpf[it_] : (g2_row_ok<M>(j, cl) ? *reinterpret_cast<const v4bh*>(wa(p.v, j, vq))
++                                                                 : v4bh{0, 0, 0, 0});
+             const float b = BETA(j);
+ #if G2_WU_MLS
+             short xb[4];   // kra P-938m: natural [j][v] row, one 8 B store
+@@ -499,6 +516,19 @@ __global__ void __launch_bounds__(256) g2_wu_kernel(WuParams p_) {
+         }
+         }
+         if (p.stop == 4) return;
++#if G2_WU_LEAN
++        v4bh qpf[4];                                     // kra P-938pf: phase 3's first q / g half, before the u MMAC
++        f4 gpf[4];
++        if constexpr (QS && KN == 0 && !L16) {
++            #pragma unroll
++            for (int i = 0; i < 4; ++i) {
++                const int tt = tid + 256 * i;
++                const int j = tt >> 5, vq = (tt & 31) << 2;
++                qpf[i] = g2_row_ok<M>(j, cl) ? *reinterpret_cast<const v4bh*>(wa(p.q, j, vq)) : v4bh{0, 0, 0, 0};
++                gpf[i] = ld16f(wa(p.g, g2_row_g<M>(j, cl), vq));
++            }
++        }
++#endif
+         mmac_phase(nullptr, nullptr, p.Un, 5);
+         if (p.stop == 5 || p.stop == 6) return;
+ 
+@@ -575,6 +605,7 @@ __global__ void __launch_bounds__(256) g2_wu_kernel(WuParams p_) {
+                     for (int i = 0; i < 4; ++i) {
+                         const int tt = tid + 256 * (4 * h + i);
+                         const int j = tt >> 5, vq = (tt & 31) << 2;
++                        if (KN == 0 && !L16 && h == 0) { qvs[i] = qpf[i]; gfs[i] = gpf[i]; continue; }   // kra P-938pf
+                         qvs[i] = g2_row_ok<M>(j, cl)
+                             ? *reinterpret_cast<const v4bh*>(wa(p.q, j, vq)) : v4bh{0, 0, 0, 0};
+                         gfs[i] = ld16f(wa(p.g, g2_row_g<M>(j, cl), vq));

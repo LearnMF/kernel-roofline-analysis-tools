@@ -1893,3 +1893,14 @@ be -1.  Combined (d5ac572 = de11e84 + the three kept) vs de11e84, ABBA fwd+bwd o
   per phase while wu's LDS is already 18 KB at 3 CTAs per CU (16 KB on the small-grid layout); the register route is
   a cross-phase software pipeline (issue the next phase's k / g row loads during the current MMAC phase) within the
   VGPR headroom (132 now, 168 keeps 3 CTAs).  Expected: part of the 0.7-2.4% ceiling.
+
+## 107. P-938pf (wu cross-phase register prefetch): bit-identical, ~0 end to end -> reverted
+- Phase 2's 8 v quads issued before phase 1's w MMAC, phase 3's first q / g half (4 + 4 quads) before phase 2's u
+  MMAC (gfx938 LEAN, KS / QS, KN = 0 instance; off on the 16 KB small-grid layout, whose 4 CTAs per CU need <= 128
+  VGPRs: with the prefetch it went 126 -> 165).  Padded-layout instance VGPR 122 -> 149 (3 CTAs per CU kept, no
+  scratch).  Gate 84/84 bit-identical.
+- ABBA (9 shapes): wu 0.981-1.025x (large shapes +1.4-2.5%, 2048/16 -1.9%), fwd+bwd 0.996-1.002x (one 1.039x whose
+  baseline run was an outlier).  Against the 1.09-1.20x row-load deletion ceiling this captures ~10-15%: the MMAC
+  phases are short relative to the load latency, and wu's wait_vm is spread over the phases' fill loops (each fill
+  consumes its loads immediately), so moving one phase's loads earlier only shifts the wait.  Reverted (patch:
+  results/kda-gfx938-s4b3cta-20261031/p938pf_wu_prefetch.diff).
