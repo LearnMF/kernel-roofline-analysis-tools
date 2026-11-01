@@ -1527,3 +1527,17 @@ Kernel time vs H at T = 1024 (16 x H CTAs), d t build, 3 reps:
   live set (row operands g / gn / k / q, the prefetch int4 pair, the pass accumulators, addresses), not the persistent
   operand arrays.  128 would need the kt loop itself split across waves (row or K halves with an LDS reduction per
   stage), i.e. a new s4b, not a re-partition.  Not started.
+
+## 86. MMAC lit / lts on gfx938 (examples/kda/gfx938/mmac_lit.hip): layout modifiers, same cost
+16x16x16 bf16, integer operands, A fragment a[e] = A[m][4q+e], B fragment b[e] = B[4q+e][m] (m = l & 15, q = l >> 4):
+| variant | result fragment | equal to lit0 lts0 | dependent latency | throughput |
+|---|---|---|---|---|
+| lit0 lts0 (ours) | gfx936 layout (element e at column (l >> 4) + 4e) | 256 / 256 | 41.4 cycles | 365 TFLOPS |
+| lit1 lts0 | A.B with C at (row m, column 4q+e) = the A-operand layout | 70 / 256 | 41.4 | 365 |
+| lit0 lts1 | none of 8 tested layouts | 28 / 256 | 41.4 | 365 |
+| lit1 lts1 (FLA) | A.B with C at (row 4q+e, column m) | 11 / 256 | 41.4 | 365 |
+- lit / lts cost nothing and change only fragment layouts.  lit1 lts0 returns a product directly in the next MMAC's
+  A-operand layout: chained GEMMs need no transpose.  This is the likely source of FLA's 1.5-1.8x on its
+  transposed-operand GEMMs (section 10).  Our kernels pay for gfx936's fixed layout with selector MMACs (fwd_h P-63),
+  LDS staging (prep_b solve stage(), s4b), ds_bpermute, pi16 permutations and g2_c2a_sel.  Next: inventory of those
+  conversions per kernel, ceiling, prototype (bit-identity to be checked per kernel: the accumulation order may differ).
