@@ -1868,3 +1868,13 @@ be -1.  Combined (d5ac572 = de11e84 + the three kept) vs de11e84, ABBA fwd+bwd o
 - Reading: removing per-lane 64-bit address math pays where those instructions sit on the binding path (VALU-bound
   bwd_tail, the dhu recurrence step, wu's row loops); it does nothing or loses where the kernel is TA-bound (s4b)
   or where saddr changes the schedule of a latency chain (fwd_h's NVH = 1 form).  R68 refined: measure per kernel.
+
+## 105. P-938sa on prep_a (local commit) and the push of the first three
+- Pushed: de11e84..d5ac572 (bwd_tail, dhu, wu).
+- prep_a (VALU 0.77): q / k row loads, beta, Kb / QgA / Kn stores as CTA-uniform base + 32-bit byte offset (QgA:
+  nat16 only permutes the bits below 512 and the block base is a multiple of 8192, so nat16(nblk + o) =
+  nblk + nat16(o); the raw-gate loads were already 32-bit since P-938ga).  Production instance: instructions
+  4080 -> 3994, 64-bit address ops 361 -> 288, saddr global ops 13 -> 33.  Gate 84/84 bit-identical; prep_a
+  1.028-1.062x, fwd+bwd 0.997-1.012x (9 shapes; the small T shapes gain most: 1024/16 1.011, 2048/8 1.012).
+- P-938sa scorecard: kept bwd_tail, dhu, wu, prep_a; rejected s4b (TA-bound), fwd_h (chain schedule), gate (neutral).
+  Untried: s4a, dav (both TA-bound like s4b: low expectation), prep_b (no 64-bit address ops in its main body).
