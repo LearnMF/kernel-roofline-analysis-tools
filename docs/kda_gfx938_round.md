@@ -1513,3 +1513,17 @@ Kernel time vs H at T = 1024 (16 x H CTAs), d t build, 3 reps:
   0.86-0.88x except 1.09x at 256 CTAs.
 - Next small-shape candidates by the same step test: prep_a (21.5 KB LDS -> 16 KB would make 256 CTAs one round),
   s4a / s4b (step at 144 CTAs: 2 CTAs per CU at these grids).
+
+## 85. s4b 8-wave plan: VGPR budget probe -> not feasible as designed
+- P-938w4 pushed (3317476..de11e84).
+- The 8-wave CTA (2 CTAs per CU, 4 waves per SIMD) needs VGPR <= 128 per wave.  Compile-only probes on the production
+  s4b (dense instance, 241 VGPR) remove what a wave pair would split:
+| probe | VGPR (dense / varlen) |
+|---|---|
+| P1: half of the V operands (ado / avn 4 of 8 vt, pass K / Q over 4 vt) | 224 / 243 |
+| P2: P1 + only the cq / ck half of the epilogue (aqA, dak, TA) | 212 / 222 |
+| P3: P1 + only the ct half of the epilogue (aqB, akB, TQ, TK) | 196 / 216 |
+- Even with the V operands and the epilogue both split, a wave keeps 196-216 VGPRs: the register peak is the kt loop's
+  live set (row operands g / gn / k / q, the prefetch int4 pair, the pass accumulators, addresses), not the persistent
+  operand arrays.  128 would need the kt loop itself split across waves (row or K halves with an LDS reduction per
+  stage), i.e. a new s4b, not a re-partition.  Not started.
