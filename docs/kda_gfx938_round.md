@@ -1767,3 +1767,18 @@ Three gfx936-era choices that now sit on gfx938's binding resources:
    (double-buffered LDS) -- measured per kernel against an MLS-free deletion ceiling.
 Fusion / pipelining between adjacent kernels (sections 56-57, 76-77, 90) stays bounded by residency; the three
 items above are per-kernel and attack the TA instruction count, the LDS replays and the VGPR budget directly.
+
+## 98. LDS bank structure on gfx938 (examples/kda/gfx938/lds_bank.hip): same 128 B period as gfx936
+One wave, lane address = lane x stride, s_memtime ticks per ds instruction (latency-weighted; ratios matter):
+- b32 reads: 57.6 at every stride that is not a multiple of 16 B; 65-70 at 16 / 32 / 48 / 80 / 96 B; 86-90 at 64 /
+  192 B; 121-125 at 128 / 256 / 512 / 1024 B (all lanes on one bank group).  b64 / b128 follow the same pattern
+  (b64 69.7 conflict-free, 132 at 128 B multiples; b128 87.5 conflict-free, 103-146 at 128 B multiples).
+- KDA 2D fragment pattern (lane m = l & 15 picks the row, q = l >> 4 the column group): pitch 136 B (the 68-short
+  pads) b64 69.6 = conflict-free; pitch 128 / 256 / 512 B 131.9 (1.9x); b128 at pitch 144 / 272 / 528 B 87.5 =
+  conflict-free, at 128 / 256 / 512 B 104-108.
+- So gfx938's bank mapping matches gfx936's (32 banks x 4 B), and the gfx936 pads used by KDA stay conflict-free for
+  these patterns.  Section 97's item 2 hypothesis ("pads tuned on gfx936") is not supported for plain ds_read /
+  ds_write; wu's 1.90 -> 4.26 conflicts per instruction must come from its gfx938-only paths (P-938m MLS staging +
+  ds_read_m32x16 reads of the natural vb rows, P-938r LEAN), and bwd_tail's 0.44 -> 1.57 from the P-938t2 tree-sum
+  exchange.  Next: attribute the conflicts per instruction (SQTT LDS stalls or a ds_read_m32x16 pattern microbench)
+  before changing any layout.
