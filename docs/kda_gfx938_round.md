@@ -1904,3 +1904,20 @@ be -1.  Combined (d5ac572 = de11e84 + the three kept) vs de11e84, ABBA fwd+bwd o
   phases are short relative to the load latency, and wu's wait_vm is spread over the phases' fill loops (each fill
   consumes its loads immediately), so moving one phase's loads earlier only shifts the wait.  Reverted (patch:
   results/kda-gfx938-s4b3cta-20261031/p938pf_wu_prefetch.diff).
+
+## 108. Three reports (2026-11-02): 24 shapes, fwd / bwd / total, FLA default and FLA disable_recompute
+Data + full tables: results/kda-3reports-20261102 (report1.md, report2.md, report3.md; mk3_fb.py, 3 reps, median).
+gfx938 runs: 4 parallel single-GPU jobs on nmz5; gfx936: bw61 (FLA split over 5 extra GPUs); H20: h20-5 GPU 1 / 2.
+FLA 0.5.2 has disable_recompute (default False = backward recomputes h; True = keeps h, the fastest backward,
+the same policy as flash-train's saved-h route).  mk3_fb.py: FLA_NORECOMP=1.
+| comparison (geomean speedup, >1 = flash-train faster) | fwd | bwd | total | total >= 1 |
+|---|---|---|---|---|
+| gfx938 ft 5ebce6f vs H20 FLA default | 0.886 | 1.018 | **0.985** | 10 / 24 |
+| gfx938 ft vs H20 FLA no-recompute | 0.946 | 0.850 | **0.876** | 0 / 24 |
+| gfx938 ft vs gfx938 FLA default | 2.038 | 2.442 | **2.338** | 24 / 24 |
+| gfx938 ft vs gfx938 FLA no-recompute | 2.130 | 2.061 | **2.080** | 24 / 24 |
+| gfx938 ft now vs first port b3d03be | 1.182 | 1.220 | **1.210** | 24 / 24 |
+| gfx936 ft e9eb1ef vs gfx936 FLA default | 1.809 | 2.120 | **2.040** | 24 / 24 |
+| gfx936 ft vs gfx936 FLA no-recompute | 1.933 | 1.835 | **1.860** | 24 / 24 |
+| gfx936 ft vs H20 FLA default | 0.763 | 0.872 | **0.844** | 1 / 24 |
+| gfx936 ft vs H20 FLA no-recompute | 0.815 | 0.728 | **0.751** | 0 / 24 |
