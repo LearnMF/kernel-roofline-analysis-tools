@@ -1826,3 +1826,11 @@ Share of wave time (issue + stall charged to the instruction), the top items per
   gfx938's VALU is 22% weaker than gfx936's; addressing through SGPR bases + 32-bit VGPR offsets (global saddr /
   buffer loads) removes the 64-bit per-lane math.  Second ceiling: count the address instructions per kernel in the
   ISA and estimate their share.
+
+## 102. s4a's 2 B stores = the transposed dwT emit (P-938a LEAN): deletion ceiling 1.03-1.04x -> not pursued
+- The 607 global_store_short per wave are pass W's dwT written transposed straight to global, one bf16 per store
+  ([col][tr], pitch 64; P-938a dropped the LDS staging for residency).  Timing-only deletion: s4a 1.028-1.038x,
+  fwd+bwd 1.002-1.004x (6 shapes).  A merged emit can only get part of that.  Not pursued.
+- Method note (R67): SQTT charged these stores 9.3% of s4a's wave time; deleting them saves ~3%.  The issue-gap
+  attribution charges a stall to the instruction that waits, while the latency it waits on is shared with the
+  surrounding loads -- SQTT shares rank candidates, only a deletion ceiling sizes them.
