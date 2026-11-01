@@ -1495,3 +1495,21 @@ Per kernel at 1K / 2K (fwd_kern / bwd_kern, 3317476 vs h20-5 FLA; the grad-accum
 - The backward kernels form a dependency chain (gate -> wu -> gn -> dav -> dhu -> s4a / s4b -> bwd_tail), so running
   kernels concurrently to fill the tails is not available.  Levers: more CTAs per CU at small grids (LDS / VGPR), or
   CTA splitting (half the rows / columns per CTA) when the grid is below ~2 rounds.
+
+## 84. Wave quantization confirmed (T = 1024, H swept) and P-938w4 (wu 16 KB layout at small grids, local commit)
+Kernel time vs H at T = 1024 (16 x H CTAs), d t build, 3 reps:
+| kernel | before the step | after the step | step at |
+|---|---|---|---|
+| wu | 56 us at H = 13 (208 CTAs) | 79 us at H = 14 (224), 90 at H = 16 | 216 slots (3 CTAs / CU) |
+| prep_a | 43 us at H = 13 | 60 at H = 14, 68 at H = 16 | 216 slots |
+| s4a | 27 us at H = 9 (144) | 35 at H = 10 | 144 slots (2 / CU at this shape) |
+| s4b | 67 us at H = 9 | 107 at H = 10, 127 at H = 16 | 144 slots |
+- Each kernel is a step function of the CTA count: per-CTA latency ~50 us (wu) and the tail round costs a full CTA
+  lifetime.  A 4th CTA per CU (288 slots) makes 256-CTA grids (1024/16, 2048/8) one round.
+- **P-938w4**: wu template variant with the slab unpadded (columns already XOR-swizzled), natural vb rows unpadded,
+  beta / the chunk-last g row read from global: 16384 B of LDS, launched at <= 288 CTAs.  wu 1.19-1.20x at 1024/16
+  and 2048/8, fwd+bwd 1.022-1.024x; gate 84/84.  At 512+ CTAs the 16 KB form measured 0.97-0.98x, so the padded
+  layout stays there.  A VGPR cap of 128 on top (4 CTAs by registers; 92 B scratch in the production instance) lost:
+  0.86-0.88x except 1.09x at 256 CTAs.
+- Next small-shape candidates by the same step test: prep_a (21.5 KB LDS -> 16 KB would make 256 CTAs one round),
+  s4a / s4b (step at 144 CTAs: 2 CTAs per CU at these grids).
