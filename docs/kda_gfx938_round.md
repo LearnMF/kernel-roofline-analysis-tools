@@ -1799,3 +1799,9 @@ One wave, lane address = lane x stride, s_memtime ticks per ds instruction (late
   tiling lever (fewer, wider V slabs, as P-938wd did for fwd_h at H >= 64), not a width lever.  The width lever is
   s4a (88 x 8 B loads, 32 x 2 B stores), dav (2 B loads), wu (47 x 8 B), bwd_tail (86 x 4 B loads, 83 x 4 B stores)
   and s4b (88 x 4 B + 82 x 8 B loads).  Static counts: runtime weights come from the hot loops (next: SQTT / ceilings).
+
+## 100. 24 shapes on de11e84 (official protocol, nmz5 GPU 0, host load 10-13 during the run)
+gfx938 / H20 total = **0.971** (forward 0.872, backward 1.004), 9 of 24 shapes >= H20.  vs 06e8f2c: 1024/16 +4.3%,
+2048/8 +1.8% (P-938w4 / P-938dt), the rest within +-1% except 4096/64 0.955, 8192/32 0.941, 16384/64 1.046 -- opposite
+signs on shapes the two commits do not touch, i.e. run-to-run noise between separate runs (host load 10-13 here vs
+6-8 in section 79).  Table: results/kda-gfx938-vs-h20-20261029/g938_w5.
