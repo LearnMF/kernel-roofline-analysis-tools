@@ -1548,3 +1548,17 @@ constants instead), ABBA: prep_a 1.12x at 2048/16 and 1024/64, 1.08-1.09x at 819
 16384/8 and 32768/16; fwd+bwd 1.003-1.010x.  An MLS version still pays 0.29x of the TA plus the LDS writes and a
 barrier, so it gets less than half of that.  Not built.  prep_a's time is in its VALU work, the LDS exchanges and the
 stores, not in the input loads.
+
+## 88. What lit could remove in our kernels: the in-wave C -> operand round trips cost ~0 -> not pursued
+- fp32 MMAC has a lit / lts form too (__builtin_hcu_mmac_16x16x8_f32_lit_lts; BuiltinsLingShu.def lists lit / lts for
+  bf16, f16, tf32, f32, fp8 and int MMACs).
+- Ceiling for the in-wave layout conversions lit would remove: prep_b's solve and prep_a's two solves pass every
+  product through stage() (wave_lds_order, put to LDS, wave_lds_order, then the mmB column reads).  Timing-only build
+  without the put and the two waits: prep_b 1.000-1.021x, prep_a 1.001-1.009x, fwd+bwd 0.997-1.001x (5 shapes).  The
+  round trips are already hidden.
+- fwd_h's and s4b's C -> operand conversions are cross-wave (a wave holds one 16-row block, the next GEMM contracts
+  over all 64 tokens), so they need the LDS exchange whatever the fragment layout; s4b's g2_c2a_sel runs once per CTA.
+- So lit does not carry FLA's gfx938 gain over to us: Triton's GEMM chains had their transposes on the critical path,
+  ours do not.
+- With sections 78 (store forms), 87 (MLS inputs) and 88 (lit), the cheap gfx938-specific data-path levers are each
+  <= 1% end to end on the current dataflow.
