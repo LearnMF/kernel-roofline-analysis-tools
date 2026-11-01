@@ -1638,3 +1638,19 @@ Relaxed precision bar = "fp64 rms error no worse than FLA's, deterministic, Mega
 Both deterministic on these cases.  Our headroom under the FLA bar is ~0.5% on o / q / k / v / beta and 8-23% on the
 gate-path gradients.  So a relaxed rewrite can only touch arithmetic whose error stays below the bf16 I/O floor of
 the main tensors (rms ~5e-3), or the gate path (dg / dA_log / ddt_bias: g cumsum, its Kahan step, the dg reductions).
+
+## 92. Relaxed-precision candidates measured against the FLA bar: none passes with a gain
+fp64 rms error / w5 error, geomean over the 6 oracle cases (4 x 4096/12, 16384/12, 32768/4); FLA for reference:
+| variant | o | q | k | v | g_raw | beta | A_log | dt_bias | speed ceiling |
+|---|---|---|---|---|---|---|---|---|---|
+| FLA (the bar) | 1.005 | 1.005 | 1.004 | 1.006 | 1.167 | 1.006 | 1.078 | 1.223 | -- |
+| dgr: s4b -> bwd_tail dg hand-off rounded to bf16 | 1.000 | 1.000 | 1.000 | 1.000 | **1.890** | 1.000 | **1.487** | **3.135** | deleting the whole dg hand-off: fwd+bwd 1.015-1.021x (bf16 would save half) |
+| rr2: prep_a -> prep_b R rounded to bf16 | **1.019** | 1.003 | 1.007 | **1.025** | 1.003 | **1.019** | 0.865 | 0.990 | <= 0.5% (section 62) |
+| gate Kahan steps dropped | not built | | | | | | | | prep_a 1.01-1.03x, <= 0.3% total (section 75) |
+- dg in bf16 multiplies the gate-gradient error 1.5-3.1x (FLA keeps dg in fp32 too); R in bf16 adds 1.9-2.5% to
+  o / v / beta, 4-5x the 0.5% FLA margin.  Both rejected; both were worth <= 1% even if they had passed.
+- With section 91: under "no worse than FLA" the main tensors have ~0.5% headroom (the bf16 I/O floor dominates every
+  implementation), the gate path 8-23%, and the gate path is worth <= 0.3-1% of the time.  Relaxed precision at the
+  FLA bar does not open a speed lever on gfx938.  (Emulation: values rounded to bf16 and stored as fp32 -- the same
+  numerics as a bf16 hand-off, layout untouched.  The first rr build patched the gfx936-only intra2 dump; rr2 patches
+  the gfx938 prep_a dump.)
