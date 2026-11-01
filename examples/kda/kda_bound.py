@@ -92,6 +92,9 @@ MACHINES = {
     "BW1000": dict(hbm_r=1339.2e9, hbm_w=1100.5e9, mmac=475.96e12, valu_lane=80 * 64 * 1.5e9,
                    valu_pk=2.0, sfu=1916e9, cus=80, clk=1.5e9,
                    src="kra calibrate (gfx936-bw1000.json): hbm read/write, mmac_bf16, valu (pk_fma 29.7 TF), sfu_exp2"),
+    "BW1102": dict(hbm_r=2014.7e9, hbm_w=1804.0e9, mmac=371.25e12, valu_lane=72 * 64 * 1.3e9,
+                   valu_pk=2.0, sfu=2983e9, cus=72, clk=1.3e9,
+                   src="kra calibrate (gfx938-bw1102.json): hbm read/write, mmac_bf16, valu, sfu_exp2"),
     "A800": dict(hbm_r=1771.2e9, hbm_w=1771.2e9, mmac=276e12, valu_lane=108 * 64 * 1.41e9,
                  valu_pk=1.0, sfu=108 * 16 * 1.41e9, cus=108, clk=1.41e9,
                  src="nv_peaks (copy 1771 GB/s, torch bf16 mm ~276 TF); FP32 / MUFU lanes from the SM spec"),
@@ -116,10 +119,11 @@ def lstep_floor_bw():
 # one CTA per CU): forward step (state + o) 1.23 us, state-only step (recompute / dh) 1.00 us.
 # NV: no microbenchmark yet -- FLA's measured kernel per step (H20 fwd_h 1.72 us incl. loads) is an
 # upper estimate, the same-structure floor is taken as ~0.8x the BW floor (range reported).
-LSTEP = {"BW1000": (1.23e-6, 1.00e-6), "H20": (0.9e-6, 0.8e-6), "A800": (1.0e-6, 0.85e-6)}
+LSTEP = {"BW1000": (1.23e-6, 1.00e-6), "BW1102": (1.23e-6 * 1.5 / 1.3, 1.00e-6 * 1.5 / 1.3),   # BW1102: same cycles, 1.3 GHz
+         "H20": (0.9e-6, 0.8e-6), "A800": (1.0e-6, 0.85e-6)}
 # attainable MMAC for KDA's tile patterns (bound_microbench k_mmac_tile, >= 2 waves / SIMD):
 # one operand register-resident 436-452 TF (0.92-0.95 of peak), both from LDS 231-237 TF (0.49)
-MMAC_EFF = {"BW1000": 0.92, "H20": 0.9, "A800": 0.9}
+MMAC_EFF = {"BW1000": 0.92, "BW1102": 0.92, "H20": 0.9, "A800": 0.9}
 
 
 def bounds(mname, T, H, policy="P1", lstep=None):
@@ -143,7 +147,7 @@ def bounds(mname, T, H, policy="P1", lstep=None):
     # instruction (HBM working set), contiguous stores 56 per 1 KB; fragment patterns (16 rows x 32-64 B)
     # cost 64-169 per instruction.  The irreducible bytes moved with the best patterns:
     t_ta = 0.0
-    if mname == "BW1000":
+    if mname in ("BW1000", "BW1102"):   # per-CU cycles per 1 KB instruction measured equal on gfx936 / gfx938
         t_ta = (rbytes / 1024 * 21 + wbytes / 1024 * 56) / (m["cus"] * m["clk"])
     terms = dict(mem=t_mem, mmac=t_mmac, valu=t_valu, chain=t_chain, ta=t_ta)
     thr = max(t_mem, t_mmac, t_valu, t_ta)

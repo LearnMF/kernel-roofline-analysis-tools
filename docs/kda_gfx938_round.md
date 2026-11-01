@@ -1654,3 +1654,40 @@ fp64 rms error / w5 error, geomean over the 6 oracle cases (4 x 4096/12, 16384/1
   FLA bar does not open a speed lever on gfx938.  (Emulation: values rounded to bf16 and stored as fp32 -- the same
   numerics as a bf16 hand-off, layout untouched.  The first rr build patched the gfx936-only intra2 dump; rr2 patches
   the gfx938 prep_a dump.)
+
+## 93. Whole-chain four-level review on de11e84 (24 shapes, playbook section 2) + Little's law with layout
+Data: results/kda-gfx938-cards-20261101-w5 (5 hip-trace runs + read / write / L2 / SQ PMC per shape, isa_mix of the
+w5 build, KRA_MACHINE=gfx938-bw1102.json).  Theory bound: kda_bound.py with a new BW1102 entry (calibrated HBM, MMAC
+371 TF, VALU, SFU 2983 G/s, recurrence step = BW1000's cycles at 1.3 GHz), policy P2 (saved h).  The split bound
+(optrace byte ledger) was not collected, so floor / theory is hand-off x in-kernel redundancy together.
+| | 1K | 2K | 4K | 8K | 16K | 32K |
+|---|---|---|---|---|---|---|
+| floor / theory, H = 64 / 32 / 16 / 8 | 6.9 / 7.2 / 8.6 / 4.4 | 6.6 / 6.8 / 7.3 / 4.3 | 6.4 / 6.5 / 7.1 / 4.1 | 6.2 / 6.4 / 6.7 / 4.1 | 6.1 / 6.4 / 6.5 / 4.0 | 6.0 / 6.3 / 6.5 / 3.9 |
+| measured / floor, H = 64 / 32 / 16 / 8 | 1.41 / 1.48 / 1.46 / 1.88 | 1.34 / 1.38 / 1.48 / 1.63 | 1.32 / 1.33 / 1.33 / 1.51 | 1.31 / 1.29 / 1.30 / 1.37 | 1.31 / 1.27 / 1.27 / 1.30 | 1.30 / 1.27 / 1.25 / 1.27 |
+- Geomean: floor / theory **5.92x**, measured / floor **1.37x**.  The large factor is work (bytes / instructions per
+  useful byte), not idling.  The theory bound itself favours gfx938 at H >= 16 (8192/64: 1.40 ms, HBM-bound, vs
+  H20's 1.78 ms, MMAC-bound); at H = 8 it is chain-bound (0.33 vs 0.22 ms) -- yet we lead H20 at H = 8 and trail at
+  H >= 32 in measured time, i.e. the gap is implementation work, not the hardware's theory limit.
+- Per kernel (time-weighted over the 24 shapes):
+| kernel | share | meas / floor | primary | TA | VALU | HBM % peak | in-flight KB / CU (need 12.4) | TA cycles per KB through L2 vs best pattern |
+|---|---|---|---|---|---|---|---|---|
+| s4b | 28.0% | 1.56 | TA | 0.64 | 0.49 | 37% | 4.6 | 74 / 30 = **2.5x** |
+| wu | 13.8% | 1.36 | TA | 0.73 | 0.57 | 61% | 7.6 | 1.5x |
+| dhu | 10.7% | 1.21 | TA | 0.73 | 0.35 | 47% | 5.8 | 1.8x |
+| fwd_h | 10.3% | 1.35 | TA | 0.68 | 0.32 | 44% | 5.5 | 1.7x |
+| prep_a | 10.2% | 1.25 | VALU | 0.53 | 0.77 | 42% | 5.2 | 1.6x |
+| s4a | 8.0% | 1.08 | TA | 0.90 | 0.41 | 62% | 7.6 | 1.9x |
+| prep_b | 6.5% | 1.11 | TA | 0.84 | 0.38 | 62% | 7.7 | 1.5x |
+| dav | 5.4% | 1.17 | TA | 0.82 | 0.58 | 58% | 7.2 | 1.6x |
+| bwd_tail | 4.4% | 1.08 | VALU | 0.57 | 0.90 | 55% | 6.8 | 1.7x |
+| gate | 2.2% | 1.09 | VALU | 0.69 | 0.84 | 78% | 9.6 | 1.2x |
+  (Best pattern: 21 TA cycles per KB read, 56 per KB written, weighted by each kernel's read / write mix; TA busy
+  includes waiting for returns, R54, so the factor mixes layout and latency.  cards.py's resident-CTA model does not
+  match gfx938's measured steps -- section 84 -- and is not quoted.)
+- Little's law with layout: useful bandwidth = in-flight requests x useful bytes per request / latency.  In-flight
+  requests are capped by waves x outstanding loads (4.6-9.6 KB per CU of the 12.4 needed); the layout sets the useful
+  bytes per request and the TA cost per useful byte (32 B row pieces 2.5x per byte, section 78; per-lane gathers vs
+  whole-line / MLS loads 0.29x, section 18).  Both factors multiply: s4b is last on both (2 CTAs, 4.6 KB, 2.5x).
+- Reading for the structural rewrite: the target is s4b first (28% of the time, the worst in-flight and the worst TA
+  cost per byte), and its rewrite has to change the operand layouts (producers emitting s4b's operands in whole-line /
+  MLS-friendly fragment order) together with residency -- residency alone (sections 82, 85) was not reachable.

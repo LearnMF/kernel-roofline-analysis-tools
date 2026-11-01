@@ -1,0 +1,6048 @@
+{
+ "_ZN2g214g2_l2n2_kernelEPKsS1_PsS2_PfS3_l": {
+  "total_ops": 178,
+  "mmac": {},
+  "exp": 0,
+  "lds": {
+   "ds_bpermute_b32": 4
+  },
+  "vmem_rd": 1,
+  "vmem_wr": 2,
+  "barrier": 0,
+  "waitcnt": 8,
+  "loop_len": 0,
+  "loop_mix": {},
+  "func_mix": {
+   "s_load": 3,
+   "scalar": 23,
+   "valu": 141,
+   "waitcnt": 8,
+   "vmem_rd": 1,
+   "vmem_wr": 2
+  }
+ },
+ "_ZN2g219g2_fwd_intra_kernelENS_10FwdIParamsE": {
+  "total_ops": 13235,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 96,
+   "v_mmac_f32_16x16x16_bf16": 64
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write2st64_b64": 8,
+   "ds_read_b32": 18,
+   "ds_read2_b32": 103,
+   "ds_write2_b32": 32,
+   "ds_read_b128": 4,
+   "ds_bpermute_b32": 240,
+   "ds_write_b128": 4,
+   "ds_read2_b64": 44,
+   "ds_write_b32": 16,
+   "ds_read2st64_b64": 5,
+   "ds_write_b16": 64,
+   "ds_read_b64": 8
+  },
+  "vmem_rd": 236,
+  "vmem_wr": 122,
+  "barrier": 23,
+  "waitcnt": 575,
+  "loop_len": 1426,
+  "loop_mix": {
+   "scalar": 52,
+   "valu": 1142,
+   "vmem_wr": 8,
+   "vmem_rd": 96,
+   "lds_rd_b32": 16,
+   "waitcnt": 70,
+   "v_mmac_16x16x8_f32": 32,
+   "lds_wr_b32": 2,
+   "bf16_round": 8
+  },
+  "func_mix": {
+   "s_load": 4,
+   "scalar": 4918,
+   "valu": 6805,
+   "waitcnt": 575,
+   "vmem_rd": 236,
+   "lds_wr_b64": 8,
+   "bf16_round": 86,
+   "barrier": 23,
+   "lds_rd_b32": 121,
+   "v_mmac_16x16x8_f32": 96,
+   "lds_wr_b32": 48,
+   "vmem_wr": 122,
+   "lds_rd_b128": 4,
+   "lds_wr_b128": 4,
+   "lds_rd_b64": 57,
+   "lds_wr_b16": 64,
+   "v_mmac_f32_16x16x16_bf16": 64
+  }
+ },
+ "_ZN2g214g2_exp2_kernelEPfl": {
+  "total_ops": 28,
+  "mmac": {},
+  "exp": 0,
+  "lds": {},
+  "vmem_rd": 1,
+  "vmem_wr": 1,
+  "barrier": 0,
+  "waitcnt": 3,
+  "loop_len": 0,
+  "loop_mix": {},
+  "func_mix": {
+   "s_load": 2,
+   "scalar": 6,
+   "valu": 15,
+   "waitcnt": 3,
+   "vmem_rd": 1,
+   "vmem_wr": 1
+  }
+ },
+ "_ZN2g215g2_gn_kp_kernelEPfS0_S0_l": {
+  "total_ops": 44,
+  "mmac": {},
+  "exp": 0,
+  "lds": {},
+  "vmem_rd": 1,
+  "vmem_wr": 3,
+  "barrier": 0,
+  "waitcnt": 3,
+  "loop_len": 0,
+  "loop_mix": {},
+  "func_mix": {
+   "s_load": 3,
+   "scalar": 6,
+   "valu": 27,
+   "waitcnt": 3,
+   "vmem_rd": 1,
+   "bf16_round": 1,
+   "vmem_wr": 3
+  }
+ },
+ "_ZN2g221g2_kp_relayout_kernelEPslPflS0_": {
+  "total_ops": 3066,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 184
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 60,
+   "ds_read2_b64": 36,
+   "ds_read2st64_b64": 4,
+   "ds_write_b64": 1,
+   "ds_read_u16": 8,
+   "ds_write2st64_b32": 1,
+   "ds_write_b16_d16_hi": 16,
+   "ds_bpermute_b32": 38,
+   "ds_add_f32": 10,
+   "ds_read_b128": 2,
+   "ds_read2_b32": 4
+  },
+  "vmem_rd": 263,
+  "vmem_wr": 33,
+  "barrier": 7,
+  "waitcnt": 253,
+  "loop_len": 428,
+  "loop_mix": {
+   "scalar": 53,
+   "valu": 265,
+   "waitcnt": 58,
+   "vmem_rd": 32,
+   "v_mmac_f32_16x16x16_bf16": 16,
+   "vmem_wr": 4
+  },
+  "func_mix": {
+   "s_load": 13,
+   "scalar": 431,
+   "valu": 1719,
+   "waitcnt": 253,
+   "vmem_rd": 263,
+   "vmem_wr": 33,
+   "bf16_round": 31,
+   "lds_wr_b16": 60,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 184,
+   "barrier": 7,
+   "lds_wr_b64": 1,
+   "lds_rd_u16": 8,
+   "lds_wr_b32": 1,
+   "lds_wr_hi": 16,
+   "lds_rd_b128": 2,
+   "lds_rd_b32": 4
+  }
+ },
+ "_ZN2g23ipi18g2_intra_pi_kernelENS0_13IntraPiParamsE": {
+  "total_ops": 17048,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 320,
+   "v_mmac_f32_16x16x16_bf16": 568
+  },
+  "exp": 0,
+  "lds": {
+   "ds_read2_b32": 67,
+   "ds_read_b128": 150,
+   "ds_bpermute_b32": 300,
+   "ds_write_b32": 236,
+   "ds_write2_b32": 54,
+   "ds_write2st64_b32": 3,
+   "ds_write_b16": 120,
+   "ds_write_b16_d16_hi": 48,
+   "ds_read2_b64": 96,
+   "ds_write_b128": 24,
+   "ds_read2st64_b64": 32,
+   "ds_add_f32": 10,
+   "ds_read2st64_b32": 1
+  },
+  "vmem_rd": 1043,
+  "vmem_wr": 94,
+  "barrier": 40,
+  "waitcnt": 1192,
+  "loop_len": 1849,
+  "loop_mix": {
+   "scalar": 293,
+   "valu": 1140,
+   "waitcnt": 137,
+   "vmem_rd": 77,
+   "lds_rd_b128": 20,
+   "lds_wr_b128": 12,
+   "barrier": 4,
+   "bf16_round": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 20,
+   "v_mmac_f32_16x16x16_bf16": 40,
+   "lds_wr_b32": 38,
+   "lds_rd_b32": 20,
+   "v_mmac_16x16x8_f32": 40
+  },
+  "func_mix": {
+   "s_load": 22,
+   "valu": 10372,
+   "scalar": 2531,
+   "waitcnt": 1192,
+   "bf16_round": 35,
+   "vmem_rd": 1043,
+   "barrier": 40,
+   "lds_rd_b32": 68,
+   "lds_rd_b128": 150,
+   "v_mmac_16x16x8_f32": 320,
+   "vmem_wr": 94,
+   "lds_wr_b32": 293,
+   "lds_wr_b16": 120,
+   "lds_wr_hi": 48,
+   "lds_rd_b64": 128,
+   "v_mmac_f32_16x16x16_bf16": 568,
+   "lds_wr_b128": 24
+  }
+ },
+ "_ZN2g212_GLOBAL__N_119g2_l2n_apply_kernelEPKsS2_PKfS4_PsS5_l": {
+  "total_ops": 73,
+  "mmac": {},
+  "exp": 0,
+  "lds": {},
+  "vmem_rd": 4,
+  "vmem_wr": 2,
+  "barrier": 0,
+  "waitcnt": 6,
+  "loop_len": 0,
+  "loop_mix": {},
+  "func_mix": {
+   "s_load": 3,
+   "scalar": 6,
+   "valu": 52,
+   "waitcnt": 6,
+   "vmem_rd": 4,
+   "vmem_wr": 2
+  }
+ },
+ "_ZN2g225g2_bwd_tail_reduce_kernelENS_10TailParamsE": {
+  "total_ops": 182,
+  "mmac": {},
+  "exp": 0,
+  "lds": {},
+  "vmem_rd": 3,
+  "vmem_wr": 2,
+  "barrier": 0,
+  "waitcnt": 7,
+  "loop_len": 72,
+  "loop_mix": {
+   "scalar": 51,
+   "valu": 15,
+   "waitcnt": 3,
+   "s_load": 2,
+   "vmem_wr": 1
+  },
+  "func_mix": {
+   "s_load": 4,
+   "scalar": 81,
+   "valu": 85,
+   "waitcnt": 7,
+   "vmem_wr": 2,
+   "vmem_rd": 3
+  }
+ },
+ "_ZN2g212_GLOBAL__N_117kda_tables_kernelEPKiiiiPiS3_S3_": {
+  "total_ops": 703,
+  "mmac": {},
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 11,
+   "ds_read_b32": 19,
+   "ds_read2_b32": 1
+  },
+  "vmem_rd": 2,
+  "vmem_wr": 56,
+  "barrier": 20,
+  "waitcnt": 55,
+  "loop_len": 372,
+  "loop_mix": {
+   "scalar": 96,
+   "waitcnt": 49,
+   "barrier": 19,
+   "valu": 163,
+   "vmem_rd": 2,
+   "lds_wr_b32": 9,
+   "lds_rd_b32": 18,
+   "vmem_wr": 13,
+   "bf16_round": 3
+  },
+  "func_mix": {
+   "s_load": 4,
+   "valu": 382,
+   "scalar": 150,
+   "lds_wr_b32": 11,
+   "waitcnt": 55,
+   "barrier": 20,
+   "vmem_rd": 2,
+   "lds_rd_b32": 20,
+   "vmem_wr": 56,
+   "bf16_round": 3
+  }
+ },
+ "_ZN2g212_GLOBAL__N_116kda_to_gn_kernelEPKfPKiS4_iiPf": {
+  "total_ops": 67,
+  "mmac": {},
+  "exp": 0,
+  "lds": {},
+  "vmem_rd": 1,
+  "vmem_wr": 1,
+  "barrier": 0,
+  "waitcnt": 5,
+  "loop_len": 0,
+  "loop_mix": {},
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 38,
+   "waitcnt": 5,
+   "valu": 15,
+   "vmem_rd": 1,
+   "bf16_round": 1,
+   "vmem_wr": 1
+  }
+ },
+ "_ZN2g212_GLOBAL__N_117kda_gn_all_kernelEPKfPKiS4_iiPfS5_S5_i": {
+  "total_ops": 103,
+  "mmac": {},
+  "exp": 0,
+  "lds": {},
+  "vmem_rd": 1,
+  "vmem_wr": 4,
+  "barrier": 0,
+  "waitcnt": 7,
+  "loop_len": 0,
+  "loop_mix": {},
+  "func_mix": {
+   "s_load": 11,
+   "scalar": 42,
+   "waitcnt": 7,
+   "valu": 37,
+   "vmem_rd": 1,
+   "bf16_round": 1,
+   "vmem_wr": 4
+  }
+ },
+ "_ZN2g214g2_gate_kernelILi1ELb1EEEvNS_10GateParamsE": {
+  "total_ops": 1198,
+  "mmac": {},
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 1,
+   "ds_read2st64_b64": 4,
+   "ds_read_b64": 1
+  },
+  "vmem_rd": 17,
+  "vmem_wr": 16,
+  "barrier": 1,
+  "waitcnt": 27,
+  "loop_len": 1109,
+  "loop_mix": {
+   "scalar": 257,
+   "s_load": 3,
+   "waitcnt": 26,
+   "valu": 783,
+   "vmem_rd": 17,
+   "lds_wr_b64": 1,
+   "barrier": 1,
+   "lds_rd_b64": 5,
+   "vmem_wr": 16
+  },
+  "func_mix": {
+   "s_load": 8,
+   "scalar": 330,
+   "waitcnt": 27,
+   "valu": 793,
+   "vmem_rd": 17,
+   "lds_wr_b64": 1,
+   "barrier": 1,
+   "lds_rd_b64": 5,
+   "vmem_wr": 16
+  }
+ },
+ "_ZN2g214g2_gate_kernelILi1ELb0EEEvNS_10GateParamsE": {
+  "total_ops": 933,
+  "mmac": {},
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 1,
+   "ds_read2st64_b64": 4,
+   "ds_read_b64": 1
+  },
+  "vmem_rd": 17,
+  "vmem_wr": 16,
+  "barrier": 1,
+  "waitcnt": 25,
+  "loop_len": 843,
+  "loop_mix": {
+   "scalar": 120,
+   "valu": 659,
+   "vmem_rd": 17,
+   "s_load": 1,
+   "waitcnt": 23,
+   "lds_wr_b64": 1,
+   "barrier": 1,
+   "lds_rd_b64": 5,
+   "vmem_wr": 16
+  },
+  "func_mix": {
+   "s_load": 6,
+   "waitcnt": 25,
+   "scalar": 193,
+   "valu": 669,
+   "vmem_rd": 17,
+   "lds_wr_b64": 1,
+   "barrier": 1,
+   "lds_rd_b64": 5,
+   "vmem_wr": 16
+  }
+ },
+ "_ZN2g214g2_gate_kernelILi0ELb1EEEvNS_10GateParamsE": {
+  "total_ops": 927,
+  "mmac": {},
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 1,
+   "ds_read2st64_b64": 4,
+   "ds_read_b64": 1
+  },
+  "vmem_rd": 16,
+  "vmem_wr": 16,
+  "barrier": 1,
+  "waitcnt": 10,
+  "loop_len": 838,
+  "loop_mix": {
+   "scalar": 248,
+   "s_load": 2,
+   "waitcnt": 9,
+   "valu": 540,
+   "vmem_rd": 16,
+   "lds_wr_b64": 1,
+   "barrier": 1,
+   "lds_rd_b64": 5,
+   "vmem_wr": 16
+  },
+  "func_mix": {
+   "s_load": 7,
+   "waitcnt": 10,
+   "scalar": 321,
+   "valu": 550,
+   "vmem_rd": 16,
+   "lds_wr_b64": 1,
+   "barrier": 1,
+   "lds_rd_b64": 5,
+   "vmem_wr": 16
+  }
+ },
+ "_ZN2g214g2_gate_kernelILi0ELb0EEEvNS_10GateParamsE": {
+  "total_ops": 660,
+  "mmac": {},
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 1,
+   "ds_read2st64_b64": 4,
+   "ds_read_b64": 1
+  },
+  "vmem_rd": 16,
+  "vmem_wr": 16,
+  "barrier": 1,
+  "waitcnt": 25,
+  "loop_len": 571,
+  "loop_mix": {
+   "scalar": 102,
+   "valu": 407,
+   "vmem_rd": 16,
+   "waitcnt": 23,
+   "lds_wr_b64": 1,
+   "barrier": 1,
+   "lds_rd_b64": 5,
+   "vmem_wr": 16
+  },
+  "func_mix": {
+   "s_load": 5,
+   "waitcnt": 25,
+   "scalar": 174,
+   "valu": 417,
+   "vmem_rd": 16,
+   "lds_wr_b64": 1,
+   "barrier": 1,
+   "lds_rd_b64": 5,
+   "vmem_wr": 16
+  }
+ },
+ "_ZN2g218g2_beta_sig_kernelIsEEvPKT_Pffl": {
+  "total_ops": 55,
+  "mmac": {},
+  "exp": 0,
+  "lds": {},
+  "vmem_rd": 1,
+  "vmem_wr": 1,
+  "barrier": 0,
+  "waitcnt": 3,
+  "loop_len": 0,
+  "loop_mix": {},
+  "func_mix": {
+   "s_load": 3,
+   "scalar": 8,
+   "valu": 39,
+   "waitcnt": 3,
+   "vmem_rd": 1,
+   "vmem_wr": 1
+  }
+ },
+ "_ZN2g218g2_beta_sig_kernelIfEEvPKT_Pffl": {
+  "total_ops": 53,
+  "mmac": {},
+  "exp": 0,
+  "lds": {},
+  "vmem_rd": 1,
+  "vmem_wr": 1,
+  "barrier": 0,
+  "waitcnt": 3,
+  "loop_len": 0,
+  "loop_mix": {},
+  "func_mix": {
+   "s_load": 3,
+   "scalar": 8,
+   "valu": 37,
+   "waitcnt": 3,
+   "vmem_rd": 1,
+   "vmem_wr": 1
+  }
+ },
+ "_ZN2g220g2_fwd_intra2_kernelILb1EEEvNS_10FwdIParamsE": {
+  "total_ops": 18591,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 224,
+   "v_mmac_f32_16x16x16_bf16": 320
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 672,
+   "ds_read_b64": 336,
+   "ds_write_b128": 90,
+   "ds_read_b128": 48,
+   "ds_read2st64_b32": 80,
+   "ds_bpermute_b32": 600,
+   "ds_read2_b32": 64
+  },
+  "vmem_rd": 264,
+  "vmem_wr": 222,
+  "barrier": 100,
+  "waitcnt": 1184,
+  "loop_len": 1742,
+  "loop_mix": {
+   "scalar": 118,
+   "waitcnt": 120,
+   "bf16_round": 6,
+   "valu": 1255,
+   "vmem_rd": 34,
+   "lds_rd_b32": 12,
+   "barrier": 9,
+   "vmem_wr": 29,
+   "lds_wr_b128": 3,
+   "v_mmac_16x16x8_f32": 4,
+   "lds_wr_b16": 88,
+   "lds_rd_b64": 32,
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "func_mix": {
+   "scalar": 1383,
+   "s_load": 6,
+   "waitcnt": 1184,
+   "valu": 13381,
+   "vmem_wr": 289,
+   "bf16_round": 38,
+   "vmem_rd": 376,
+   "lds_wr_b16": 672,
+   "barrier": 100,
+   "lds_rd_b64": 336,
+   "v_mmac_16x16x8_f32": 224,
+   "lds_wr_b128": 90,
+   "lds_rd_b128": 48,
+   "lds_rd_b32": 144,
+   "v_mmac_f32_16x16x16_bf16": 320
+  }
+ },
+ "_ZN2g220g2_fwd_intra2_kernelILb0EEEvNS_10FwdIParamsE": {
+  "total_ops": 8380,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 112,
+   "v_mmac_f32_16x16x16_bf16": 160
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 288,
+   "ds_read_b64": 168,
+   "ds_write_b128": 45,
+   "ds_read_b128": 24,
+   "ds_read2st64_b32": 40,
+   "ds_bpermute_b32": 300,
+   "ds_read2_b32": 32
+  },
+  "vmem_rd": 108,
+  "vmem_wr": 96,
+  "barrier": 50,
+  "waitcnt": 547,
+  "loop_len": 5148,
+  "loop_mix": {
+   "scalar": 138,
+   "valu": 3716,
+   "bf16_round": 13,
+   "waitcnt": 456,
+   "lds_rd_b32": 72,
+   "barrier": 33,
+   "vmem_rd": 71,
+   "vmem_wr": 76,
+   "lds_wr_b128": 13,
+   "v_mmac_16x16x8_f32": 32,
+   "lds_wr_b16": 224,
+   "lds_rd_b64": 152,
+   "v_mmac_f32_16x16x16_bf16": 152
+  },
+  "func_mix": {
+   "scalar": 494,
+   "s_load": 4,
+   "valu": 6132,
+   "bf16_round": 14,
+   "waitcnt": 547,
+   "vmem_rd": 141,
+   "lds_wr_b16": 288,
+   "vmem_wr": 129,
+   "barrier": 50,
+   "lds_rd_b64": 168,
+   "v_mmac_16x16x8_f32": 112,
+   "lds_wr_b128": 45,
+   "lds_rd_b128": 24,
+   "lds_rd_b32": 72,
+   "v_mmac_f32_16x16x16_bf16": 160
+  }
+ },
+ "_ZN2g23fis21g2_fwd_intra2a_kernelILb1EEEvNS0_10FI2AParamsE": {
+  "total_ops": 5688,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 160
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 64,
+   "ds_read_b64": 16,
+   "ds_write_b128": 64,
+   "ds_read_b128": 50
+  },
+  "vmem_rd": 64,
+  "vmem_wr": 34,
+  "barrier": 28,
+  "waitcnt": 129,
+  "loop_len": 2737,
+  "loop_mix": {
+   "valu": 2177,
+   "scalar": 259,
+   "lds_rd_b128": 25,
+   "waitcnt": 64,
+   "lds_wr_b128": 30,
+   "barrier": 13,
+   "vmem_rd": 32,
+   "v_mmac_16x16x8_f32": 80,
+   "vmem_wr": 17,
+   "lds_wr_b16": 32,
+   "lds_rd_b64": 8
+  },
+  "func_mix": {
+   "s_load": 4,
+   "scalar": 614,
+   "waitcnt": 129,
+   "valu": 4460,
+   "bf16_round": 1,
+   "vmem_rd": 64,
+   "lds_wr_b16": 64,
+   "vmem_wr": 34,
+   "barrier": 28,
+   "lds_rd_b64": 16,
+   "v_mmac_16x16x8_f32": 160,
+   "lds_wr_b128": 64,
+   "lds_rd_b128": 50
+  }
+ },
+ "_ZN2g23fis21g2_fwd_intra2b_kernelILb1EEEvNS0_10FI2BParamsE": {
+  "total_ops": 12774,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 64,
+   "v_mmac_f32_16x16x16_bf16": 320
+  },
+  "exp": 0,
+  "lds": {
+   "ds_bpermute_b32": 600,
+   "ds_write_b128": 26,
+   "ds_read2_b32": 64,
+   "ds_write_b16": 608,
+   "ds_read_b64": 320
+  },
+  "vmem_rd": 360,
+  "vmem_wr": 190,
+  "barrier": 72,
+  "waitcnt": 1042,
+  "loop_len": 5526,
+  "loop_mix": {
+   "valu": 3964,
+   "scalar": 133,
+   "vmem_rd": 156,
+   "bf16_round": 11,
+   "waitcnt": 493,
+   "barrier": 36,
+   "vmem_wr": 80,
+   "lds_wr_b128": 13,
+   "lds_wr_b16": 256,
+   "lds_rd_b64": 160,
+   "v_mmac_f32_16x16x16_bf16": 160,
+   "lds_rd_b32": 32,
+   "v_mmac_16x16x8_f32": 32
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 661,
+   "waitcnt": 1042,
+   "valu": 9012,
+   "vmem_rd": 360,
+   "barrier": 72,
+   "vmem_wr": 190,
+   "bf16_round": 30,
+   "lds_wr_b128": 26,
+   "lds_rd_b32": 64,
+   "v_mmac_16x16x8_f32": 64,
+   "lds_wr_b16": 608,
+   "lds_rd_b64": 320,
+   "v_mmac_f32_16x16x16_bf16": 320
+  }
+ },
+ "_ZN2g23fis21g2_fwd_intra2a_kernelILb0EEEvNS0_10FI2AParamsE": {
+  "total_ops": 2801,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 80
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 32,
+   "ds_read_b64": 8,
+   "ds_write_b128": 32,
+   "ds_read_b128": 25
+  },
+  "vmem_rd": 32,
+  "vmem_wr": 17,
+  "barrier": 14,
+  "waitcnt": 66,
+  "loop_len": 1141,
+  "loop_mix": {
+   "valu": 785,
+   "scalar": 194,
+   "lds_rd_b128": 25,
+   "waitcnt": 41,
+   "lds_wr_b128": 30,
+   "barrier": 11,
+   "vmem_rd": 6,
+   "v_mmac_16x16x8_f32": 48,
+   "vmem_wr": 1
+  },
+  "func_mix": {
+   "s_load": 3,
+   "valu": 2201,
+   "waitcnt": 66,
+   "scalar": 291,
+   "vmem_rd": 32,
+   "lds_wr_b16": 32,
+   "vmem_wr": 17,
+   "barrier": 14,
+   "lds_rd_b64": 8,
+   "v_mmac_16x16x8_f32": 80,
+   "lds_wr_b128": 32,
+   "lds_rd_b128": 25
+  }
+ },
+ "_ZN2g23fis21g2_fwd_intra2b_kernelILb0EEEvNS0_10FI2BParamsE": {
+  "total_ops": 5510,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 32,
+   "v_mmac_f32_16x16x16_bf16": 160
+  },
+  "exp": 0,
+  "lds": {
+   "ds_bpermute_b32": 300,
+   "ds_write_b128": 13,
+   "ds_read2_b32": 32,
+   "ds_write_b16": 256,
+   "ds_read_b64": 160
+  },
+  "vmem_rd": 156,
+  "vmem_wr": 80,
+  "barrier": 36,
+  "waitcnt": 492,
+  "loop_len": 4320,
+  "loop_mix": {
+   "scalar": 121,
+   "valu": 3017,
+   "vmem_rd": 129,
+   "bf16_round": 9,
+   "waitcnt": 401,
+   "barrier": 27,
+   "vmem_wr": 60,
+   "lds_wr_b128": 12,
+   "lds_rd_b32": 32,
+   "v_mmac_16x16x8_f32": 32,
+   "lds_wr_b16": 192,
+   "lds_rd_b64": 144,
+   "v_mmac_f32_16x16x16_bf16": 144
+  },
+  "func_mix": {
+   "s_load": 3,
+   "scalar": 167,
+   "waitcnt": 492,
+   "valu": 3911,
+   "bf16_round": 12,
+   "vmem_rd": 156,
+   "barrier": 36,
+   "vmem_wr": 80,
+   "lds_wr_b128": 13,
+   "lds_rd_b32": 32,
+   "v_mmac_16x16x8_f32": 32,
+   "lds_wr_b16": 256,
+   "lds_rd_b64": 160,
+   "v_mmac_f32_16x16x16_bf16": 160
+  }
+ },
+ "_ZN2g22r420g2_fwd_prep_a_kernelILi1ELb1ELb1EEEvNS0_11PrepAParamsE": {
+  "total_ops": 9264,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 160
+  },
+  "exp": 0,
+  "lds": {
+   "ds_bpermute_b32": 32,
+   "ds_write2st64_b32": 8,
+   "ds_write_b64": 66,
+   "ds_read_b128": 126,
+   "ds_read2st64_b64": 8,
+   "ds_read_b64": 2,
+   "ds_write_b128": 68,
+   "ds_write_b16": 96,
+   "ds_read2_b64": 8
+  },
+  "vmem_rd": 59,
+  "vmem_wr": 82,
+  "barrier": 40,
+  "waitcnt": 251,
+  "loop_len": 2071,
+  "loop_mix": {
+   "scalar": 321,
+   "valu": 1634,
+   "s_load": 3,
+   "bf16_round": 5,
+   "waitcnt": 40,
+   "vmem_rd": 25,
+   "lds_wr_b32": 4,
+   "lds_wr_b64": 9,
+   "barrier": 1,
+   "lds_rd_b128": 8,
+   "vmem_wr": 16,
+   "lds_rd_b64": 5
+  },
+  "func_mix": {
+   "scalar": 1644,
+   "s_load": 12,
+   "waitcnt": 251,
+   "valu": 6612,
+   "bf16_round": 22,
+   "vmem_rd": 59,
+   "lds_wr_b32": 8,
+   "lds_wr_b64": 66,
+   "barrier": 40,
+   "lds_rd_b128": 126,
+   "vmem_wr": 82,
+   "lds_rd_b64": 18,
+   "lds_wr_b128": 68,
+   "lds_wr_b16": 96,
+   "v_mmac_16x16x8_f32": 160
+  }
+ },
+ "_ZN2g22r420g2_fwd_prep_a_kernelILi1ELb0ELb1EEEvNS0_11PrepAParamsE": {
+  "total_ops": 4081,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 80
+  },
+  "exp": 0,
+  "lds": {
+   "ds_bpermute_b32": 16,
+   "ds_write2st64_b32": 4,
+   "ds_write_b64": 33,
+   "ds_read_b128": 59,
+   "ds_read2st64_b64": 4,
+   "ds_read_b64": 1,
+   "ds_write_b128": 34,
+   "ds_write_b16": 32,
+   "ds_read2_b64": 4
+  },
+  "vmem_rd": 29,
+  "vmem_wr": 41,
+  "barrier": 20,
+  "waitcnt": 116,
+  "loop_len": 3089,
+  "loop_mix": {
+   "scalar": 315,
+   "valu": 2476,
+   "bf16_round": 10,
+   "vmem_rd": 29,
+   "waitcnt": 71,
+   "lds_wr_b32": 4,
+   "s_load": 1,
+   "lds_wr_b64": 33,
+   "barrier": 7,
+   "lds_rd_b128": 28,
+   "vmem_wr": 40,
+   "lds_rd_b64": 9,
+   "lds_wr_b128": 2,
+   "lds_wr_b16": 32,
+   "v_mmac_16x16x8_f32": 32
+  },
+  "func_mix": {
+   "scalar": 680,
+   "s_load": 9,
+   "waitcnt": 116,
+   "valu": 2925,
+   "bf16_round": 10,
+   "vmem_rd": 29,
+   "lds_wr_b32": 4,
+   "lds_wr_b64": 33,
+   "barrier": 20,
+   "lds_rd_b128": 59,
+   "vmem_wr": 41,
+   "lds_rd_b64": 9,
+   "lds_wr_b128": 34,
+   "lds_wr_b16": 32,
+   "v_mmac_16x16x8_f32": 80
+  }
+ },
+ "_ZN2g22r420g2_fwd_prep_a_kernelILi0ELb1ELb1EEEvNS0_11PrepAParamsE": {
+  "total_ops": 8766,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 160
+  },
+  "exp": 0,
+  "lds": {
+   "ds_bpermute_b32": 32,
+   "ds_write2st64_b32": 8,
+   "ds_write_b64": 66,
+   "ds_read_b128": 126,
+   "ds_read2st64_b64": 8,
+   "ds_read_b64": 2,
+   "ds_write_b128": 68,
+   "ds_write_b16": 96,
+   "ds_read2_b64": 8
+  },
+  "vmem_rd": 56,
+  "vmem_wr": 82,
+  "barrier": 40,
+  "waitcnt": 248,
+  "loop_len": 1827,
+  "loop_mix": {
+   "scalar": 357,
+   "valu": 1356,
+   "s_load": 2,
+   "bf16_round": 5,
+   "waitcnt": 40,
+   "vmem_rd": 24,
+   "lds_wr_b32": 4,
+   "lds_wr_b64": 9,
+   "barrier": 1,
+   "lds_rd_b128": 8,
+   "vmem_wr": 16,
+   "lds_rd_b64": 5
+  },
+  "func_mix": {
+   "scalar": 1720,
+   "s_load": 11,
+   "waitcnt": 248,
+   "valu": 6045,
+   "bf16_round": 22,
+   "vmem_rd": 56,
+   "lds_wr_b32": 8,
+   "lds_wr_b64": 66,
+   "barrier": 40,
+   "lds_rd_b128": 126,
+   "vmem_wr": 82,
+   "lds_rd_b64": 18,
+   "lds_wr_b128": 68,
+   "lds_wr_b16": 96,
+   "v_mmac_16x16x8_f32": 160
+  }
+ },
+ "_ZN2g22r420g2_fwd_prep_a_kernelILi0ELb0ELb1EEEvNS0_11PrepAParamsE": {
+  "total_ops": 3810,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 80
+  },
+  "exp": 0,
+  "lds": {
+   "ds_bpermute_b32": 16,
+   "ds_write2st64_b32": 4,
+   "ds_write_b64": 33,
+   "ds_read_b128": 59,
+   "ds_read2st64_b64": 4,
+   "ds_read_b64": 1,
+   "ds_write_b128": 34,
+   "ds_write_b16": 32,
+   "ds_read2_b64": 4
+  },
+  "vmem_rd": 28,
+  "vmem_wr": 41,
+  "barrier": 20,
+  "waitcnt": 118,
+  "loop_len": 2818,
+  "loop_mix": {
+   "scalar": 303,
+   "valu": 2217,
+   "bf16_round": 10,
+   "vmem_rd": 28,
+   "waitcnt": 73,
+   "lds_wr_b32": 4,
+   "lds_wr_b64": 33,
+   "barrier": 7,
+   "lds_rd_b128": 28,
+   "vmem_wr": 40,
+   "lds_rd_b64": 9,
+   "lds_wr_b128": 2,
+   "lds_wr_b16": 32,
+   "v_mmac_16x16x8_f32": 32
+  },
+  "func_mix": {
+   "scalar": 668,
+   "s_load": 8,
+   "waitcnt": 118,
+   "valu": 2666,
+   "bf16_round": 10,
+   "vmem_rd": 28,
+   "lds_wr_b32": 4,
+   "lds_wr_b64": 33,
+   "barrier": 20,
+   "lds_rd_b128": 59,
+   "vmem_wr": 41,
+   "lds_rd_b64": 9,
+   "lds_wr_b128": 34,
+   "lds_wr_b16": 32,
+   "v_mmac_16x16x8_f32": 80
+  }
+ },
+ "_ZN2g22r420g2_fwd_prep_a_kernelILi1ELb1ELb0EEEvNS0_11PrepAParamsE": {
+  "total_ops": 7305,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 160
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 66,
+   "ds_read2st64_b64": 8,
+   "ds_read_b64": 2,
+   "ds_read_b128": 110,
+   "ds_write_b128": 68,
+   "ds_write_b16": 96,
+   "ds_read2_b64": 8
+  },
+  "vmem_rd": 59,
+  "vmem_wr": 50,
+  "barrier": 40,
+  "waitcnt": 190,
+  "loop_len": 1099,
+  "loop_mix": {
+   "scalar": 240,
+   "valu": 803,
+   "s_load": 3,
+   "bf16_round": 1,
+   "waitcnt": 12,
+   "vmem_rd": 25,
+   "lds_wr_b64": 9,
+   "barrier": 1,
+   "lds_rd_b64": 5
+  },
+  "func_mix": {
+   "scalar": 1501,
+   "s_load": 11,
+   "waitcnt": 190,
+   "valu": 4922,
+   "bf16_round": 14,
+   "vmem_rd": 59,
+   "lds_wr_b64": 66,
+   "barrier": 40,
+   "lds_rd_b64": 18,
+   "lds_rd_b128": 110,
+   "lds_wr_b128": 68,
+   "vmem_wr": 50,
+   "lds_wr_b16": 96,
+   "v_mmac_16x16x8_f32": 160
+  }
+ },
+ "_ZN2g22r420g2_fwd_prep_a_kernelILi1ELb0ELb0EEEvNS0_11PrepAParamsE": {
+  "total_ops": 3122,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 80
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 33,
+   "ds_read2st64_b64": 4,
+   "ds_read_b64": 1,
+   "ds_read_b128": 51,
+   "ds_write_b128": 34,
+   "ds_write_b16": 32,
+   "ds_read2_b64": 4
+  },
+  "vmem_rd": 29,
+  "vmem_wr": 25,
+  "barrier": 20,
+  "waitcnt": 87,
+  "loop_len": 2131,
+  "loop_mix": {
+   "scalar": 247,
+   "valu": 1647,
+   "bf16_round": 6,
+   "vmem_rd": 29,
+   "s_load": 1,
+   "waitcnt": 42,
+   "lds_wr_b64": 33,
+   "barrier": 7,
+   "lds_rd_b64": 9,
+   "lds_rd_b128": 20,
+   "lds_wr_b128": 2,
+   "vmem_wr": 24,
+   "lds_wr_b16": 32,
+   "v_mmac_16x16x8_f32": 32
+  },
+  "func_mix": {
+   "scalar": 612,
+   "s_load": 8,
+   "waitcnt": 87,
+   "valu": 2096,
+   "bf16_round": 6,
+   "vmem_rd": 29,
+   "lds_wr_b64": 33,
+   "barrier": 20,
+   "lds_rd_b64": 9,
+   "lds_rd_b128": 51,
+   "lds_wr_b128": 34,
+   "vmem_wr": 25,
+   "lds_wr_b16": 32,
+   "v_mmac_16x16x8_f32": 80
+  }
+ },
+ "_ZN2g22r420g2_fwd_prep_a_kernelILi0ELb1ELb0EEEvNS0_11PrepAParamsE": {
+  "total_ops": 6821,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 160
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 66,
+   "ds_read2st64_b64": 8,
+   "ds_read_b64": 2,
+   "ds_read_b128": 110,
+   "ds_write_b128": 68,
+   "ds_write_b16": 96,
+   "ds_read2_b64": 8
+  },
+  "vmem_rd": 56,
+  "vmem_wr": 50,
+  "barrier": 40,
+  "waitcnt": 186,
+  "loop_len": 854,
+  "loop_mix": {
+   "scalar": 275,
+   "valu": 527,
+   "s_load": 2,
+   "bf16_round": 1,
+   "waitcnt": 10,
+   "vmem_rd": 24,
+   "lds_wr_b64": 9,
+   "barrier": 1,
+   "lds_rd_b64": 5
+  },
+  "func_mix": {
+   "scalar": 1573,
+   "s_load": 12,
+   "waitcnt": 186,
+   "valu": 4372,
+   "bf16_round": 14,
+   "vmem_rd": 56,
+   "lds_wr_b64": 66,
+   "barrier": 40,
+   "lds_rd_b64": 18,
+   "lds_rd_b128": 110,
+   "lds_wr_b128": 68,
+   "vmem_wr": 50,
+   "lds_wr_b16": 96,
+   "v_mmac_16x16x8_f32": 160
+  }
+ },
+ "_ZN2g22r420g2_fwd_prep_a_kernelILi0ELb0ELb0EEEvNS0_11PrepAParamsE": {
+  "total_ops": 2856,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 80
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 33,
+   "ds_read2st64_b64": 4,
+   "ds_read_b64": 1,
+   "ds_read_b128": 51,
+   "ds_write_b128": 34,
+   "ds_write_b16": 32,
+   "ds_read2_b64": 4
+  },
+  "vmem_rd": 28,
+  "vmem_wr": 25,
+  "barrier": 20,
+  "waitcnt": 90,
+  "loop_len": 1863,
+  "loop_mix": {
+   "scalar": 238,
+   "valu": 1387,
+   "bf16_round": 6,
+   "vmem_rd": 28,
+   "waitcnt": 45,
+   "lds_wr_b64": 33,
+   "barrier": 7,
+   "lds_rd_b64": 9,
+   "lds_rd_b128": 20,
+   "lds_wr_b128": 2,
+   "vmem_wr": 24,
+   "lds_wr_b16": 32,
+   "v_mmac_16x16x8_f32": 32
+  },
+  "func_mix": {
+   "scalar": 603,
+   "s_load": 9,
+   "waitcnt": 90,
+   "valu": 1836,
+   "bf16_round": 6,
+   "vmem_rd": 28,
+   "lds_wr_b64": 33,
+   "barrier": 20,
+   "lds_rd_b64": 9,
+   "lds_rd_b128": 51,
+   "lds_wr_b128": 34,
+   "vmem_wr": 25,
+   "lds_wr_b16": 32,
+   "v_mmac_16x16x8_f32": 80
+  }
+ },
+ "_ZN2g22r420g2_fwd_prep_b_kernelILb1EEEvNS0_11PrepBParamsE": {
+  "total_ops": 10604,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 64,
+   "v_mmac_f32_16x16x16_bf16": 320
+  },
+  "exp": 0,
+  "lds": {
+   "ds_read2st64_b32": 80,
+   "ds_bpermute_b32": 600,
+   "ds_write_b128": 26,
+   "ds_read2_b32": 64,
+   "ds_write_b16": 480,
+   "ds_write_b16_d16_hi": 128,
+   "ds_read2st64_b64": 160
+  },
+  "vmem_rd": 116,
+  "vmem_wr": 166,
+  "barrier": 72,
+  "waitcnt": 886,
+  "loop_len": 5905,
+  "loop_mix": {
+   "scalar": 622,
+   "s_load": 2,
+   "valu": 3892,
+   "waitcnt": 473,
+   "lds_rd_b32": 72,
+   "barrier": 36,
+   "bf16_round": 9,
+   "vmem_wr": 86,
+   "vmem_rd": 76,
+   "lds_wr_b128": 13,
+   "v_mmac_16x16x8_f32": 32,
+   "lds_wr_b16": 288,
+   "lds_wr_hi": 64,
+   "lds_rd_b64": 80,
+   "v_mmac_f32_16x16x16_bf16": 160
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 955,
+   "waitcnt": 886,
+   "valu": 7062,
+   "lds_rd_b32": 144,
+   "barrier": 72,
+   "bf16_round": 18,
+   "vmem_wr": 166,
+   "vmem_rd": 116,
+   "lds_wr_b128": 26,
+   "v_mmac_16x16x8_f32": 64,
+   "lds_wr_b16": 480,
+   "lds_wr_hi": 128,
+   "lds_rd_b64": 160,
+   "v_mmac_f32_16x16x16_bf16": 320
+  }
+ },
+ "_ZN2g22r420g2_fwd_prep_b_kernelILb0EEEvNS0_11PrepBParamsE": {
+  "total_ops": 4781,
+  "mmac": {
+   "v_mmac_16x16x8_f32": 32,
+   "v_mmac_f32_16x16x16_bf16": 160
+  },
+  "exp": 0,
+  "lds": {
+   "ds_read2st64_b32": 40,
+   "ds_bpermute_b32": 300,
+   "ds_write_b128": 13,
+   "ds_read2_b32": 32,
+   "ds_write_b16": 192,
+   "ds_write_b16_d16_hi": 64,
+   "ds_read2st64_b64": 80
+  },
+  "vmem_rd": 40,
+  "vmem_wr": 80,
+  "barrier": 36,
+  "waitcnt": 415,
+  "loop_len": 4692,
+  "loop_mix": {
+   "scalar": 354,
+   "valu": 3146,
+   "waitcnt": 414,
+   "lds_rd_b32": 72,
+   "barrier": 36,
+   "bf16_round": 9,
+   "vmem_rd": 40,
+   "vmem_wr": 80,
+   "lds_wr_b128": 13,
+   "v_mmac_16x16x8_f32": 32,
+   "lds_wr_b16": 192,
+   "lds_wr_hi": 64,
+   "lds_rd_b64": 80,
+   "v_mmac_f32_16x16x16_bf16": 160
+  },
+  "func_mix": {
+   "s_load": 4,
+   "scalar": 428,
+   "waitcnt": 415,
+   "valu": 3156,
+   "lds_rd_b32": 72,
+   "barrier": 36,
+   "bf16_round": 9,
+   "vmem_rd": 40,
+   "vmem_wr": 80,
+   "lds_wr_b128": 13,
+   "v_mmac_16x16x8_f32": 32,
+   "lds_wr_b16": 192,
+   "lds_wr_hi": 64,
+   "lds_rd_b64": 80,
+   "v_mmac_f32_16x16x16_bf16": 160
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb1ELi1ELi1EEEvNS_10FwdOParamsE": {
+  "total_ops": 446,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 28
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 8,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 16,
+   "ds_read_b64": 1
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 1,
+  "barrier": 2,
+  "waitcnt": 20,
+  "loop_len": 218,
+  "loop_mix": {
+   "scalar": 29,
+   "lds_rd_b64": 12,
+   "valu": 65,
+   "waitcnt": 15,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "vmem_rd": 19,
+   "bf16_round": 32,
+   "lds_wr_hi": 16,
+   "barrier": 2
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 92,
+   "waitcnt": 20,
+   "valu": 194,
+   "bf16_round": 35,
+   "vmem_rd": 30,
+   "lds_wr_b16": 8,
+   "lds_rd_b64": 13,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "lds_wr_hi": 16,
+   "barrier": 2,
+   "vmem_wr": 1
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb1ELi2ELi1EEEvNS_10FwdOParamsE": {
+  "total_ops": 553,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 28
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 12,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 12,
+   "ds_read_u16": 8,
+   "ds_read_b64": 1
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 8,
+  "barrier": 2,
+  "waitcnt": 21,
+  "loop_len": 260,
+  "loop_mix": {
+   "scalar": 29,
+   "lds_rd_b64": 12,
+   "valu": 90,
+   "waitcnt": 17,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "vmem_rd": 19,
+   "bf16_round": 32,
+   "lds_wr_hi": 12,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "vmem_wr": 7,
+   "lds_wr_b16": 4
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 120,
+   "waitcnt": 21,
+   "valu": 256,
+   "bf16_round": 36,
+   "vmem_rd": 30,
+   "lds_wr_b16": 12,
+   "lds_rd_b64": 13,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "lds_wr_hi": 12,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "vmem_wr": 8
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb1ELi3ELi1EEEvNS_10FwdOParamsE": {
+  "total_ops": 414,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 16
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 12,
+   "ds_read_u16": 8,
+   "ds_read2_b64": 6,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 7,
+  "barrier": 2,
+  "waitcnt": 19,
+  "loop_len": 191,
+  "loop_mix": {
+   "scalar": 17,
+   "waitcnt": 14,
+   "barrier": 2,
+   "valu": 74,
+   "lds_rd_u16": 8,
+   "lds_rd_b64": 6,
+   "v_mmac_f32_16x16x16_bf16": 16,
+   "vmem_wr": 7,
+   "vmem_rd": 11,
+   "bf16_round": 24,
+   "lds_wr_b16": 4,
+   "lds_wr_hi": 8
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 85,
+   "waitcnt": 19,
+   "valu": 196,
+   "vmem_rd": 22,
+   "bf16_round": 27,
+   "lds_wr_b16": 12,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "lds_rd_b64": 6,
+   "v_mmac_f32_16x16x16_bf16": 16,
+   "vmem_wr": 7,
+   "lds_wr_hi": 8
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb1ELi4ELi1EEEvNS_10FwdOParamsE": {
+  "total_ops": 389,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 16
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 12,
+   "ds_read_u16": 8,
+   "ds_read2_b64": 6,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 3,
+  "barrier": 2,
+  "waitcnt": 18,
+  "loop_len": 184,
+  "loop_mix": {
+   "scalar": 17,
+   "waitcnt": 14,
+   "barrier": 2,
+   "valu": 71,
+   "lds_rd_u16": 8,
+   "lds_rd_b64": 6,
+   "v_mmac_f32_16x16x16_bf16": 16,
+   "vmem_wr": 3,
+   "vmem_rd": 11,
+   "bf16_round": 24,
+   "lds_wr_b16": 4,
+   "lds_wr_hi": 8
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 82,
+   "waitcnt": 18,
+   "valu": 180,
+   "vmem_rd": 22,
+   "bf16_round": 27,
+   "lds_wr_b16": 12,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "lds_rd_b64": 6,
+   "v_mmac_f32_16x16x16_bf16": 16,
+   "vmem_wr": 3,
+   "lds_wr_hi": 8
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb1ELi5ELi1EEEvNS_10FwdOParamsE": {
+  "total_ops": 499,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 28
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 8,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 16,
+   "ds_read_u16": 8,
+   "ds_read_b64": 1
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 3,
+  "barrier": 2,
+  "waitcnt": 22,
+  "loop_len": 240,
+  "loop_mix": {
+   "scalar": 27,
+   "lds_rd_b64": 12,
+   "valu": 77,
+   "waitcnt": 17,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "vmem_rd": 19,
+   "bf16_round": 32,
+   "lds_wr_hi": 16,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "vmem_wr": 2
+  },
+  "func_mix": {
+   "s_load": 8,
+   "scalar": 104,
+   "waitcnt": 22,
+   "valu": 221,
+   "bf16_round": 36,
+   "vmem_rd": 30,
+   "lds_wr_b16": 8,
+   "lds_rd_b64": 13,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "lds_wr_hi": 16,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "vmem_wr": 3
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb1ELi0ELi1EEEvNS_10FwdOParamsE": {
+  "total_ops": 616,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 28
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 12,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 12,
+   "ds_read_u16": 8,
+   "ds_read_b64": 1
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 12,
+  "barrier": 2,
+  "waitcnt": 24,
+  "loop_len": 327,
+  "loop_mix": {
+   "scalar": 59,
+   "valu": 120,
+   "lds_rd_b64": 13,
+   "waitcnt": 21,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "vmem_rd": 19,
+   "bf16_round": 33,
+   "lds_wr_hi": 12,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "vmem_wr": 8,
+   "lds_wr_b16": 4
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 162,
+   "waitcnt": 24,
+   "valu": 270,
+   "bf16_round": 36,
+   "vmem_rd": 30,
+   "lds_wr_b16": 12,
+   "lds_rd_b64": 13,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "lds_wr_hi": 12,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "vmem_wr": 12
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb1ELi1ELi4EEEvNS_10FwdOParamsE": {
+  "total_ops": 1036,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 112
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 32,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 64,
+   "ds_read_b64": 68
+  },
+  "vmem_rd": 32,
+  "vmem_wr": 4,
+  "barrier": 2,
+  "waitcnt": 93,
+  "loop_len": 731,
+  "loop_mix": {
+   "scalar": 57,
+   "lds_rd_b64": 83,
+   "valu": 172,
+   "waitcnt": 89,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "vmem_rd": 20,
+   "bf16_round": 129,
+   "lds_wr_hi": 64,
+   "barrier": 2,
+   "vmem_wr": 3
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 115,
+   "waitcnt": 93,
+   "valu": 360,
+   "vmem_rd": 32,
+   "bf16_round": 131,
+   "lds_wr_b16": 32,
+   "lds_rd_b64": 84,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "lds_wr_hi": 64,
+   "barrier": 2,
+   "vmem_wr": 4
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb1ELi2ELi4EEEvNS_10FwdOParamsE": {
+  "total_ops": 1227,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 112
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 48,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 48,
+   "ds_read_u16": 32,
+   "ds_read_b64": 68
+  },
+  "vmem_rd": 32,
+  "vmem_wr": 32,
+  "barrier": 2,
+  "waitcnt": 101,
+  "loop_len": 855,
+  "loop_mix": {
+   "scalar": 54,
+   "lds_rd_b64": 83,
+   "valu": 231,
+   "waitcnt": 97,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "vmem_rd": 20,
+   "bf16_round": 129,
+   "lds_wr_hi": 48,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "vmem_wr": 31,
+   "lds_wr_b16": 16
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 134,
+   "waitcnt": 101,
+   "valu": 463,
+   "bf16_round": 132,
+   "vmem_rd": 32,
+   "lds_wr_b16": 48,
+   "lds_rd_b64": 84,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "lds_wr_hi": 48,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "vmem_wr": 32
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb1ELi3ELi4EEEvNS_10FwdOParamsE": {
+  "total_ops": 897,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 64
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 48,
+   "ds_read_u16": 32,
+   "ds_read_b64": 32,
+   "ds_read2_b64": 8,
+   "ds_write_b16_d16_hi": 32
+  },
+  "vmem_rd": 24,
+  "vmem_wr": 28,
+  "barrier": 2,
+  "waitcnt": 64,
+  "loop_len": 571,
+  "loop_mix": {
+   "scalar": 24,
+   "waitcnt": 60,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "valu": 165,
+   "vmem_wr": 28,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 64,
+   "bf16_round": 96,
+   "vmem_rd": 12,
+   "lds_wr_b16": 16,
+   "lds_wr_hi": 32
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 91,
+   "waitcnt": 64,
+   "valu": 367,
+   "vmem_rd": 24,
+   "bf16_round": 99,
+   "lds_wr_b16": 48,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "vmem_wr": 28,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 64,
+   "lds_wr_hi": 32
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb1ELi4ELi4EEEvNS_10FwdOParamsE": {
+  "total_ops": 859,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 64
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 48,
+   "ds_read_u16": 32,
+   "ds_read_b64": 32,
+   "ds_read2_b64": 8,
+   "ds_write_b16_d16_hi": 32
+  },
+  "vmem_rd": 24,
+  "vmem_wr": 12,
+  "barrier": 2,
+  "waitcnt": 65,
+  "loop_len": 550,
+  "loop_mix": {
+   "scalar": 21,
+   "waitcnt": 61,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "valu": 162,
+   "vmem_wr": 12,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 64,
+   "bf16_round": 96,
+   "vmem_rd": 12,
+   "lds_wr_b16": 16,
+   "lds_wr_hi": 32
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 85,
+   "waitcnt": 65,
+   "valu": 351,
+   "vmem_rd": 24,
+   "bf16_round": 99,
+   "lds_wr_b16": 48,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "vmem_wr": 12,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 64,
+   "lds_wr_hi": 32
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb1ELi5ELi4EEEvNS_10FwdOParamsE": {
+  "total_ops": 1154,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 112
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 32,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 64,
+   "ds_read_u16": 32,
+   "ds_read_b64": 68
+  },
+  "vmem_rd": 32,
+  "vmem_wr": 12,
+  "barrier": 2,
+  "waitcnt": 102,
+  "loop_len": 806,
+  "loop_mix": {
+   "scalar": 55,
+   "lds_rd_b64": 83,
+   "valu": 200,
+   "waitcnt": 98,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "vmem_rd": 20,
+   "bf16_round": 129,
+   "lds_wr_hi": 64,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "vmem_wr": 11
+  },
+  "func_mix": {
+   "s_load": 8,
+   "scalar": 130,
+   "waitcnt": 102,
+   "valu": 412,
+   "vmem_rd": 32,
+   "bf16_round": 132,
+   "lds_wr_b16": 32,
+   "lds_rd_b64": 84,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "lds_wr_hi": 64,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "vmem_wr": 12
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb1ELi0ELi4EEEvNS_10FwdOParamsE": {
+  "total_ops": 1404,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 112
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 48,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 48,
+   "ds_read_u16": 32,
+   "ds_read_b64": 68
+  },
+  "vmem_rd": 32,
+  "vmem_wr": 48,
+  "barrier": 2,
+  "waitcnt": 108,
+  "loop_len": 1024,
+  "loop_mix": {
+   "scalar": 127,
+   "lds_rd_b64": 84,
+   "valu": 305,
+   "waitcnt": 105,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "vmem_rd": 20,
+   "bf16_round": 129,
+   "lds_wr_hi": 48,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "vmem_wr": 44,
+   "lds_wr_b16": 16
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 221,
+   "waitcnt": 108,
+   "valu": 530,
+   "bf16_round": 132,
+   "vmem_rd": 32,
+   "lds_wr_b16": 48,
+   "lds_rd_b64": 84,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "lds_wr_hi": 48,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "vmem_wr": 48
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb0ELi1ELi1EEEvNS_10FwdOParamsE": {
+  "total_ops": 429,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 28
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 8,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 16,
+   "ds_read_b64": 1
+  },
+  "vmem_rd": 28,
+  "vmem_wr": 1,
+  "barrier": 2,
+  "waitcnt": 20,
+  "loop_len": 211,
+  "loop_mix": {
+   "scalar": 20,
+   "waitcnt": 16,
+   "barrier": 2,
+   "vmem_rd": 17,
+   "lds_rd_b64": 13,
+   "valu": 66,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "bf16_round": 32,
+   "lds_wr_hi": 16,
+   "vmem_wr": 1
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 82,
+   "waitcnt": 20,
+   "valu": 190,
+   "bf16_round": 35,
+   "vmem_rd": 28,
+   "lds_wr_b16": 8,
+   "barrier": 2,
+   "lds_rd_b64": 13,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "lds_wr_hi": 16,
+   "vmem_wr": 1
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb0ELi2ELi1EEEvNS_10FwdOParamsE": {
+  "total_ops": 536,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 28
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 12,
+   "ds_read_u16": 8,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 12,
+   "ds_read_b64": 1
+  },
+  "vmem_rd": 28,
+  "vmem_wr": 8,
+  "barrier": 2,
+  "waitcnt": 24,
+  "loop_len": 255,
+  "loop_mix": {
+   "scalar": 22,
+   "waitcnt": 19,
+   "barrier": 2,
+   "valu": 90,
+   "vmem_rd": 17,
+   "lds_rd_u16": 8,
+   "lds_rd_b64": 13,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "vmem_wr": 8,
+   "bf16_round": 32,
+   "lds_wr_b16": 4,
+   "lds_wr_hi": 12
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 110,
+   "waitcnt": 24,
+   "valu": 249,
+   "bf16_round": 36,
+   "vmem_rd": 28,
+   "lds_wr_b16": 12,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "lds_rd_b64": 13,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "vmem_wr": 8,
+   "lds_wr_hi": 12
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb0ELi3ELi1EEEvNS_10FwdOParamsE": {
+  "total_ops": 414,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 16
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 12,
+   "ds_read_u16": 8,
+   "ds_read2_b64": 6,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 7,
+  "barrier": 2,
+  "waitcnt": 19,
+  "loop_len": 191,
+  "loop_mix": {
+   "scalar": 17,
+   "waitcnt": 14,
+   "barrier": 2,
+   "valu": 74,
+   "lds_rd_u16": 8,
+   "lds_rd_b64": 6,
+   "v_mmac_f32_16x16x16_bf16": 16,
+   "vmem_wr": 7,
+   "vmem_rd": 11,
+   "bf16_round": 24,
+   "lds_wr_b16": 4,
+   "lds_wr_hi": 8
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 85,
+   "waitcnt": 19,
+   "valu": 196,
+   "vmem_rd": 22,
+   "bf16_round": 27,
+   "lds_wr_b16": 12,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "lds_rd_b64": 6,
+   "v_mmac_f32_16x16x16_bf16": 16,
+   "vmem_wr": 7,
+   "lds_wr_hi": 8
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb0ELi4ELi1EEEvNS_10FwdOParamsE": {
+  "total_ops": 389,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 16
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 12,
+   "ds_read_u16": 8,
+   "ds_read2_b64": 6,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 3,
+  "barrier": 2,
+  "waitcnt": 18,
+  "loop_len": 184,
+  "loop_mix": {
+   "scalar": 17,
+   "waitcnt": 14,
+   "barrier": 2,
+   "valu": 71,
+   "lds_rd_u16": 8,
+   "lds_rd_b64": 6,
+   "v_mmac_f32_16x16x16_bf16": 16,
+   "vmem_wr": 3,
+   "vmem_rd": 11,
+   "bf16_round": 24,
+   "lds_wr_b16": 4,
+   "lds_wr_hi": 8
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 82,
+   "waitcnt": 18,
+   "valu": 180,
+   "vmem_rd": 22,
+   "bf16_round": 27,
+   "lds_wr_b16": 12,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "lds_rd_b64": 6,
+   "v_mmac_f32_16x16x16_bf16": 16,
+   "vmem_wr": 3,
+   "lds_wr_hi": 8
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb0ELi5ELi1EEEvNS_10FwdOParamsE": {
+  "total_ops": 481,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 28
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 8,
+   "ds_read_u16": 8,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 16,
+   "ds_read_b64": 1
+  },
+  "vmem_rd": 28,
+  "vmem_wr": 3,
+  "barrier": 2,
+  "waitcnt": 23,
+  "loop_len": 231,
+  "loop_mix": {
+   "scalar": 17,
+   "waitcnt": 17,
+   "barrier": 2,
+   "valu": 78,
+   "vmem_rd": 17,
+   "lds_rd_u16": 8,
+   "lds_rd_b64": 13,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "vmem_wr": 3,
+   "bf16_round": 32,
+   "lds_wr_hi": 16
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 92,
+   "waitcnt": 23,
+   "valu": 217,
+   "bf16_round": 36,
+   "vmem_rd": 28,
+   "lds_wr_b16": 8,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "lds_rd_b64": 13,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "vmem_wr": 3,
+   "lds_wr_hi": 16
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb0ELi0ELi1EEEvNS_10FwdOParamsE": {
+  "total_ops": 597,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 28
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 12,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 12,
+   "ds_read_u16": 8,
+   "ds_read_b64": 1
+  },
+  "vmem_rd": 28,
+  "vmem_wr": 12,
+  "barrier": 2,
+  "waitcnt": 24,
+  "loop_len": 301,
+  "loop_mix": {
+   "scalar": 51,
+   "lds_rd_b64": 13,
+   "valu": 105,
+   "waitcnt": 21,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "vmem_rd": 17,
+   "bf16_round": 32,
+   "lds_wr_hi": 12,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "vmem_wr": 8,
+   "lds_wr_b16": 4
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 144,
+   "waitcnt": 24,
+   "valu": 272,
+   "bf16_round": 36,
+   "vmem_rd": 28,
+   "lds_wr_b16": 12,
+   "lds_rd_b64": 13,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "lds_wr_hi": 12,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "vmem_wr": 12
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb0ELi1ELi4EEEvNS_10FwdOParamsE": {
+  "total_ops": 1010,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 112
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 32,
+   "ds_read_b64": 68,
+   "ds_write_b16_d16_hi": 64,
+   "ds_read2_b64": 16
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 4,
+  "barrier": 2,
+  "waitcnt": 94,
+  "loop_len": 699,
+  "loop_mix": {
+   "scalar": 44,
+   "waitcnt": 91,
+   "barrier": 2,
+   "vmem_rd": 18,
+   "lds_rd_b64": 84,
+   "valu": 152,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "bf16_round": 128,
+   "lds_wr_hi": 64,
+   "vmem_wr": 4
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 104,
+   "waitcnt": 94,
+   "valu": 347,
+   "vmem_rd": 30,
+   "bf16_round": 131,
+   "lds_wr_b16": 32,
+   "barrier": 2,
+   "lds_rd_b64": 84,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "lds_wr_hi": 64,
+   "vmem_wr": 4
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb0ELi2ELi4EEEvNS_10FwdOParamsE": {
+  "total_ops": 1206,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 112
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 48,
+   "ds_read_u16": 32,
+   "ds_read_b64": 68,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 48
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 32,
+  "barrier": 2,
+  "waitcnt": 107,
+  "loop_len": 835,
+  "loop_mix": {
+   "scalar": 37,
+   "waitcnt": 104,
+   "barrier": 2,
+   "vmem_rd": 18,
+   "lds_rd_u16": 32,
+   "valu": 222,
+   "vmem_wr": 32,
+   "lds_rd_b64": 84,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "bf16_round": 128,
+   "lds_wr_b16": 16,
+   "lds_wr_hi": 48
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 116,
+   "waitcnt": 107,
+   "valu": 457,
+   "vmem_rd": 30,
+   "bf16_round": 132,
+   "lds_wr_b16": 48,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "vmem_wr": 32,
+   "lds_rd_b64": 84,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "lds_wr_hi": 48
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb0ELi3ELi4EEEvNS_10FwdOParamsE": {
+  "total_ops": 897,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 64
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 48,
+   "ds_read_u16": 32,
+   "ds_read_b64": 32,
+   "ds_read2_b64": 8,
+   "ds_write_b16_d16_hi": 32
+  },
+  "vmem_rd": 24,
+  "vmem_wr": 28,
+  "barrier": 2,
+  "waitcnt": 64,
+  "loop_len": 571,
+  "loop_mix": {
+   "scalar": 24,
+   "waitcnt": 60,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "valu": 165,
+   "vmem_wr": 28,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 64,
+   "bf16_round": 96,
+   "vmem_rd": 12,
+   "lds_wr_b16": 16,
+   "lds_wr_hi": 32
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 91,
+   "waitcnt": 64,
+   "valu": 367,
+   "vmem_rd": 24,
+   "bf16_round": 99,
+   "lds_wr_b16": 48,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "vmem_wr": 28,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 64,
+   "lds_wr_hi": 32
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb0ELi4ELi4EEEvNS_10FwdOParamsE": {
+  "total_ops": 859,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 64
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 48,
+   "ds_read_u16": 32,
+   "ds_read_b64": 32,
+   "ds_read2_b64": 8,
+   "ds_write_b16_d16_hi": 32
+  },
+  "vmem_rd": 24,
+  "vmem_wr": 12,
+  "barrier": 2,
+  "waitcnt": 65,
+  "loop_len": 550,
+  "loop_mix": {
+   "scalar": 21,
+   "waitcnt": 61,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "valu": 162,
+   "vmem_wr": 12,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 64,
+   "bf16_round": 96,
+   "vmem_rd": 12,
+   "lds_wr_b16": 16,
+   "lds_wr_hi": 32
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 85,
+   "waitcnt": 65,
+   "valu": 351,
+   "vmem_rd": 24,
+   "bf16_round": 99,
+   "lds_wr_b16": 48,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "vmem_wr": 12,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 64,
+   "lds_wr_hi": 32
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb0ELi5ELi4EEEvNS_10FwdOParamsE": {
+  "total_ops": 1140,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 112
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 32,
+   "ds_read_u16": 32,
+   "ds_read_b64": 68,
+   "ds_write_b16_d16_hi": 64,
+   "ds_read2_b64": 16
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 12,
+  "barrier": 2,
+  "waitcnt": 106,
+  "loop_len": 789,
+  "loop_mix": {
+   "scalar": 34,
+   "waitcnt": 103,
+   "barrier": 2,
+   "vmem_rd": 18,
+   "lds_rd_u16": 32,
+   "valu": 200,
+   "vmem_wr": 12,
+   "lds_rd_b64": 84,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "bf16_round": 128,
+   "lds_wr_hi": 64
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 108,
+   "waitcnt": 106,
+   "valu": 419,
+   "vmem_rd": 30,
+   "bf16_round": 132,
+   "lds_wr_b16": 32,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "vmem_wr": 12,
+   "lds_rd_b64": 84,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "lds_wr_hi": 64
+  }
+ },
+ "_ZN2g221g2_fwd_h_v8o4w_kernelILb0ELi0ELi4EEEvNS_10FwdOParamsE": {
+  "total_ops": 1354,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 112
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 48,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 48,
+   "ds_read_u16": 32,
+   "ds_read_b64": 68
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 48,
+  "barrier": 2,
+  "waitcnt": 106,
+  "loop_len": 962,
+  "loop_mix": {
+   "scalar": 97,
+   "lds_rd_b64": 84,
+   "valu": 278,
+   "waitcnt": 103,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "vmem_rd": 18,
+   "bf16_round": 128,
+   "lds_wr_hi": 48,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "vmem_wr": 44,
+   "lds_wr_b16": 16
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 188,
+   "waitcnt": 106,
+   "valu": 518,
+   "bf16_round": 132,
+   "vmem_rd": 30,
+   "lds_wr_b16": 48,
+   "lds_rd_b64": 84,
+   "v_mmac_f32_16x16x16_bf16": 112,
+   "lds_wr_hi": 48,
+   "barrier": 2,
+   "lds_rd_u16": 32,
+   "vmem_wr": 48
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi5ELb1ELb1ELb1ELb1ELb1ELb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 752,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 63
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 9,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 36,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 20,
+  "loop_len": 412,
+  "loop_mix": {
+   "scalar": 84,
+   "valu": 137,
+   "vmem_rd": 19,
+   "waitcnt": 16,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 59,
+   "bf16_round": 65,
+   "lds_wr_hi": 8,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 9,
+   "valu": 265,
+   "waitcnt": 20,
+   "scalar": 253,
+   "vmem_rd": 36,
+   "bf16_round": 69,
+   "lds_wr_b64": 9,
+   "v_mmac_f32_16x16x16_bf16": 63,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "lds_wr_hi": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi5ELb1ELb0ELb0ELb1ELb1ELb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 751,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 63
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 9,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 23,
+  "loop_len": 409,
+  "loop_mix": {
+   "valu": 163,
+   "scalar": 52,
+   "vmem_rd": 19,
+   "waitcnt": 19,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 59,
+   "bf16_round": 65,
+   "lds_wr_hi": 8,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 9,
+   "scalar": 160,
+   "waitcnt": 23,
+   "valu": 360,
+   "vmem_rd": 30,
+   "bf16_round": 69,
+   "lds_wr_b64": 9,
+   "v_mmac_f32_16x16x16_bf16": 63,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "lds_wr_hi": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi5ELb1ELb0ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 680,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 16,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 32,
+   "ds_read_u16": 16,
+   "ds_read_b64": 2
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 36,
+  "loop_len": 413,
+  "loop_mix": {
+   "scalar": 35,
+   "lds_rd_b64": 17,
+   "valu": 134,
+   "waitcnt": 32,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "vmem_rd": 19,
+   "bf16_round": 65,
+   "lds_wr_hi": 32,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 5
+  },
+  "func_mix": {
+   "s_load": 8,
+   "scalar": 107,
+   "waitcnt": 36,
+   "valu": 285,
+   "bf16_round": 68,
+   "lds_wr_b16": 16,
+   "vmem_rd": 30,
+   "lds_rd_b64": 18,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "lds_wr_hi": 32,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 6
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi1ELb1ELb1ELb1ELb1ELb1ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 585,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 8,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 36,
+  "vmem_wr": 2,
+  "barrier": 2,
+  "waitcnt": 22,
+  "loop_len": 349,
+  "loop_mix": {
+   "scalar": 62,
+   "valu": 105,
+   "vmem_rd": 19,
+   "lds_rd_b64": 16,
+   "waitcnt": 19,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "bf16_round": 57,
+   "lds_wr_b64": 4,
+   "barrier": 2,
+   "lds_wr_hi": 8,
+   "vmem_wr": 1
+  },
+  "func_mix": {
+   "s_load": 8,
+   "valu": 188,
+   "waitcnt": 22,
+   "scalar": 171,
+   "bf16_round": 68,
+   "lds_wr_b64": 8,
+   "vmem_rd": 36,
+   "lds_rd_b64": 16,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "barrier": 2,
+   "lds_wr_hi": 8,
+   "vmem_wr": 2
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi1ELb1ELb1ELb1ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 613,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 16,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 32,
+   "ds_read_b64": 2
+  },
+  "vmem_rd": 36,
+  "vmem_wr": 2,
+  "barrier": 2,
+  "waitcnt": 27,
+  "loop_len": 381,
+  "loop_mix": {
+   "scalar": 65,
+   "valu": 101,
+   "vmem_rd": 19,
+   "lds_rd_b64": 17,
+   "waitcnt": 23,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "bf16_round": 65,
+   "lds_wr_hi": 32,
+   "barrier": 2,
+   "vmem_wr": 1
+  },
+  "func_mix": {
+   "s_load": 7,
+   "valu": 180,
+   "scalar": 170,
+   "waitcnt": 27,
+   "bf16_round": 67,
+   "vmem_rd": 36,
+   "lds_wr_b16": 16,
+   "lds_rd_b64": 18,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "lds_wr_hi": 32,
+   "barrier": 2,
+   "vmem_wr": 2
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi1ELb1ELb0ELb0ELb1ELb1ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 589,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 8,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 2,
+  "barrier": 2,
+  "waitcnt": 25,
+  "loop_len": 351,
+  "loop_mix": {
+   "scalar": 37,
+   "valu": 129,
+   "lds_rd_b64": 16,
+   "waitcnt": 22,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "vmem_rd": 19,
+   "bf16_round": 57,
+   "lds_wr_b64": 4,
+   "barrier": 2,
+   "lds_wr_hi": 8,
+   "vmem_wr": 1
+  },
+  "func_mix": {
+   "s_load": 8,
+   "scalar": 98,
+   "waitcnt": 25,
+   "valu": 268,
+   "bf16_round": 68,
+   "lds_wr_b64": 8,
+   "vmem_rd": 30,
+   "lds_rd_b64": 16,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "barrier": 2,
+   "lds_wr_hi": 8,
+   "vmem_wr": 2
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi1ELb1ELb0ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 592,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 16,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 32,
+   "ds_read_b64": 2
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 2,
+  "barrier": 2,
+  "waitcnt": 30,
+  "loop_len": 368,
+  "loop_mix": {
+   "scalar": 36,
+   "lds_rd_b64": 17,
+   "valu": 114,
+   "waitcnt": 26,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "vmem_rd": 19,
+   "bf16_round": 65,
+   "lds_wr_hi": 32,
+   "barrier": 2,
+   "vmem_wr": 1
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 93,
+   "waitcnt": 30,
+   "valu": 239,
+   "bf16_round": 67,
+   "lds_wr_b16": 16,
+   "vmem_rd": 30,
+   "lds_rd_b64": 18,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "lds_wr_hi": 32,
+   "barrier": 2,
+   "vmem_wr": 2
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi2ELb1ELb0ELb0ELb1ELb1ELb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 824,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 63
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 9,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 8,
+   "ds_read_u16": 8
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 16,
+  "barrier": 2,
+  "waitcnt": 26,
+  "loop_len": 445,
+  "loop_mix": {
+   "valu": 174,
+   "scalar": 56,
+   "vmem_rd": 19,
+   "waitcnt": 22,
+   "barrier": 2,
+   "vmem_wr": 16,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 59,
+   "bf16_round": 65,
+   "lds_wr_hi": 8,
+   "lds_rd_u16": 8,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 8,
+   "scalar": 172,
+   "waitcnt": 26,
+   "valu": 400,
+   "bf16_round": 70,
+   "vmem_rd": 30,
+   "lds_wr_b64": 9,
+   "v_mmac_f32_16x16x16_bf16": 63,
+   "barrier": 2,
+   "vmem_wr": 16,
+   "lds_rd_b64": 12,
+   "lds_wr_hi": 8,
+   "lds_rd_u16": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi2ELb1ELb0ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 737,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 24,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 24,
+   "ds_read_u16": 16,
+   "ds_read_b64": 2
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 16,
+  "barrier": 2,
+  "waitcnt": 36,
+  "loop_len": 442,
+  "loop_mix": {
+   "scalar": 35,
+   "lds_rd_b64": 17,
+   "valu": 153,
+   "waitcnt": 32,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "vmem_rd": 19,
+   "bf16_round": 65,
+   "lds_wr_hi": 24,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 15,
+   "lds_wr_b16": 8
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 113,
+   "waitcnt": 36,
+   "valu": 327,
+   "bf16_round": 68,
+   "lds_wr_b16": 24,
+   "vmem_rd": 30,
+   "lds_rd_b64": 18,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "lds_wr_hi": 24,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 16
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi3ELb1ELb0ELb0ELb1ELb0ELb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 637,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 39
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 9,
+   "ds_read2_b64": 12,
+   "ds_write_b16": 8
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 14,
+  "barrier": 2,
+  "waitcnt": 22,
+  "loop_len": 316,
+  "loop_mix": {
+   "valu": 130,
+   "scalar": 35,
+   "waitcnt": 17,
+   "barrier": 2,
+   "vmem_wr": 14,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 35,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 134,
+   "waitcnt": 22,
+   "valu": 316,
+   "vmem_rd": 22,
+   "bf16_round": 53,
+   "lds_wr_b64": 9,
+   "v_mmac_f32_16x16x16_bf16": 39,
+   "barrier": 2,
+   "vmem_wr": 14,
+   "lds_rd_b64": 12,
+   "lds_wr_b16": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi3ELb1ELb0ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 563,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 24,
+   "ds_read_u16": 16,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 16
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 14,
+  "barrier": 2,
+  "waitcnt": 30,
+  "loop_len": 317,
+  "loop_mix": {
+   "scalar": 21,
+   "waitcnt": 26,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "valu": 111,
+   "vmem_wr": 14,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_hi": 16
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 85,
+   "waitcnt": 30,
+   "valu": 253,
+   "bf16_round": 51,
+   "lds_wr_b16": 24,
+   "vmem_rd": 22,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 14,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "lds_wr_hi": 16
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi4ELb0ELb0ELb0ELb1ELb0ELb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 655,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 39
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 9,
+   "ds_read2_b64": 12,
+   "ds_write_b16": 8
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 20,
+  "loop_len": 350,
+  "loop_mix": {
+   "valu": 173,
+   "waitcnt": 15,
+   "scalar": 36,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 35,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 133,
+   "waitcnt": 20,
+   "valu": 346,
+   "vmem_rd": 22,
+   "bf16_round": 53,
+   "lds_wr_b64": 9,
+   "v_mmac_f32_16x16x16_bf16": 39,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "lds_wr_b16": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi4ELb0ELb0ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 578,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 24,
+   "ds_read_u16": 16,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 16
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 30,
+  "loop_len": 348,
+  "loop_mix": {
+   "scalar": 21,
+   "waitcnt": 26,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "valu": 150,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_hi": 16
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 83,
+   "waitcnt": 30,
+   "valu": 279,
+   "bf16_round": 51,
+   "lds_wr_b16": 24,
+   "vmem_rd": 22,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "lds_wr_hi": 16
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi4ELb1ELb1ELb0ELb1ELb0ELb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 610,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 39
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 9,
+   "ds_read2_b64": 12,
+   "ds_write_b16": 8
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 23,
+  "loop_len": 310,
+  "loop_mix": {
+   "valu": 106,
+   "scalar": 60,
+   "waitcnt": 18,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 35,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 5,
+   "valu": 227,
+   "scalar": 204,
+   "waitcnt": 23,
+   "vmem_rd": 22,
+   "bf16_round": 53,
+   "lds_wr_b64": 9,
+   "v_mmac_f32_16x16x16_bf16": 39,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "lds_wr_b16": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi4ELb1ELb1ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 536,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 24,
+   "ds_read_u16": 16,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 16
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 29,
+  "loop_len": 301,
+  "loop_mix": {
+   "scalar": 40,
+   "waitcnt": 25,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "valu": 85,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_hi": 16
+  },
+  "func_mix": {
+   "s_load": 5,
+   "valu": 169,
+   "scalar": 152,
+   "waitcnt": 29,
+   "bf16_round": 51,
+   "lds_wr_b16": 24,
+   "vmem_rd": 22,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "lds_wr_hi": 16
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi4ELb1ELb0ELb0ELb1ELb0ELb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 609,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 39
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 9,
+   "ds_read2_b64": 12,
+   "ds_write_b16": 8
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 22,
+  "loop_len": 305,
+  "loop_mix": {
+   "valu": 127,
+   "scalar": 35,
+   "waitcnt": 17,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 35,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 131,
+   "waitcnt": 22,
+   "valu": 300,
+   "vmem_rd": 22,
+   "bf16_round": 53,
+   "lds_wr_b64": 9,
+   "v_mmac_f32_16x16x16_bf16": 39,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "lds_wr_b16": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi4ELb1ELb0ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 535,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 24,
+   "ds_read_u16": 16,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 16
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 30,
+  "loop_len": 306,
+  "loop_mix": {
+   "scalar": 21,
+   "waitcnt": 26,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "valu": 108,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_hi": 16
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 82,
+   "waitcnt": 30,
+   "valu": 237,
+   "bf16_round": 51,
+   "lds_wr_b16": 24,
+   "vmem_rd": 22,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "lds_wr_hi": 16
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi0ELb1ELb0ELb0ELb1ELb1ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 813,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 8,
+   "ds_read2_b64": 16,
+   "ds_read_u16": 24,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 18,
+  "barrier": 2,
+  "waitcnt": 46,
+  "loop_len": 501,
+  "loop_mix": {
+   "scalar": 70,
+   "waitcnt": 43,
+   "valu": 177,
+   "lds_rd_b64": 16,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "vmem_rd": 19,
+   "bf16_round": 65,
+   "lds_wr_b64": 4,
+   "barrier": 2,
+   "lds_rd_u16": 24,
+   "vmem_wr": 17,
+   "lds_wr_hi": 8
+  },
+  "func_mix": {
+   "s_load": 8,
+   "scalar": 167,
+   "waitcnt": 46,
+   "valu": 361,
+   "bf16_round": 69,
+   "lds_wr_b64": 8,
+   "vmem_rd": 30,
+   "lds_rd_b64": 16,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "barrier": 2,
+   "lds_rd_u16": 24,
+   "vmem_wr": 18,
+   "lds_wr_hi": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb1ELi0ELb1ELb0ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 820,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 24,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 24,
+   "ds_read_u16": 16,
+   "ds_read_b64": 2
+  },
+  "vmem_rd": 30,
+  "vmem_wr": 24,
+  "barrier": 2,
+  "waitcnt": 41,
+  "loop_len": 507,
+  "loop_mix": {
+   "scalar": 72,
+   "lds_rd_b64": 18,
+   "valu": 169,
+   "waitcnt": 38,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "vmem_rd": 19,
+   "bf16_round": 65,
+   "lds_wr_hi": 24,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 20,
+   "lds_wr_b16": 8
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 165,
+   "waitcnt": 41,
+   "valu": 346,
+   "bf16_round": 67,
+   "lds_wr_b16": 24,
+   "vmem_rd": 30,
+   "lds_rd_b64": 18,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "lds_wr_hi": 24,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 24
+  }
+ },
+ "_ZN2g219g2_fwd_h_v8o_kernelILb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 578,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 28
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 12,
+   "ds_read2_b64": 14,
+   "ds_write_b16_d16_hi": 12,
+   "ds_read_u16": 8,
+   "ds_read_b64": 1
+  },
+  "vmem_rd": 24,
+  "vmem_wr": 12,
+  "barrier": 2,
+  "waitcnt": 25,
+  "loop_len": 305,
+  "loop_mix": {
+   "scalar": 46,
+   "lds_rd_b64": 14,
+   "waitcnt": 21,
+   "valu": 110,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "vmem_rd": 16,
+   "bf16_round": 33,
+   "lds_wr_hi": 12,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "vmem_wr": 11,
+   "lds_wr_b16": 4
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 133,
+   "waitcnt": 25,
+   "valu": 263,
+   "bf16_round": 37,
+   "vmem_rd": 24,
+   "lds_wr_b16": 12,
+   "lds_rd_b64": 15,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "lds_wr_hi": 12,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "vmem_wr": 12
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi5ELb1ELb1ELb1ELb1ELb1ELb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 743,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 63
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 9,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 34,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 30,
+  "loop_len": 387,
+  "loop_mix": {
+   "scalar": 72,
+   "valu": 118,
+   "vmem_rd": 17,
+   "waitcnt": 25,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 59,
+   "bf16_round": 64,
+   "lds_wr_hi": 8,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 8,
+   "valu": 260,
+   "waitcnt": 30,
+   "scalar": 242,
+   "vmem_rd": 34,
+   "bf16_round": 69,
+   "lds_wr_b64": 9,
+   "v_mmac_f32_16x16x16_bf16": 63,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "lds_wr_hi": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi5ELb1ELb0ELb0ELb1ELb1ELb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 739,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 63
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 9,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 28,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 25,
+  "loop_len": 383,
+  "loop_mix": {
+   "valu": 146,
+   "scalar": 44,
+   "waitcnt": 21,
+   "barrier": 2,
+   "vmem_rd": 17,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 59,
+   "bf16_round": 64,
+   "lds_wr_hi": 8,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 8,
+   "waitcnt": 25,
+   "valu": 354,
+   "scalar": 155,
+   "vmem_rd": 28,
+   "bf16_round": 69,
+   "lds_wr_b64": 9,
+   "v_mmac_f32_16x16x16_bf16": 63,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "lds_wr_hi": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi5ELb1ELb0ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 648,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 16,
+   "ds_read_u16": 16,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 32,
+   "ds_read_b64": 2
+  },
+  "vmem_rd": 28,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 28,
+  "loop_len": 377,
+  "loop_mix": {
+   "scalar": 27,
+   "waitcnt": 25,
+   "barrier": 2,
+   "valu": 114,
+   "vmem_rd": 17,
+   "lds_rd_u16": 16,
+   "lds_rd_b64": 18,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "vmem_wr": 6,
+   "bf16_round": 64,
+   "lds_wr_hi": 32
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 99,
+   "waitcnt": 28,
+   "valu": 272,
+   "bf16_round": 68,
+   "lds_wr_b16": 16,
+   "vmem_rd": 28,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "lds_rd_b64": 18,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "vmem_wr": 6,
+   "lds_wr_hi": 32
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi1ELb1ELb1ELb1ELb1ELb1ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 575,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 8,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 34,
+  "vmem_wr": 2,
+  "barrier": 2,
+  "waitcnt": 30,
+  "loop_len": 341,
+  "loop_mix": {
+   "scalar": 52,
+   "waitcnt": 26,
+   "barrier": 2,
+   "valu": 94,
+   "lds_rd_b64": 16,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "vmem_rd": 17,
+   "bf16_round": 64,
+   "lds_wr_hi": 8,
+   "vmem_wr": 2,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 7,
+   "valu": 183,
+   "waitcnt": 30,
+   "scalar": 161,
+   "bf16_round": 68,
+   "lds_wr_b64": 8,
+   "vmem_rd": 34,
+   "barrier": 2,
+   "lds_rd_b64": 16,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "lds_wr_hi": 8,
+   "vmem_wr": 2
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi1ELb1ELb1ELb1ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 597,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 16,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 32,
+   "ds_read_b64": 2
+  },
+  "vmem_rd": 34,
+  "vmem_wr": 2,
+  "barrier": 2,
+  "waitcnt": 34,
+  "loop_len": 358,
+  "loop_mix": {
+   "scalar": 55,
+   "waitcnt": 30,
+   "barrier": 2,
+   "valu": 82,
+   "lds_rd_b64": 18,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "vmem_rd": 17,
+   "bf16_round": 64,
+   "lds_wr_hi": 32,
+   "vmem_wr": 2
+  },
+  "func_mix": {
+   "s_load": 6,
+   "valu": 171,
+   "scalar": 159,
+   "waitcnt": 34,
+   "vmem_rd": 34,
+   "bf16_round": 67,
+   "lds_wr_b16": 16,
+   "barrier": 2,
+   "lds_rd_b64": 18,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "lds_wr_hi": 32,
+   "vmem_wr": 2
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi1ELb1ELb0ELb0ELb1ELb1ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 568,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 8,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 28,
+  "vmem_wr": 2,
+  "barrier": 2,
+  "waitcnt": 27,
+  "loop_len": 335,
+  "loop_mix": {
+   "scalar": 27,
+   "waitcnt": 24,
+   "barrier": 2,
+   "vmem_rd": 17,
+   "valu": 115,
+   "lds_rd_b64": 16,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "bf16_round": 64,
+   "lds_wr_hi": 8,
+   "vmem_wr": 2,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 89,
+   "waitcnt": 27,
+   "valu": 257,
+   "bf16_round": 68,
+   "lds_wr_b64": 8,
+   "vmem_rd": 28,
+   "barrier": 2,
+   "lds_rd_b64": 16,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "lds_wr_hi": 8,
+   "vmem_wr": 2
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi1ELb1ELb0ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 568,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 16,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 32,
+   "ds_read_b64": 2
+  },
+  "vmem_rd": 28,
+  "vmem_wr": 2,
+  "barrier": 2,
+  "waitcnt": 31,
+  "loop_len": 339,
+  "loop_mix": {
+   "scalar": 26,
+   "waitcnt": 28,
+   "barrier": 2,
+   "vmem_rd": 17,
+   "valu": 94,
+   "lds_rd_b64": 18,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "bf16_round": 64,
+   "lds_wr_hi": 32,
+   "vmem_wr": 2
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 84,
+   "waitcnt": 31,
+   "valu": 226,
+   "bf16_round": 67,
+   "lds_wr_b16": 16,
+   "vmem_rd": 28,
+   "barrier": 2,
+   "lds_rd_b64": 18,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "lds_wr_hi": 32,
+   "vmem_wr": 2
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi2ELb1ELb0ELb0ELb1ELb1ELb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 807,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 63
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 9,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 8,
+   "ds_read_u16": 8
+  },
+  "vmem_rd": 28,
+  "vmem_wr": 16,
+  "barrier": 2,
+  "waitcnt": 27,
+  "loop_len": 416,
+  "loop_mix": {
+   "valu": 156,
+   "scalar": 47,
+   "waitcnt": 23,
+   "barrier": 2,
+   "vmem_rd": 17,
+   "vmem_wr": 16,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 59,
+   "bf16_round": 64,
+   "lds_wr_hi": 8,
+   "lds_rd_u16": 8,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 7,
+   "waitcnt": 27,
+   "valu": 392,
+   "scalar": 165,
+   "bf16_round": 70,
+   "vmem_rd": 28,
+   "lds_wr_b64": 9,
+   "v_mmac_f32_16x16x16_bf16": 63,
+   "barrier": 2,
+   "vmem_wr": 16,
+   "lds_rd_b64": 12,
+   "lds_wr_hi": 8,
+   "lds_rd_u16": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi2ELb1ELb0ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 700,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 24,
+   "ds_read_u16": 16,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 24,
+   "ds_read_b64": 2
+  },
+  "vmem_rd": 28,
+  "vmem_wr": 16,
+  "barrier": 2,
+  "waitcnt": 28,
+  "loop_len": 404,
+  "loop_mix": {
+   "scalar": 26,
+   "waitcnt": 25,
+   "barrier": 2,
+   "valu": 132,
+   "vmem_rd": 17,
+   "lds_rd_u16": 16,
+   "lds_rd_b64": 18,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "vmem_wr": 16,
+   "bf16_round": 64,
+   "lds_wr_b16": 8,
+   "lds_wr_hi": 24
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 104,
+   "waitcnt": 28,
+   "valu": 310,
+   "bf16_round": 68,
+   "lds_wr_b16": 24,
+   "vmem_rd": 28,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "lds_rd_b64": 18,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "vmem_wr": 16,
+   "lds_wr_hi": 24
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi3ELb1ELb0ELb0ELb1ELb0ELb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 637,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 39
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 9,
+   "ds_read2_b64": 12,
+   "ds_write_b16": 8
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 14,
+  "barrier": 2,
+  "waitcnt": 22,
+  "loop_len": 316,
+  "loop_mix": {
+   "valu": 130,
+   "scalar": 35,
+   "waitcnt": 17,
+   "barrier": 2,
+   "vmem_wr": 14,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 35,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 134,
+   "waitcnt": 22,
+   "valu": 316,
+   "vmem_rd": 22,
+   "bf16_round": 53,
+   "lds_wr_b64": 9,
+   "v_mmac_f32_16x16x16_bf16": 39,
+   "barrier": 2,
+   "vmem_wr": 14,
+   "lds_rd_b64": 12,
+   "lds_wr_b16": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi3ELb1ELb0ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 563,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 24,
+   "ds_read_u16": 16,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 16
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 14,
+  "barrier": 2,
+  "waitcnt": 30,
+  "loop_len": 317,
+  "loop_mix": {
+   "scalar": 21,
+   "waitcnt": 26,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "valu": 111,
+   "vmem_wr": 14,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_hi": 16
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 85,
+   "waitcnt": 30,
+   "valu": 253,
+   "bf16_round": 51,
+   "lds_wr_b16": 24,
+   "vmem_rd": 22,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 14,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "lds_wr_hi": 16
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi4ELb0ELb0ELb0ELb1ELb0ELb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 655,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 39
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 9,
+   "ds_read2_b64": 12,
+   "ds_write_b16": 8
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 20,
+  "loop_len": 350,
+  "loop_mix": {
+   "valu": 173,
+   "waitcnt": 15,
+   "scalar": 36,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 35,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 133,
+   "waitcnt": 20,
+   "valu": 346,
+   "vmem_rd": 22,
+   "bf16_round": 53,
+   "lds_wr_b64": 9,
+   "v_mmac_f32_16x16x16_bf16": 39,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "lds_wr_b16": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi4ELb0ELb0ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 578,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 24,
+   "ds_read_u16": 16,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 16
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 30,
+  "loop_len": 348,
+  "loop_mix": {
+   "scalar": 21,
+   "waitcnt": 26,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "valu": 150,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_hi": 16
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 83,
+   "waitcnt": 30,
+   "valu": 279,
+   "bf16_round": 51,
+   "lds_wr_b16": 24,
+   "vmem_rd": 22,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "lds_wr_hi": 16
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi4ELb1ELb1ELb0ELb1ELb0ELb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 610,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 39
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 9,
+   "ds_read2_b64": 12,
+   "ds_write_b16": 8
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 23,
+  "loop_len": 310,
+  "loop_mix": {
+   "valu": 106,
+   "scalar": 60,
+   "waitcnt": 18,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 35,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 5,
+   "valu": 227,
+   "scalar": 204,
+   "waitcnt": 23,
+   "vmem_rd": 22,
+   "bf16_round": 53,
+   "lds_wr_b64": 9,
+   "v_mmac_f32_16x16x16_bf16": 39,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "lds_wr_b16": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi4ELb1ELb1ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 536,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 24,
+   "ds_read_u16": 16,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 16
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 29,
+  "loop_len": 301,
+  "loop_mix": {
+   "scalar": 40,
+   "waitcnt": 25,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "valu": 85,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_hi": 16
+  },
+  "func_mix": {
+   "s_load": 5,
+   "valu": 169,
+   "scalar": 152,
+   "waitcnt": 29,
+   "bf16_round": 51,
+   "lds_wr_b16": 24,
+   "vmem_rd": 22,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "lds_wr_hi": 16
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi4ELb1ELb0ELb0ELb1ELb0ELb1EEEvNS_10FwdOParamsE": {
+  "total_ops": 609,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 39
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 9,
+   "ds_read2_b64": 12,
+   "ds_write_b16": 8
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 22,
+  "loop_len": 305,
+  "loop_mix": {
+   "valu": 127,
+   "scalar": 35,
+   "waitcnt": 17,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 35,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_b64": 4
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 131,
+   "waitcnt": 22,
+   "valu": 300,
+   "vmem_rd": 22,
+   "bf16_round": 53,
+   "lds_wr_b64": 9,
+   "v_mmac_f32_16x16x16_bf16": 39,
+   "barrier": 2,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "lds_wr_b16": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi4ELb1ELb0ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 535,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 24,
+   "ds_read_u16": 16,
+   "ds_read2_b64": 12,
+   "ds_write_b16_d16_hi": 16
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 30,
+  "loop_len": 306,
+  "loop_mix": {
+   "scalar": 21,
+   "waitcnt": 26,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "valu": 108,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 8,
+   "lds_wr_hi": 16
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 82,
+   "waitcnt": 30,
+   "valu": 237,
+   "bf16_round": 51,
+   "lds_wr_b16": 24,
+   "vmem_rd": 22,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 6,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "lds_wr_hi": 16
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi0ELb1ELb0ELb0ELb1ELb1ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 788,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 8,
+   "ds_read2_b64": 16,
+   "ds_read_u16": 24,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 28,
+  "vmem_wr": 18,
+  "barrier": 2,
+  "waitcnt": 38,
+  "loop_len": 467,
+  "loop_mix": {
+   "waitcnt": 35,
+   "valu": 163,
+   "lds_rd_b64": 16,
+   "scalar": 61,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "vmem_rd": 17,
+   "bf16_round": 64,
+   "lds_wr_b64": 4,
+   "barrier": 2,
+   "lds_rd_u16": 24,
+   "vmem_wr": 17,
+   "lds_wr_hi": 8
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 157,
+   "waitcnt": 38,
+   "valu": 357,
+   "bf16_round": 69,
+   "lds_wr_b64": 8,
+   "vmem_rd": 28,
+   "lds_rd_b64": 16,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "barrier": 2,
+   "lds_rd_u16": 24,
+   "vmem_wr": 18,
+   "lds_wr_hi": 8
+  }
+ },
+ "_ZN2g220g2_fwd_h_v8o4_kernelILb0ELi0ELb1ELb0ELb0ELb0ELb0ELb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 787,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 56
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 24,
+   "ds_read2_b64": 16,
+   "ds_write_b16_d16_hi": 24,
+   "ds_read_u16": 16,
+   "ds_read_b64": 2
+  },
+  "vmem_rd": 28,
+  "vmem_wr": 24,
+  "barrier": 2,
+  "waitcnt": 36,
+  "loop_len": 463,
+  "loop_mix": {
+   "valu": 149,
+   "lds_rd_b64": 18,
+   "scalar": 56,
+   "waitcnt": 33,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "vmem_rd": 17,
+   "bf16_round": 64,
+   "lds_wr_hi": 24,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 20,
+   "lds_wr_b16": 8
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 147,
+   "waitcnt": 36,
+   "valu": 339,
+   "bf16_round": 67,
+   "lds_wr_b16": 24,
+   "vmem_rd": 28,
+   "lds_rd_b64": 18,
+   "v_mmac_f32_16x16x16_bf16": 56,
+   "lds_wr_hi": 24,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "vmem_wr": 24
+  }
+ },
+ "_ZN2g219g2_fwd_h_v8o_kernelILb0EEEvNS_10FwdOParamsE": {
+  "total_ops": 576,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 28
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 12,
+   "ds_read2_b64": 14,
+   "ds_write_b16_d16_hi": 12,
+   "ds_read_u16": 8,
+   "ds_read_b64": 1
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 12,
+  "barrier": 2,
+  "waitcnt": 26,
+  "loop_len": 271,
+  "loop_mix": {
+   "lds_rd_b64": 14,
+   "scalar": 40,
+   "valu": 98,
+   "waitcnt": 20,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "vmem_rd": 14,
+   "bf16_round": 24,
+   "lds_wr_hi": 8,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "vmem_wr": 11,
+   "lds_wr_b16": 4
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 128,
+   "waitcnt": 26,
+   "valu": 268,
+   "bf16_round": 37,
+   "vmem_rd": 22,
+   "lds_wr_b16": 12,
+   "lds_rd_b64": 15,
+   "v_mmac_f32_16x16x16_bf16": 28,
+   "lds_wr_hi": 12,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "vmem_wr": 12
+  }
+ },
+ "_ZN2g218g2_fwd_h_v7_kernelILi4EEEvNS_10FwdNParamsE": {
+  "total_ops": 473,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 40,
+   "ds_read_b64": 24
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 6,
+  "barrier": 2,
+  "waitcnt": 33,
+  "loop_len": 296,
+  "loop_mix": {
+   "valu": 105,
+   "vmem_wr": 6,
+   "scalar": 14,
+   "waitcnt": 30,
+   "barrier": 2,
+   "lds_rd_b64": 24,
+   "v_mmac_f32_16x16x16_bf16": 32,
+   "vmem_rd": 11,
+   "bf16_round": 48,
+   "lds_wr_b16": 24
+  },
+  "func_mix": {
+   "s_load": 3,
+   "valu": 227,
+   "bf16_round": 49,
+   "scalar": 35,
+   "waitcnt": 33,
+   "lds_wr_b16": 40,
+   "vmem_rd": 22,
+   "vmem_wr": 6,
+   "barrier": 2,
+   "lds_rd_b64": 24,
+   "v_mmac_f32_16x16x16_bf16": 32
+  }
+ },
+ "_ZN2g218g2_fwd_h_v7_kernelILi8EEEvNS_10FwdNParamsE": {
+  "total_ops": 310,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 16
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 20,
+   "ds_read2_b64": 4,
+   "ds_read_b64": 8
+  },
+  "vmem_rd": 16,
+  "vmem_wr": 3,
+  "barrier": 2,
+  "waitcnt": 15,
+  "loop_len": 170,
+  "loop_mix": {
+   "scalar": 11,
+   "vmem_wr": 3,
+   "waitcnt": 11,
+   "barrier": 2,
+   "lds_rd_b64": 12,
+   "valu": 71,
+   "v_mmac_f32_16x16x16_bf16": 16,
+   "vmem_rd": 8,
+   "bf16_round": 24,
+   "lds_wr_b16": 12
+  },
+  "func_mix": {
+   "s_load": 3,
+   "valu": 168,
+   "bf16_round": 25,
+   "scalar": 30,
+   "waitcnt": 15,
+   "lds_wr_b16": 20,
+   "vmem_rd": 16,
+   "vmem_wr": 3,
+   "barrier": 2,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 16
+  }
+ },
+ "_ZN2g218g2_dhu_v8b4_kernelILi0ELb1EEEvNS_10BwdNParamsE": {
+  "total_ops": 992,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 48
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 40,
+   "ds_read_u16": 40,
+   "ds_read2st64_b64": 4,
+   "ds_read2_b64": 12,
+   "ds_write_b64": 2,
+   "ds_write_b16_d16_hi": 4
+  },
+  "vmem_rd": 36,
+  "vmem_wr": 16,
+  "barrier": 3,
+  "waitcnt": 37,
+  "loop_len": 540,
+  "loop_mix": {
+   "valu": 240,
+   "scalar": 78,
+   "lds_rd_b64": 16,
+   "waitcnt": 26,
+   "v_mmac_f32_16x16x16_bf16": 48,
+   "vmem_rd": 18,
+   "bf16_round": 56,
+   "lds_wr_b16": 24,
+   "vmem_wr": 10,
+   "lds_wr_b64": 2,
+   "barrier": 2,
+   "lds_rd_u16": 16,
+   "lds_wr_hi": 4
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 180,
+   "waitcnt": 37,
+   "valu": 506,
+   "vmem_rd": 36,
+   "bf16_round": 59,
+   "lds_wr_b16": 40,
+   "barrier": 3,
+   "lds_rd_u16": 40,
+   "vmem_wr": 16,
+   "lds_rd_b64": 16,
+   "v_mmac_f32_16x16x16_bf16": 48,
+   "lds_wr_b64": 2,
+   "lds_wr_hi": 4
+  }
+ },
+ "_ZN2g218g2_dhu_v8b4_kernelILi0ELb0EEEvNS_10BwdNParamsE": {
+  "total_ops": 983,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 48
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 40,
+   "ds_read_u16": 32,
+   "ds_read2st64_b64": 4,
+   "ds_read2_b64": 12,
+   "ds_write_b64": 2
+  },
+  "vmem_rd": 36,
+  "vmem_wr": 22,
+  "barrier": 3,
+  "waitcnt": 35,
+  "loop_len": 555,
+  "loop_mix": {
+   "scalar": 89,
+   "valu": 252,
+   "vmem_rd": 18,
+   "waitcnt": 26,
+   "barrier": 2,
+   "lds_rd_b64": 16,
+   "v_mmac_f32_16x16x16_bf16": 48,
+   "bf16_round": 48,
+   "lds_wr_b16": 24,
+   "vmem_wr": 14,
+   "lds_wr_b64": 2,
+   "lds_rd_u16": 16
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 189,
+   "waitcnt": 35,
+   "valu": 504,
+   "vmem_rd": 36,
+   "bf16_round": 51,
+   "lds_wr_b16": 40,
+   "barrier": 3,
+   "lds_rd_u16": 32,
+   "vmem_wr": 22,
+   "lds_rd_b64": 16,
+   "v_mmac_f32_16x16x16_bf16": 48,
+   "lds_wr_b64": 2
+  }
+ },
+ "_ZN2g217g2_dhu_v8b_kernelILi1ELb1EEEvNS_10BwdNParamsE": {
+  "total_ops": 522,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 24
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 8,
+   "ds_read_u16": 20,
+   "ds_write_b64": 1,
+   "ds_read2_b64": 8,
+   "ds_write_b16_d16_hi": 12,
+   "ds_read2st64_b64": 4
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 5,
+  "barrier": 3,
+  "waitcnt": 27,
+  "loop_len": 231,
+  "loop_mix": {
+   "scalar": 22,
+   "valu": 88,
+   "waitcnt": 20,
+   "lds_wr_b64": 1,
+   "vmem_rd": 11,
+   "barrier": 2,
+   "lds_rd_u16": 12,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 24,
+   "vmem_wr": 3,
+   "bf16_round": 24,
+   "lds_wr_hi": 12
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 95,
+   "waitcnt": 27,
+   "valu": 259,
+   "bf16_round": 28,
+   "vmem_rd": 22,
+   "lds_wr_b16": 8,
+   "barrier": 3,
+   "lds_rd_u16": 20,
+   "vmem_wr": 5,
+   "lds_wr_b64": 1,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 24,
+   "lds_wr_hi": 12
+  }
+ },
+ "_ZN2g217g2_dhu_v8b_kernelILi1ELb0EEEvNS_10BwdNParamsE": {
+  "total_ops": 534,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 24
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 12,
+   "ds_read_u16": 16,
+   "ds_write_b64": 1,
+   "ds_read2_b64": 8,
+   "ds_read2st64_b64": 4,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 8,
+  "barrier": 3,
+  "waitcnt": 24,
+  "loop_len": 228,
+  "loop_mix": {
+   "scalar": 21,
+   "valu": 90,
+   "waitcnt": 17,
+   "lds_wr_b64": 1,
+   "vmem_rd": 11,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 24,
+   "bf16_round": 24,
+   "vmem_wr": 6,
+   "lds_wr_b16": 4,
+   "lds_wr_hi": 8
+  },
+  "func_mix": {
+   "s_load": 6,
+   "scalar": 101,
+   "waitcnt": 24,
+   "valu": 269,
+   "bf16_round": 28,
+   "vmem_rd": 22,
+   "lds_wr_b16": 12,
+   "barrier": 3,
+   "lds_rd_u16": 16,
+   "vmem_wr": 8,
+   "lds_wr_b64": 1,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 24,
+   "lds_wr_hi": 8
+  }
+ },
+ "_ZN2g217g2_dhu_v8b_kernelILi2ELb0EEEvNS_10BwdNParamsE": {
+  "total_ops": 509,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 24
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 12,
+   "ds_read_u16": 16,
+   "ds_write_b64": 1,
+   "ds_read2_b64": 8,
+   "ds_read2st64_b64": 4,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 5,
+  "barrier": 3,
+  "waitcnt": 25,
+  "loop_len": 224,
+  "loop_mix": {
+   "scalar": 21,
+   "valu": 89,
+   "waitcnt": 17,
+   "lds_wr_b64": 1,
+   "vmem_rd": 11,
+   "barrier": 2,
+   "lds_rd_u16": 8,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 24,
+   "bf16_round": 24,
+   "vmem_wr": 3,
+   "lds_wr_b16": 4,
+   "lds_wr_hi": 8
+  },
+  "func_mix": {
+   "s_load": 7,
+   "scalar": 91,
+   "waitcnt": 25,
+   "valu": 255,
+   "bf16_round": 28,
+   "vmem_rd": 22,
+   "lds_wr_b16": 12,
+   "barrier": 3,
+   "lds_rd_u16": 16,
+   "vmem_wr": 5,
+   "lds_wr_b64": 1,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 24,
+   "lds_wr_hi": 8
+  }
+ },
+ "_ZN2g217g2_dhu_v8b_kernelILi0ELb0EEEvNS_10BwdNParamsE": {
+  "total_ops": 616,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 24
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 20,
+   "ds_read_u16": 16,
+   "ds_read2st64_b64": 4,
+   "ds_read2_b64": 8,
+   "ds_write_b64": 1
+  },
+  "vmem_rd": 22,
+  "vmem_wr": 11,
+  "barrier": 3,
+  "waitcnt": 24,
+  "loop_len": 264,
+  "loop_mix": {
+   "valu": 121,
+   "vmem_rd": 11,
+   "waitcnt": 17,
+   "scalar": 27,
+   "barrier": 2,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 24,
+   "bf16_round": 24,
+   "lds_wr_b16": 12,
+   "vmem_wr": 5,
+   "lds_wr_b64": 1,
+   "lds_rd_u16": 8
+  },
+  "func_mix": {
+   "s_load": 5,
+   "scalar": 129,
+   "waitcnt": 24,
+   "valu": 322,
+   "bf16_round": 27,
+   "vmem_rd": 22,
+   "lds_wr_b16": 20,
+   "barrier": 3,
+   "lds_rd_u16": 16,
+   "vmem_wr": 11,
+   "lds_rd_b64": 12,
+   "v_mmac_f32_16x16x16_bf16": 24,
+   "lds_wr_b64": 1
+  }
+ },
+ "_ZN2g212g2_wu_kernelILb1ELb1ELb1ELi0ELb1EEEvNS_8WuParamsE": {
+  "total_ops": 7523,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 256
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 192,
+   "ds_read_b64": 72,
+   "ds_write_b64": 63,
+   "ds_read_m32x16_b16": 96
+  },
+  "vmem_rd": 221,
+  "vmem_wr": 84,
+  "barrier": 26,
+  "waitcnt": 356,
+  "loop_len": 1926,
+  "loop_mix": {
+   "scalar": 291,
+   "s_load": 3,
+   "valu": 1360,
+   "waitcnt": 56,
+   "bf16_round": 17,
+   "vmem_rd": 43,
+   "barrier": 5,
+   "vmem_wr": 21,
+   "lds_wr_b16": 64,
+   "lds_rd_b64": 34,
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "func_mix": {
+   "s_load": 11,
+   "scalar": 641,
+   "waitcnt": 356,
+   "valu": 5430,
+   "bf16_round": 75,
+   "vmem_rd": 221,
+   "barrier": 26,
+   "vmem_wr": 84,
+   "lds_wr_b16": 192,
+   "lds_rd_b64": 72,
+   "v_mmac_f32_16x16x16_bf16": 256,
+   "lds_wr_b64": 63,
+   "lds_rd_b16": 96
+  }
+ },
+ "_ZN2g212g2_wu_kernelILb1ELb1ELb1ELi0ELb0EEEvNS_8WuParamsE": {
+  "total_ops": 7020,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 256
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 2,
+   "ds_write_b128": 2,
+   "ds_read_b128": 16,
+   "ds_read_b32": 47,
+   "ds_write_b16": 192,
+   "ds_read_b64": 72,
+   "ds_write_b64": 63,
+   "ds_read_m32x16_b16": 96
+  },
+  "vmem_rd": 123,
+  "vmem_wr": 84,
+  "barrier": 26,
+  "waitcnt": 352,
+  "loop_len": 1819,
+  "loop_mix": {
+   "scalar": 273,
+   "s_load": 2,
+   "valu": 1280,
+   "waitcnt": 56,
+   "bf16_round": 12,
+   "vmem_rd": 22,
+   "lds_wr_b32": 1,
+   "lds_wr_b128": 1,
+   "barrier": 5,
+   "lds_rd_b128": 8,
+   "lds_rd_b32": 8,
+   "lds_wr_b16": 64,
+   "vmem_wr": 21,
+   "lds_rd_b64": 34,
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "func_mix": {
+   "s_load": 10,
+   "scalar": 624,
+   "waitcnt": 352,
+   "valu": 5021,
+   "bf16_round": 34,
+   "vmem_rd": 123,
+   "lds_wr_b32": 2,
+   "lds_wr_b128": 2,
+   "barrier": 26,
+   "lds_rd_b128": 16,
+   "lds_rd_b32": 47,
+   "lds_wr_b16": 192,
+   "vmem_wr": 84,
+   "lds_rd_b64": 72,
+   "v_mmac_f32_16x16x16_bf16": 256,
+   "lds_wr_b64": 63,
+   "lds_rd_b16": 96
+  }
+ },
+ "_ZN2g212g2_wu_kernelILb1ELb1ELb1ELi2ELb0EEEvNS_8WuParamsE": {
+  "total_ops": 9070,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 256
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 2,
+   "ds_write_b128": 2,
+   "ds_read_b128": 30,
+   "ds_read_b32": 47,
+   "ds_write_b16": 320,
+   "ds_read_b64": 80,
+   "ds_write_b64": 63,
+   "ds_read_m32x16_b16": 96
+  },
+  "vmem_rd": 171,
+  "vmem_wr": 88,
+  "barrier": 32,
+  "waitcnt": 403,
+  "loop_len": 1820,
+  "loop_mix": {
+   "scalar": 273,
+   "s_load": 2,
+   "valu": 1280,
+   "waitcnt": 57,
+   "bf16_round": 12,
+   "vmem_rd": 22,
+   "lds_wr_b32": 1,
+   "lds_wr_b128": 1,
+   "barrier": 5,
+   "lds_rd_b128": 8,
+   "lds_rd_b32": 8,
+   "lds_wr_b16": 64,
+   "vmem_wr": 21,
+   "lds_rd_b64": 34,
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "func_mix": {
+   "scalar": 851,
+   "s_load": 11,
+   "waitcnt": 403,
+   "valu": 6581,
+   "bf16_round": 37,
+   "vmem_rd": 171,
+   "lds_wr_b32": 2,
+   "lds_wr_b128": 2,
+   "barrier": 32,
+   "lds_rd_b128": 30,
+   "lds_rd_b32": 47,
+   "lds_wr_b16": 320,
+   "vmem_wr": 88,
+   "lds_rd_b64": 80,
+   "v_mmac_f32_16x16x16_bf16": 256,
+   "lds_wr_b64": 63,
+   "lds_rd_b16": 96
+  }
+ },
+ "_ZN2g212g2_wu_kernelILb1ELb1ELb0ELi2ELb0EEEvNS_8WuParamsE": {
+  "total_ops": 9233,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 256
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 2,
+   "ds_write_b128": 2,
+   "ds_read_b128": 30,
+   "ds_read_b32": 47,
+   "ds_write_b16": 302,
+   "ds_read_b64": 80,
+   "ds_write_b64": 63,
+   "ds_read_m32x16_b16": 96,
+   "ds_write_b16_d16_hi": 16
+  },
+  "vmem_rd": 187,
+  "vmem_wr": 88,
+  "barrier": 30,
+  "waitcnt": 416,
+  "loop_len": 1823,
+  "loop_mix": {
+   "scalar": 273,
+   "s_load": 2,
+   "valu": 1284,
+   "waitcnt": 56,
+   "bf16_round": 12,
+   "vmem_rd": 22,
+   "lds_wr_b32": 1,
+   "lds_wr_b128": 1,
+   "barrier": 5,
+   "lds_rd_b128": 8,
+   "lds_rd_b32": 8,
+   "lds_wr_b16": 64,
+   "vmem_wr": 21,
+   "lds_rd_b64": 34,
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "func_mix": {
+   "scalar": 883,
+   "s_load": 11,
+   "waitcnt": 416,
+   "valu": 6687,
+   "bf16_round": 37,
+   "vmem_rd": 187,
+   "lds_wr_b32": 2,
+   "lds_wr_b128": 2,
+   "barrier": 30,
+   "lds_rd_b128": 30,
+   "lds_rd_b32": 47,
+   "lds_wr_b16": 302,
+   "vmem_wr": 88,
+   "lds_rd_b64": 80,
+   "v_mmac_f32_16x16x16_bf16": 256,
+   "lds_wr_b64": 63,
+   "lds_rd_b16": 96,
+   "lds_wr_hi": 16
+  }
+ },
+ "_ZN2g212g2_wu_kernelILb1ELb0ELb0ELi2ELb0EEEvNS_8WuParamsE": {
+  "total_ops": 9250,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 256
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 2,
+   "ds_write_b128": 2,
+   "ds_read_b128": 30,
+   "ds_read_b32": 47,
+   "ds_write_b16": 302,
+   "ds_read_b64": 80,
+   "ds_write_b64": 63,
+   "ds_read_m32x16_b16": 96,
+   "ds_write_b16_d16_hi": 16
+  },
+  "vmem_rd": 187,
+  "vmem_wr": 88,
+  "barrier": 30,
+  "waitcnt": 435,
+  "loop_len": 1818,
+  "loop_mix": {
+   "scalar": 194,
+   "s_load": 2,
+   "valu": 1342,
+   "waitcnt": 64,
+   "bf16_round": 20,
+   "vmem_rd": 22,
+   "lds_wr_b32": 1,
+   "lds_wr_b128": 1,
+   "barrier": 5,
+   "lds_rd_b128": 8,
+   "lds_rd_b32": 8,
+   "lds_wr_b16": 64,
+   "vmem_wr": 21,
+   "lds_rd_b64": 34,
+   "v_mmac_f32_16x16x16_bf16": 32
+  },
+  "func_mix": {
+   "scalar": 806,
+   "s_load": 11,
+   "waitcnt": 435,
+   "valu": 6757,
+   "bf16_round": 42,
+   "vmem_rd": 187,
+   "lds_wr_b32": 2,
+   "lds_wr_b128": 2,
+   "barrier": 30,
+   "lds_rd_b128": 30,
+   "lds_rd_b32": 47,
+   "lds_wr_b16": 302,
+   "vmem_wr": 88,
+   "lds_rd_b64": 80,
+   "v_mmac_f32_16x16x16_bf16": 256,
+   "lds_wr_b64": 63,
+   "lds_rd_b16": 96,
+   "lds_wr_hi": 16
+  }
+ },
+ "_ZN2g212g2_wu_kernelILb0ELb1ELb1ELi0ELb1EEEvNS_8WuParamsE": {
+  "total_ops": 3351,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 128
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 96,
+   "ds_read_b64": 36,
+   "ds_write_b64": 31,
+   "ds_read_m32x16_b16": 48
+  },
+  "vmem_rd": 90,
+  "vmem_wr": 42,
+  "barrier": 13,
+  "waitcnt": 158,
+  "loop_len": 3021,
+  "loop_mix": {
+   "scalar": 173,
+   "valu": 2209,
+   "bf16_round": 25,
+   "vmem_rd": 90,
+   "waitcnt": 150,
+   "barrier": 12,
+   "vmem_wr": 41,
+   "lds_wr_b16": 80,
+   "lds_rd_b64": 34,
+   "v_mmac_f32_16x16x16_bf16": 128,
+   "lds_wr_b64": 31,
+   "lds_rd_b16": 48
+  },
+  "func_mix": {
+   "scalar": 261,
+   "s_load": 7,
+   "waitcnt": 158,
+   "valu": 2416,
+   "bf16_round": 25,
+   "vmem_rd": 90,
+   "barrier": 13,
+   "vmem_wr": 42,
+   "lds_wr_b16": 96,
+   "lds_rd_b64": 36,
+   "v_mmac_f32_16x16x16_bf16": 128,
+   "lds_wr_b64": 31,
+   "lds_rd_b16": 48
+  }
+ },
+ "_ZN2g212g2_wu_kernelILb0ELb1ELb1ELi0ELb0EEEvNS_8WuParamsE": {
+  "total_ops": 3379,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 128
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 1,
+   "ds_write_b128": 1,
+   "ds_read_b128": 8,
+   "ds_read_b32": 23,
+   "ds_write_b16": 96,
+   "ds_read_b64": 36,
+   "ds_write_b64": 31,
+   "ds_read_m32x16_b16": 48
+  },
+  "vmem_rd": 61,
+  "vmem_wr": 42,
+  "barrier": 13,
+  "waitcnt": 182,
+  "loop_len": 3049,
+  "loop_mix": {
+   "scalar": 194,
+   "valu": 2197,
+   "bf16_round": 16,
+   "vmem_rd": 61,
+   "waitcnt": 174,
+   "lds_wr_b32": 1,
+   "lds_wr_b128": 1,
+   "barrier": 12,
+   "lds_rd_b128": 8,
+   "lds_rd_b32": 23,
+   "vmem_wr": 41,
+   "lds_wr_b16": 80,
+   "lds_rd_b64": 34,
+   "v_mmac_f32_16x16x16_bf16": 128,
+   "lds_wr_b64": 31,
+   "lds_rd_b16": 48
+  },
+  "func_mix": {
+   "scalar": 282,
+   "s_load": 7,
+   "waitcnt": 182,
+   "valu": 2404,
+   "bf16_round": 16,
+   "vmem_rd": 61,
+   "lds_wr_b32": 1,
+   "lds_wr_b128": 1,
+   "barrier": 13,
+   "lds_rd_b128": 8,
+   "lds_rd_b32": 23,
+   "vmem_wr": 42,
+   "lds_wr_b16": 96,
+   "lds_rd_b64": 36,
+   "v_mmac_f32_16x16x16_bf16": 128,
+   "lds_wr_b64": 31,
+   "lds_rd_b16": 48
+  }
+ },
+ "_ZN2g212g2_wu_kernelILb0ELb1ELb1ELi2ELb0EEEvNS_8WuParamsE": {
+  "total_ops": 4245,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 128
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 1,
+   "ds_write_b128": 1,
+   "ds_read_b128": 14,
+   "ds_read_b32": 23,
+   "ds_write_b16": 160,
+   "ds_read_b64": 40,
+   "ds_write_b64": 31,
+   "ds_read_m32x16_b16": 48
+  },
+  "vmem_rd": 85,
+  "vmem_wr": 44,
+  "barrier": 16,
+  "waitcnt": 207,
+  "loop_len": 3349,
+  "loop_mix": {
+   "scalar": 209,
+   "valu": 2421,
+   "bf16_round": 17,
+   "vmem_rd": 77,
+   "waitcnt": 192,
+   "lds_wr_b32": 1,
+   "lds_wr_b128": 1,
+   "barrier": 13,
+   "lds_rd_b128": 14,
+   "lds_rd_b32": 23,
+   "vmem_wr": 42,
+   "lds_wr_b16": 96,
+   "lds_rd_b64": 36,
+   "v_mmac_f32_16x16x16_bf16": 128,
+   "lds_wr_b64": 31,
+   "lds_rd_b16": 48
+  },
+  "func_mix": {
+   "scalar": 332,
+   "s_load": 8,
+   "waitcnt": 207,
+   "valu": 3090,
+   "bf16_round": 17,
+   "vmem_rd": 85,
+   "lds_wr_b32": 1,
+   "lds_wr_b128": 1,
+   "barrier": 16,
+   "lds_rd_b128": 14,
+   "lds_rd_b32": 23,
+   "vmem_wr": 44,
+   "lds_wr_b16": 160,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 128,
+   "lds_wr_b64": 31,
+   "lds_rd_b16": 48
+  }
+ },
+ "_ZN2g212g2_wu_kernelILb0ELb1ELb0ELi2ELb0EEEvNS_8WuParamsE": {
+  "total_ops": 4298,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 128
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 1,
+   "ds_write_b128": 1,
+   "ds_read_b32": 23,
+   "ds_read_b128": 14,
+   "ds_write_b16": 151,
+   "ds_read_b64": 40,
+   "ds_write_b64": 31,
+   "ds_read_m32x16_b16": 48,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 93,
+  "vmem_wr": 44,
+  "barrier": 15,
+  "waitcnt": 213,
+  "loop_len": 3352,
+  "loop_mix": {
+   "scalar": 209,
+   "valu": 2426,
+   "bf16_round": 17,
+   "vmem_rd": 77,
+   "waitcnt": 190,
+   "lds_wr_b32": 1,
+   "lds_wr_b128": 1,
+   "barrier": 13,
+   "lds_rd_b32": 23,
+   "lds_rd_b128": 14,
+   "vmem_wr": 42,
+   "lds_wr_b16": 96,
+   "lds_rd_b64": 36,
+   "v_mmac_f32_16x16x16_bf16": 128,
+   "lds_wr_b64": 31,
+   "lds_rd_b16": 48
+  },
+  "func_mix": {
+   "scalar": 340,
+   "s_load": 8,
+   "waitcnt": 213,
+   "valu": 3123,
+   "bf16_round": 17,
+   "vmem_rd": 93,
+   "lds_wr_b32": 1,
+   "lds_wr_b128": 1,
+   "barrier": 15,
+   "lds_rd_b32": 23,
+   "lds_rd_b128": 14,
+   "vmem_wr": 44,
+   "lds_wr_b16": 151,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 128,
+   "lds_wr_b64": 31,
+   "lds_rd_b16": 48,
+   "lds_wr_hi": 8
+  }
+ },
+ "_ZN2g212g2_wu_kernelILb0ELb0ELb0ELi2ELb0EEEvNS_8WuParamsE": {
+  "total_ops": 4319,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 128
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 1,
+   "ds_write_b128": 1,
+   "ds_read_b128": 14,
+   "ds_read_b32": 23,
+   "ds_write_b16": 151,
+   "ds_read_b64": 40,
+   "ds_write_b64": 31,
+   "ds_read_m32x16_b16": 48,
+   "ds_write_b16_d16_hi": 8
+  },
+  "vmem_rd": 93,
+  "vmem_wr": 44,
+  "barrier": 15,
+  "waitcnt": 220,
+  "loop_len": 3408,
+  "loop_mix": {
+   "scalar": 209,
+   "valu": 2475,
+   "bf16_round": 17,
+   "vmem_rd": 77,
+   "waitcnt": 197,
+   "lds_wr_b32": 1,
+   "lds_wr_b128": 1,
+   "barrier": 13,
+   "lds_rd_b128": 14,
+   "lds_rd_b32": 23,
+   "vmem_wr": 42,
+   "lds_wr_b16": 96,
+   "lds_rd_b64": 36,
+   "v_mmac_f32_16x16x16_bf16": 128,
+   "lds_wr_b64": 31,
+   "lds_rd_b16": 48
+  },
+  "func_mix": {
+   "scalar": 340,
+   "s_load": 8,
+   "waitcnt": 220,
+   "valu": 3137,
+   "bf16_round": 17,
+   "vmem_rd": 93,
+   "lds_wr_b32": 1,
+   "lds_wr_b128": 1,
+   "barrier": 15,
+   "lds_rd_b128": 14,
+   "lds_rd_b32": 23,
+   "vmem_wr": 44,
+   "lds_wr_b16": 151,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 128,
+   "lds_wr_b64": 31,
+   "lds_rd_b16": 48,
+   "lds_wr_hi": 8
+  }
+ },
+ "_ZN2g213g2_dav_kernelILb1EEEvNS_9DavParamsE": {
+  "total_ops": 3604,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 128
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 92,
+   "ds_write_b16_d16_hi": 92,
+   "ds_read2st64_b64": 64,
+   "ds_write_b32": 32,
+   "ds_read_b128": 8,
+   "ds_read_b64": 16
+  },
+  "vmem_rd": 80,
+  "vmem_wr": 47,
+  "barrier": 10,
+  "waitcnt": 111,
+  "loop_len": 1918,
+  "loop_mix": {
+   "scalar": 295,
+   "s_load": 2,
+   "valu": 1262,
+   "waitcnt": 54,
+   "bf16_round": 21,
+   "vmem_rd": 40,
+   "lds_wr_b16": 46,
+   "lds_wr_hi": 46,
+   "barrier": 5,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 64,
+   "lds_wr_b32": 16,
+   "lds_rd_b128": 4,
+   "vmem_wr": 23
+  },
+  "func_mix": {
+   "s_load": 8,
+   "scalar": 484,
+   "waitcnt": 111,
+   "valu": 2390,
+   "bf16_round": 42,
+   "vmem_rd": 80,
+   "lds_wr_b16": 92,
+   "lds_wr_hi": 92,
+   "barrier": 10,
+   "lds_rd_b64": 80,
+   "v_mmac_f32_16x16x16_bf16": 128,
+   "lds_wr_b32": 32,
+   "lds_rd_b128": 8,
+   "vmem_wr": 47
+  }
+ },
+ "_ZN2g213g2_dav_kernelILb0EEEvNS_9DavParamsE": {
+  "total_ops": 1715,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 64
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b16": 46,
+   "ds_write_b16_d16_hi": 46,
+   "ds_read2st64_b64": 32,
+   "ds_write_b32": 16,
+   "ds_read_b128": 4,
+   "ds_read_b64": 8
+  },
+  "vmem_rd": 40,
+  "vmem_wr": 24,
+  "barrier": 5,
+  "waitcnt": 54,
+  "loop_len": 1623,
+  "loop_mix": {
+   "scalar": 185,
+   "valu": 1078,
+   "bf16_round": 22,
+   "vmem_rd": 40,
+   "waitcnt": 53,
+   "lds_wr_b16": 46,
+   "lds_wr_hi": 46,
+   "barrier": 5,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 64,
+   "lds_wr_b32": 16,
+   "lds_rd_b128": 4,
+   "vmem_wr": 24
+  },
+  "func_mix": {
+   "scalar": 260,
+   "s_load": 6,
+   "waitcnt": 54,
+   "valu": 1088,
+   "bf16_round": 22,
+   "vmem_rd": 40,
+   "lds_wr_b16": 46,
+   "lds_wr_hi": 46,
+   "barrier": 5,
+   "lds_rd_b64": 40,
+   "v_mmac_f32_16x16x16_bf16": 64,
+   "lds_wr_b32": 16,
+   "lds_rd_b128": 4,
+   "vmem_wr": 24
+  }
+ },
+ "_ZN2g216p3_wy_s4a_kernelILb1ELb1ELi1EEEvNS_11WyS4AParamsE": {
+  "total_ops": 4024,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 448
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 2,
+   "ds_write2st64_b64": 4,
+   "ds_read_u16": 32,
+   "ds_write_b16": 64,
+   "ds_write_b16_d16_hi": 32,
+   "ds_read2_b64": 96,
+   "ds_write2_b64": 8,
+   "ds_write_b64": 24,
+   "ds_write_b128": 16,
+   "ds_read2st64_b64": 64,
+   "ds_read_b64": 64,
+   "ds_read_b32": 32
+  },
+  "vmem_rd": 184,
+  "vmem_wr": 88,
+  "barrier": 36,
+  "waitcnt": 383,
+  "loop_len": 0,
+  "loop_mix": {},
+  "func_mix": {
+   "s_load": 8,
+   "valu": 1930,
+   "bf16_round": 2,
+   "waitcnt": 383,
+   "scalar": 507,
+   "vmem_rd": 184,
+   "lds_wr_b32": 2,
+   "lds_wr_b64": 36,
+   "barrier": 36,
+   "lds_rd_u16": 32,
+   "lds_wr_b16": 64,
+   "lds_wr_hi": 32,
+   "lds_rd_b64": 224,
+   "v_mmac_f32_16x16x16_bf16": 448,
+   "vmem_wr": 88,
+   "lds_wr_b128": 16,
+   "lds_rd_b32": 32
+  }
+ },
+ "_ZN2g216p3_wy_s4a_kernelILb1ELb1ELi0EEEvNS_11WyS4AParamsE": {
+  "total_ops": 2857,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 280
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 2,
+   "ds_write2st64_b64": 4,
+   "ds_read_u16": 32,
+   "ds_write_b16": 64,
+   "ds_write_b16_d16_hi": 32,
+   "ds_read2_b64": 96,
+   "ds_write2_b64": 8,
+   "ds_write_b64": 12,
+   "ds_write_b128": 4,
+   "ds_read_b64": 8,
+   "ds_read2st64_b64": 8,
+   "ds_read_b32": 32
+  },
+  "vmem_rd": 128,
+  "vmem_wr": 32,
+  "barrier": 22,
+  "waitcnt": 266,
+  "loop_len": 110,
+  "loop_mix": {
+   "scalar": 20,
+   "valu": 52,
+   "waitcnt": 11,
+   "v_mmac_f32_16x16x16_bf16": 12,
+   "vmem_wr": 4,
+   "lds_rd_b64": 8,
+   "barrier": 1,
+   "lds_wr_b128": 1,
+   "lds_wr_b64": 1
+  },
+  "func_mix": {
+   "s_load": 8,
+   "valu": 1280,
+   "bf16_round": 2,
+   "waitcnt": 266,
+   "scalar": 537,
+   "vmem_rd": 128,
+   "lds_wr_b32": 2,
+   "lds_wr_b64": 24,
+   "barrier": 22,
+   "lds_rd_u16": 32,
+   "lds_wr_b16": 64,
+   "lds_wr_hi": 32,
+   "lds_rd_b64": 112,
+   "v_mmac_f32_16x16x16_bf16": 280,
+   "vmem_wr": 32,
+   "lds_wr_b128": 4,
+   "lds_rd_b32": 32
+  }
+ },
+ "_ZN2g216p3_wy_s4a_kernelILb1ELb0ELi1EEEvNS_11WyS4AParamsE": {
+  "total_ops": 4102,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 448
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 2,
+   "ds_write2st64_b64": 4,
+   "ds_read_u16": 32,
+   "ds_write_b16": 64,
+   "ds_write_b16_d16_hi": 32,
+   "ds_read2_b64": 80,
+   "ds_write2_b64": 8,
+   "ds_write_b64": 16,
+   "ds_write_b128": 16,
+   "ds_read2st64_b64": 64,
+   "ds_read_b64": 64,
+   "ds_read_b32": 32
+  },
+  "vmem_rd": 208,
+  "vmem_wr": 88,
+  "barrier": 32,
+  "waitcnt": 387,
+  "loop_len": 0,
+  "loop_mix": {},
+  "func_mix": {
+   "s_load": 8,
+   "valu": 1982,
+   "bf16_round": 2,
+   "waitcnt": 387,
+   "scalar": 533,
+   "vmem_rd": 208,
+   "lds_wr_b32": 2,
+   "lds_wr_b64": 28,
+   "barrier": 32,
+   "lds_rd_u16": 32,
+   "lds_wr_b16": 64,
+   "lds_wr_hi": 32,
+   "lds_rd_b64": 208,
+   "v_mmac_f32_16x16x16_bf16": 448,
+   "vmem_wr": 88,
+   "lds_wr_b128": 16,
+   "lds_rd_b32": 32
+  }
+ },
+ "_ZN2g216p3_wy_s4a_kernelILb1ELb0ELi0EEEvNS_11WyS4AParamsE": {
+  "total_ops": 2957,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 280
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 2,
+   "ds_write2st64_b64": 4,
+   "ds_read_u16": 32,
+   "ds_write_b16": 64,
+   "ds_write_b16_d16_hi": 32,
+   "ds_read2_b64": 80,
+   "ds_write2_b64": 8,
+   "ds_write_b64": 4,
+   "ds_write_b128": 4,
+   "ds_read_b64": 8,
+   "ds_read2st64_b64": 8,
+   "ds_read_b32": 32
+  },
+  "vmem_rd": 152,
+  "vmem_wr": 32,
+  "barrier": 18,
+  "waitcnt": 271,
+  "loop_len": 110,
+  "loop_mix": {
+   "scalar": 20,
+   "valu": 52,
+   "waitcnt": 11,
+   "v_mmac_f32_16x16x16_bf16": 12,
+   "vmem_wr": 4,
+   "lds_rd_b64": 8,
+   "barrier": 1,
+   "lds_wr_b128": 1,
+   "lds_wr_b64": 1
+  },
+  "func_mix": {
+   "s_load": 8,
+   "valu": 1353,
+   "bf16_round": 2,
+   "waitcnt": 271,
+   "scalar": 563,
+   "vmem_rd": 152,
+   "lds_wr_b32": 2,
+   "lds_wr_b64": 16,
+   "barrier": 18,
+   "lds_rd_u16": 32,
+   "lds_wr_b16": 64,
+   "lds_wr_hi": 32,
+   "lds_rd_b64": 96,
+   "v_mmac_f32_16x16x16_bf16": 280,
+   "vmem_wr": 32,
+   "lds_wr_b128": 4,
+   "lds_rd_b32": 32
+  }
+ },
+ "_ZN2g216p3_wy_s4a_kernelILb0ELb1ELi2EEEvNS_11WyS4AParamsE": {
+  "total_ops": 1937,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 224
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 1,
+   "ds_write2st64_b64": 2,
+   "ds_read_u16": 16,
+   "ds_write_b16": 32,
+   "ds_write_b16_d16_hi": 16,
+   "ds_read2_b64": 48,
+   "ds_write2_b64": 4,
+   "ds_write_b64": 12,
+   "ds_write_b128": 8,
+   "ds_read2st64_b64": 32,
+   "ds_read_b64": 32,
+   "ds_read_b32": 16
+  },
+  "vmem_rd": 106,
+  "vmem_wr": 45,
+  "barrier": 18,
+  "waitcnt": 185,
+  "loop_len": 0,
+  "loop_mix": {},
+  "func_mix": {
+   "s_load": 5,
+   "valu": 952,
+   "waitcnt": 185,
+   "scalar": 182,
+   "vmem_rd": 106,
+   "bf16_round": 1,
+   "lds_wr_b32": 1,
+   "lds_wr_b64": 18,
+   "barrier": 18,
+   "lds_rd_u16": 16,
+   "lds_wr_b16": 32,
+   "lds_wr_hi": 16,
+   "lds_rd_b64": 112,
+   "v_mmac_f32_16x16x16_bf16": 224,
+   "vmem_wr": 45,
+   "lds_wr_b128": 8,
+   "lds_rd_b32": 16
+  }
+ },
+ "_ZN2g216p3_wy_s4a_kernelILb0ELb1ELi1EEEvNS_11WyS4AParamsE": {
+  "total_ops": 1959,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 224
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 1,
+   "ds_write2st64_b64": 2,
+   "ds_read_u16": 16,
+   "ds_write_b16": 32,
+   "ds_write_b16_d16_hi": 16,
+   "ds_read2_b64": 48,
+   "ds_write2_b64": 4,
+   "ds_write_b64": 12,
+   "ds_write_b128": 8,
+   "ds_read2st64_b64": 32,
+   "ds_read_b64": 32,
+   "ds_read_b32": 16
+  },
+  "vmem_rd": 110,
+  "vmem_wr": 45,
+  "barrier": 18,
+  "waitcnt": 192,
+  "loop_len": 0,
+  "loop_mix": {},
+  "func_mix": {
+   "s_load": 5,
+   "valu": 963,
+   "waitcnt": 192,
+   "scalar": 182,
+   "vmem_rd": 110,
+   "bf16_round": 1,
+   "lds_wr_b32": 1,
+   "lds_wr_b64": 18,
+   "barrier": 18,
+   "lds_rd_u16": 16,
+   "lds_wr_b16": 32,
+   "lds_wr_hi": 16,
+   "lds_rd_b64": 112,
+   "v_mmac_f32_16x16x16_bf16": 224,
+   "vmem_wr": 45,
+   "lds_wr_b128": 8,
+   "lds_rd_b32": 16
+  }
+ },
+ "_ZN2g216p3_wy_s4a_kernelILb0ELb1ELi0EEEvNS_11WyS4AParamsE": {
+  "total_ops": 1286,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 140
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 1,
+   "ds_write2st64_b64": 2,
+   "ds_read_u16": 16,
+   "ds_write_b16": 32,
+   "ds_write_b16_d16_hi": 16,
+   "ds_read2_b64": 48,
+   "ds_write2_b64": 4,
+   "ds_write_b64": 6,
+   "ds_write_b128": 2,
+   "ds_read_b64": 4,
+   "ds_read2st64_b64": 4,
+   "ds_read_b32": 16
+  },
+  "vmem_rd": 64,
+  "vmem_wr": 17,
+  "barrier": 11,
+  "waitcnt": 143,
+  "loop_len": 110,
+  "loop_mix": {
+   "scalar": 20,
+   "valu": 52,
+   "waitcnt": 11,
+   "v_mmac_f32_16x16x16_bf16": 12,
+   "vmem_wr": 4,
+   "lds_rd_b64": 8,
+   "barrier": 1,
+   "lds_wr_b128": 1,
+   "lds_wr_b64": 1
+  },
+  "func_mix": {
+   "s_load": 5,
+   "valu": 564,
+   "waitcnt": 143,
+   "scalar": 190,
+   "vmem_rd": 64,
+   "lds_wr_b32": 1,
+   "bf16_round": 1,
+   "lds_wr_b64": 12,
+   "barrier": 11,
+   "lds_rd_u16": 16,
+   "lds_wr_b16": 32,
+   "lds_wr_hi": 16,
+   "lds_rd_b64": 56,
+   "v_mmac_f32_16x16x16_bf16": 140,
+   "vmem_wr": 17,
+   "lds_wr_b128": 2,
+   "lds_rd_b32": 16
+  }
+ },
+ "_ZN2g216p3_wy_s4a_kernelILb0ELb0ELi1EEEvNS_11WyS4AParamsE": {
+  "total_ops": 1973,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 224
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 1,
+   "ds_write2st64_b64": 2,
+   "ds_read_u16": 16,
+   "ds_write_b16": 32,
+   "ds_write_b16_d16_hi": 16,
+   "ds_read2_b64": 40,
+   "ds_write2_b64": 4,
+   "ds_write_b64": 8,
+   "ds_write_b128": 8,
+   "ds_read2st64_b64": 32,
+   "ds_read_b64": 32,
+   "ds_read_b32": 16
+  },
+  "vmem_rd": 122,
+  "vmem_wr": 45,
+  "barrier": 16,
+  "waitcnt": 194,
+  "loop_len": 0,
+  "loop_mix": {},
+  "func_mix": {
+   "s_load": 5,
+   "valu": 978,
+   "waitcnt": 194,
+   "scalar": 181,
+   "vmem_rd": 122,
+   "bf16_round": 1,
+   "lds_wr_b32": 1,
+   "lds_wr_b64": 14,
+   "barrier": 16,
+   "lds_rd_u16": 16,
+   "lds_wr_b16": 32,
+   "lds_wr_hi": 16,
+   "lds_rd_b64": 104,
+   "v_mmac_f32_16x16x16_bf16": 224,
+   "vmem_wr": 45,
+   "lds_wr_b128": 8,
+   "lds_rd_b32": 16
+  }
+ },
+ "_ZN2g216p3_wy_s4a_kernelILb0ELb0ELi0EEEvNS_11WyS4AParamsE": {
+  "total_ops": 1290,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 140
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 1,
+   "ds_write2st64_b64": 2,
+   "ds_read_u16": 16,
+   "ds_write_b16": 32,
+   "ds_write_b16_d16_hi": 16,
+   "ds_read2_b64": 40,
+   "ds_write2_b64": 4,
+   "ds_write_b64": 2,
+   "ds_write_b128": 2,
+   "ds_read_b64": 4,
+   "ds_read2st64_b64": 4,
+   "ds_read_b32": 16
+  },
+  "vmem_rd": 76,
+  "vmem_wr": 17,
+  "barrier": 9,
+  "waitcnt": 146,
+  "loop_len": 110,
+  "loop_mix": {
+   "scalar": 20,
+   "valu": 52,
+   "waitcnt": 11,
+   "v_mmac_f32_16x16x16_bf16": 12,
+   "vmem_wr": 4,
+   "lds_rd_b64": 8,
+   "barrier": 1,
+   "lds_wr_b128": 1,
+   "lds_wr_b64": 1
+  },
+  "func_mix": {
+   "s_load": 5,
+   "valu": 565,
+   "waitcnt": 146,
+   "scalar": 192,
+   "vmem_rd": 76,
+   "lds_wr_b32": 1,
+   "bf16_round": 1,
+   "lds_wr_b64": 8,
+   "barrier": 9,
+   "lds_rd_u16": 16,
+   "lds_wr_b16": 32,
+   "lds_wr_hi": 16,
+   "lds_rd_b64": 48,
+   "v_mmac_f32_16x16x16_bf16": 140,
+   "vmem_wr": 17,
+   "lds_wr_b128": 2,
+   "lds_rd_b32": 16
+  }
+ },
+ "_ZN2g216p3_wy_s4b_kernelILb1EEEvNS_11WyS4BParamsE": {
+  "total_ops": 11642,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 160,
+   "v_mmac_16x16x8_f32": 160
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 16,
+   "ds_read_u16": 32,
+   "ds_bpermute_b32": 336,
+   "ds_write_b128": 56,
+   "ds_read2st64_b64": 50,
+   "ds_read_b64": 82,
+   "ds_write_b32": 104,
+   "ds_write2_b32": 16,
+   "ds_read_b32": 24,
+   "ds_read2_b32": 32,
+   "ds_read_b128": 120,
+   "ds_read2st64_b32": 12
+  },
+  "vmem_rd": 526,
+  "vmem_wr": 41,
+  "barrier": 36,
+  "waitcnt": 673,
+  "loop_len": 1091,
+  "loop_mix": {
+   "scalar": 153,
+   "valu": 702,
+   "s_load": 1,
+   "waitcnt": 79,
+   "bf16_round": 1,
+   "vmem_wr": 6,
+   "barrier": 5,
+   "lds_rd_b128": 11,
+   "lds_rd_b32": 20,
+   "vmem_rd": 35,
+   "lds_wr_b128": 7,
+   "lds_rd_b64": 15,
+   "v_mmac_f32_16x16x16_bf16": 20,
+   "lds_wr_b32": 15,
+   "lds_wr_b64": 1,
+   "v_mmac_16x16x8_f32": 20
+  },
+  "func_mix": {
+   "scalar": 1937,
+   "s_load": 10,
+   "valu": 7540,
+   "waitcnt": 673,
+   "bf16_round": 12,
+   "vmem_rd": 527,
+   "lds_wr_b64": 16,
+   "barrier": 36,
+   "lds_rd_u16": 32,
+   "lds_wr_b128": 56,
+   "vmem_wr": 43,
+   "lds_rd_b64": 132,
+   "v_mmac_f32_16x16x16_bf16": 160,
+   "lds_wr_b32": 120,
+   "lds_rd_b32": 68,
+   "lds_rd_b128": 120,
+   "v_mmac_16x16x8_f32": 160
+  }
+ },
+ "_ZN2g216p3_wy_s4b_kernelILb0EEEvNS_11WyS4BParamsE": {
+  "total_ops": 5600,
+  "mmac": {
+   "v_mmac_f32_16x16x16_bf16": 80,
+   "v_mmac_16x16x8_f32": 80
+  },
+  "exp": 0,
+  "lds": {
+   "ds_write_b64": 8,
+   "ds_read_u16": 16,
+   "ds_read_b128": 58,
+   "ds_read2st64_b32": 12,
+   "ds_read_b32": 18,
+   "ds_read2_b32": 27,
+   "ds_bpermute_b32": 168,
+   "ds_write_b128": 28,
+   "ds_read2st64_b64": 25,
+   "ds_read_b64": 41,
+   "ds_write_b32": 52,
+   "ds_write2_b32": 8
+  },
+  "vmem_rd": 249,
+  "vmem_wr": 21,
+  "barrier": 22,
+  "waitcnt": 348,
+  "loop_len": 1100,
+  "loop_mix": {
+   "valu": 724,
+   "waitcnt": 80,
+   "bf16_round": 1,
+   "vmem_wr": 6,
+   "scalar": 140,
+   "barrier": 5,
+   "lds_rd_b128": 11,
+   "lds_rd_b32": 20,
+   "vmem_rd": 35,
+   "lds_wr_b128": 7,
+   "lds_rd_b64": 15,
+   "v_mmac_f32_16x16x16_bf16": 20,
+   "lds_wr_b32": 15,
+   "lds_wr_b64": 1,
+   "v_mmac_16x16x8_f32": 20
+  },
+  "func_mix": {
+   "s_load": 8,
+   "valu": 3645,
+   "waitcnt": 348,
+   "scalar": 849,
+   "vmem_rd": 249,
+   "lds_wr_b64": 8,
+   "barrier": 22,
+   "lds_rd_u16": 16,
+   "bf16_round": 5,
+   "lds_rd_b128": 58,
+   "lds_rd_b32": 57,
+   "lds_wr_b128": 28,
+   "vmem_wr": 21,
+   "lds_rd_b64": 66,
+   "v_mmac_f32_16x16x16_bf16": 80,
+   "lds_wr_b32": 60,
+   "v_mmac_16x16x8_f32": 80
+  }
+ },
+ "_ZN2g218g2_bwd_tail_kernelILb1EEEvNS_10TailParamsE": {
+  "total_ops": 11331,
+  "mmac": {},
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 12,
+   "ds_read_b32": 8,
+   "ds_write2st64_b32": 2,
+   "ds_bpermute_b32": 396,
+   "ds_read2st64_b32": 12
+  },
+  "vmem_rd": 304,
+  "vmem_wr": 200,
+  "barrier": 12,
+  "waitcnt": 669,
+  "loop_len": 4798,
+  "loop_mix": {
+   "waitcnt": 375,
+   "valu": 3694,
+   "scalar": 239,
+   "bf16_round": 192,
+   "vmem_wr": 118,
+   "vmem_rd": 157,
+   "lds_wr_b32": 7,
+   "barrier": 6,
+   "lds_rd_b32": 10
+  },
+  "func_mix": {
+   "s_load": 9,
+   "waitcnt": 669,
+   "scalar": 1334,
+   "valu": 8317,
+   "bf16_round": 452,
+   "vmem_rd": 304,
+   "lds_wr_b32": 14,
+   "barrier": 12,
+   "vmem_wr": 200,
+   "lds_rd_b32": 20
+  }
+ },
+ "_ZN2g218g2_bwd_tail_kernelILb0EEEvNS_10TailParamsE": {
+  "total_ops": 4380,
+  "mmac": {},
+  "exp": 0,
+  "lds": {
+   "ds_write_b32": 6,
+   "ds_read_b32": 4,
+   "ds_write2st64_b32": 1,
+   "ds_bpermute_b32": 198,
+   "ds_read2st64_b32": 6
+  },
+  "vmem_rd": 152,
+  "vmem_wr": 100,
+  "barrier": 6,
+  "waitcnt": 365,
+  "loop_len": 1750,
+  "loop_mix": {
+   "valu": 1206,
+   "scalar": 61,
+   "waitcnt": 244,
+   "bf16_round": 133,
+   "vmem_rd": 66,
+   "vmem_wr": 34,
+   "lds_rd_b32": 6
+  },
+  "func_mix": {
+   "s_load": 7,
+   "waitcnt": 365,
+   "scalar": 194,
+   "valu": 3365,
+   "bf16_round": 174,
+   "vmem_rd": 152,
+   "lds_wr_b32": 7,
+   "barrier": 6,
+   "lds_rd_b32": 10,
+   "vmem_wr": 100
+  }
+ }
+}
