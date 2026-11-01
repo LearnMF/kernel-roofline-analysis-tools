@@ -1721,3 +1721,14 @@ Timing-only ceilings on de11e84 (ABBA, 6 shapes):
 - dq / dk carry ~2/3 of section 94's store ceiling (1.037-1.053x total).  Whole-row stores of a public row-major
   output need the 8 kt of a wave's 16 rows staged: 2 x 4 KB per wave (32 KB per CTA, LDS is full at 2 CTAs) or
   +32 VGPRs packed bf16 (244 -> 276: spills, section 82).  Not reachable inside the current s4b.
+
+## 96. P-938nb (dg in a chunk-native layout): bit-identical, no gain -> reverted
+- s4b writes dg as one contiguous 1 KB block per wave and kt ([i*H+hh][kt][64 rows][16 columns]); bwd_tail reads
+  that layout (dense, gfx938; KDA_G2_DG_NAT).  Gate 84/84 bit-identical.
+- ABBA (6 shapes): s4b 0.988-1.009x (the dg-store deletion ceiling was 1.043-1.064x); bwd_tail 0.88-0.89x at
+  H >= 32 and **0.45-0.56x** at 16384/8 and 32768/16 (its lanes walk d: 16 consecutive columns per 64 B block, the
+  next block 4 KB away, instead of one 256 B row).  fwd+bwd 0.947-0.999x.  Reverted (patch kept in
+  results/kda-gfx938-s4b3cta-20261031/p938nb_dg_native.diff).
+- Third confirmation of section 79's reading (P-938aq, P-938ow, now P-938nb): inside these kernels a whole-line store
+  form does not reduce the store cost -- the deletion ceilings measure bytes, and only fewer bytes remove them.  And a
+  layout that suits the producer's stores costs the consumer's loads (R60 / R64: pick a layout for both ends).

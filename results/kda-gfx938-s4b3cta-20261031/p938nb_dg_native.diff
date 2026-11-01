@@ -1,0 +1,82 @@
+diff --git a/src/primitive/hygon/kda/g2/g2_bwd_tail.cuh b/src/primitive/hygon/kda/g2/g2_bwd_tail.cuh
+index 7d66858..b2234b5 100644
+--- a/src/primitive/hygon/kda/g2/g2_bwd_tail.cuh
++++ b/src/primitive/hygon/kda/g2/g2_bwd_tail.cuh
+@@ -49,6 +49,7 @@ struct TailParams {
+     int gate_none; int beta_f32;
+     int no_cast = 0;                         // kra P-938q: dq / dk already final (s4b wrote bf16): skip the cast
+     int order = 0, order_m = 4;              // kra P-938o2: CTA visiting order (g2_cta_order)
++    int dg_nat = 0;                          // kra P-938nb: dg in s4b's chunk-native layout (dense only)
+ };
+ 
+ // VL (varlen phase 2): rows r >= clen load as 0 and are never stored; ALL arithmetic
+@@ -68,6 +69,11 @@ __global__ void __launch_bounds__(256) g2_bwd_tail_kernel(TailParams p) {
+     // varlen: ONE uniform branch per CTA -- full chunks run the unmasked body (M=1)
+     g2_vl_dispatch<VL>(cl, [&](auto mode_) {
+     constexpr int M = decltype(mode_)::value;
++    // kra P-938nb: dg element (row t, column d) of this chunk -- row-major or s4b's chunk-native blocks
++    auto DGI = [&](int t, int d) -> size_t {
++        return p.dg_nat ? ((size_t)i * p.H + hh) * (64 * kK) + ((size_t)((d >> 4) * 64 + t) * 16 + (d & 15))
++                        : ((size_t)(t0 + t) * p.H + hh) * kK + d;
++    };
+ 
+         // ---- Phase A: dg reverse cumsum + gate backward.  ALL FOUR warps work:
+         // warp w owns row block w (rows [16w, 16w+16)); each lane owns TWO K
+@@ -85,7 +91,7 @@ __global__ void __launch_bounds__(256) g2_bwd_tail_kernel(TailParams p) {
+                 for (int u = 0; u < 16; ++u) {
+                     const int t = tb + 15 - u;
+                     const float y = (g2_row_ok<M>(t, cl)
+-                                     ? p.dg[((size_t)(t0 + t) * p.H + hh) * kK + d] : 0.f) - runC;
++                                     ? p.dg[DGI(t, d)] : 0.f) - runC;
+                     const float tt = run + y;
+                     runC = (tt - run) - y;  run = tt;
+                     loc[u] = run;
+@@ -119,7 +125,7 @@ __global__ void __launch_bounds__(256) g2_bwd_tail_kernel(TailParams p) {
+             for (int u = 0; u < 16; ++u) {
+                 const int t = tb + 15 - u;
+                 const float2 v = g2_row_ok<M>(t, cl)
+-                    ? *reinterpret_cast<const float2*>(p.dg + ((size_t)(t0 + t) * p.H + hh) * kK + d0)
++                    ? *reinterpret_cast<const float2*>(p.dg + DGI(t, d0))
+                     : float2{0.f, 0.f};
+                 {
+                     const float y = v.x - run0C;
+@@ -394,6 +400,7 @@ extern "C" int g2_bwd_tail2(const void* dq, const void* dk, const void* dg,
+                      (float)lower_bound, (float)beta_scale,
+                      use_l2, use_beta, H, NT, ctok, clen, gate_none, beta_f32};
+     p.no_cast = (no_cast && !use_l2) ? 1 : 0;
++    p.dg_nat = (ctok == nullptr && g2::g2_cur_gfx938() && g2::g2_env_long("KDA_G2_DG_NAT", 1)) ? 1 : 0;   // kra P-938nb
+     // kra P-938o2 (gfx938): row-major in and out -> head-fastest at H % 32 == 0
+     p.order = (int)g2::g2_env_long("KDA_G2_TAIL_ORDER", g2::g2_cur_gfx938() && H % 32 == 0 ? 1 : 0);
+     p.order_m = (int)g2::g2_env_long("KDA_G2_TAIL_ORDER_M", 4);
+diff --git a/src/primitive/hygon/kda/g2/g2_wy.cuh b/src/primitive/hygon/kda/g2/g2_wy.cuh
+index 3351380..5d9bf95 100644
+--- a/src/primitive/hygon/kda/g2/g2_wy.cuh
++++ b/src/primitive/hygon/kda/g2/g2_wy.cuh
+@@ -827,6 +827,7 @@ struct WyS4BParams {
+     int hf = 0;                         // kra P-96: head-fastest grid (blockIdx.x = head), set by the launcher
+     short* dq_bf = nullptr;             // kra P-938q: non-null -> dq / dk go out as the final bf16 (gfx938, no l2norm)
+     short* dk_bf = nullptr;
++    int dg_nat = 0;                     // kra P-938nb: dg (s4b -> bwd_tail) in the chunk-native [i*H+hh][kt][64][16] layout
+ };
+ 
+ #if defined(__gfx938__)
+@@ -1452,7 +1453,10 @@ __device__ __forceinline__ void s4b_tail(const WyS4BParams& p, S4BSmem& sm, cons
+             *reinterpret_cast<f4*>(dq_ + ro + kc) = oq;
+             *reinterpret_cast<f4*>(dk_ + ro + kc) = ok;
+             }
+-            *reinterpret_cast<f4*>(dg_ + ro + kc) = og;
++            if (p.dg_nat)   // kra P-938nb: one 1 KB block per wave and kt instead of 16 rows x 64 B
++                *reinterpret_cast<f4*>(p.dg + ((size_t)i * H + hh) * (kBT * kD) + ((size_t)(kt * kBT + row) * 16 + 4 * q)) = og;
++            else
++                *reinterpret_cast<f4*>(dg_ + ro + kc) = og;
+         }
+         lds_barrier();                             // table WAR: kt's reads done before kt+1 writes
+     }
+@@ -1561,6 +1565,7 @@ extern "C" int g2_wy_s4_split_r2(const void* q_kgb, const void* k, const void* v
+                        (const bf16*)dwT, (const float*)dA, (const float*)db_part,
+                        (float*)dq, (float*)dk, (float*)dg, (float*)db, scale, T, H, NT,
+                        ctok, clen, (const bf16*)do_row, (const bf16*)vnc};
++        pb.dg_nat = (ctok == nullptr && g2::g2_cur_gfx938() && g2::g2_env_long("KDA_G2_DG_NAT", 1)) ? 1 : 0;   // kra P-938nb
+         const dim3 s4grd = g2::g2_env_long("KDA_G2_S4_HF", 1) ? dim3(H, NT) : dim3(NT, H);   // kra P-88 (default on)
+         pb.hf = g2::g2_env_long("KDA_G2_S4_HF", 1) != 0;   // kra P-96
+         pb.dq_bf = (short*)dq_bf; pb.dk_bf = (short*)dk_bf;
