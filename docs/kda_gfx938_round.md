@@ -1612,3 +1612,29 @@ at H = 8.
   hand-offs gives up parallelism (fewer CTAs per CU, or fewer CTAs).  Closing the 1.27x needs less work per chunk:
   fewer VALU / transcendental operations in prep_a (B-class arithmetic: 2^g factorisations, precision of the gated
   operands) or a different chunk algorithm -- not a different split of the same work.
+
+## 91. Total-time sprint: small-grid knob sweep (negative); relaxed precision: FLA's fp64 error as the bar
+Small grids (1024/16, 2048/8, 1024/32, 2048/16; de11e84 + P-938w4, ABBA kernel time vs default):
+| knob | effect |
+|---|---|
+| KDA_G2_S4A_AFSR=0 | s4a 0.97-0.98x |
+| KDA_G2_S4A_AFS_MAXH=0 | s4a 0.81-0.84x |
+| KDA_G2_S4A_PF=0 | s4a 0.90x |
+| KDA_G2_R1A_DHU=1 (8-wave dhu) | dhu 0.81-0.95x |
+| KDA_G2_DHU4_MAX_CTAS=100000 | dhu 0.96-1.005x |
+| KDA_G2_DHU_LIN=0 | dhu 0.79-0.92x |
+| KDA_G2_V8O4W_MIN_H=1, KDA_G2_V8O4_THROTTLE_MIN_CTAS off | fwd_h 0.99-1.00x |
+Every existing host rule is already right at small grids; the remaining small-shape levers are structural (prep_a
+4 CTAs / CU needs <= 16 KB LDS with R's 20 KB reduction; s4a / s4b are VGPR bound at 2 CTAs / CU).
+
+Relaxed precision bar = "fp64 rms error no worse than FLA's, deterministic, Megatron loss aligned".  ft_fp64_gate2.py
+(GATE_FLA runs fla.ops.kda.chunk_kda, FLA 0.5.2 / Triton 3.6 on gfx938) on the frozen fp64 oracle, K3 route:
+| tensor | FLA error / w5 (de11e84) error, geomean of 4 x 4096/12 + 16384/12 |
+|---|---|
+| o, q, k, v, beta | 1.004-1.007 |
+| g_raw | 1.17 |
+| A_log | 1.08 |
+| dt_bias | 1.23 |
+Both deterministic on these cases.  Our headroom under the FLA bar is ~0.5% on o / q / k / v / beta and 8-23% on the
+gate-path gradients.  So a relaxed rewrite can only touch arithmetic whose error stays below the bf16 I/O floor of
+the main tensors (rms ~5e-3), or the gate path (dg / dA_log / ddt_bias: g cumsum, its Kahan step, the dg reductions).
