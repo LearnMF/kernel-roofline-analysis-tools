@@ -1711,3 +1711,13 @@ Timing-only ceilings on de11e84 (ABBA, 6 shapes):
   gradients), so their layout is free: a chunk-native layout ([chunk-head][kt][64 rows][16 columns], 2 KB bf16 /
   4 KB fp32 blocks) makes every s4b store a contiguous block.  Next: P-938nb = that layout + bwd_tail reading it,
   A-class (bit-identical), measured against this ceiling.
+
+## 95. Correction to section 94: dq / dk are the user's outputs; only dg's layout is free
+- On the K3 route (use_qk_l2norm_in_kernel=False) P-938q makes s4b write the final bf16 dq / dk straight into the
+  user's [B, T, H, 128] gradient tensors (the runner passes p.dq / p.dk to s4b).  Their row-major layout is the public
+  contract, so section 94's "internal hand-off" applies to dg (fp32, read by bwd_tail) only.
+- dg-store-only ceiling (timing only, ABBA): s4b 1.043-1.064x, fwd+bwd 1.012-1.018x.  A chunk-native dg layout
+  captures part of it (~0.6-1% end to end) and needs bwd_tail's two dg read paths re-indexed.
+- dq / dk carry ~2/3 of section 94's store ceiling (1.037-1.053x total).  Whole-row stores of a public row-major
+  output need the 8 kt of a wave's 16 rows staged: 2 x 4 KB per wave (32 KB per CTA, LDS is full at 2 CTAs) or
+  +32 VGPRs packed bf16 (244 -> 276: spills, section 82).  Not reachable inside the current s4b.
