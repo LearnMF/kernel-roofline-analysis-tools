@@ -1805,3 +1805,24 @@ gfx938 / H20 total = **0.971** (forward 0.872, backward 1.004), 9 of 24 shapes >
 2048/8 +1.8% (P-938w4 / P-938dt), the rest within +-1% except 4096/64 0.955, 8192/32 0.941, 16384/64 1.046 -- opposite
 signs on shapes the two commits do not touch, i.e. run-to-run noise between separate runs (host load 10-13 here vs
 6-8 in section 79).  Table: results/kda-gfx938-vs-h20-20261029/g938_w5.
+
+## 101. SQTT per opcode (8192/64, de11e84; hipprof --sqtt --sqtt-type 1 --output-type 0, issue_ops.py)
+Half-K ceilings first (timing only, every odd V-slab CTA skips its K-side loads): fwd_h v8o4 0.77-1.01x, dhu
+0.975-1.08x, fwd+bwd 0.965-1.009x -> the K-side re-reads are not on the critical path; the wider-V-slab lever of
+section 99 is closed.  (The hipprof default output is now .pftrace.gz + stat.html; --output-type 0 restores the json.)
+Share of wave time (issue + stall charged to the instruction), the top items per kernel:
+| kernel | narrow memory ops | LDS ops | other |
+|---|---|---|---|
+| s4a | **global_load_dwordx2 12.7%**, **global_store_short 9.3% (607 x 2 B stores per wave)**, store_dwordx2 5.1%, load_dword 1.1% | ds_read2_b64 2.3%, ds_write_b16 2.0% (+1.2% d16_hi) | wait_lgkm 11.7%, valu int/move 10.1%, barrier 7.8%, salu 7.1%, load_dwordx4 9.0% |
+| bwd_tail | load_dwordx2 4.6%, load_dword 1.2%, store_dword 0.9% | all LDS incl. ds_bpermute 0.4% | **valu int/move 36.2%**, valu fp 29.0%, barrier 8.3%, wait_vm 7.3% |
+| s4b | load_dwordx2 6.9%, load_dword 1.6% | ds_bpermute 3.2%, ds_write_b32 1.8% | wait_vm 17.0%, valu int/move 13.0%, valu fp 9.9%, wait_lgkm 8.9%, mmac f32x8 7.1%, barrier 6.5%, load_dwordx4 5.4% |
+| wu | load_dwordx2 4.8%, store_dwordx2 3.3% | ds_write_b16 2.9% (1215 per wave), ds_read_m32x16 0.8% | **wait_vm 27.9%**, valu int/move 20.8%, wait_lgkm 10.7%, salu 7.5%, barrier 6.5% |
+- Bank conflicts: bwd_tail's whole LDS share is 0.4% and wu's ds_read_m32x16 is 0.8% -- the conflict-rate growth of
+  section 97 costs little time.  Not a lever.
+- Narrow accesses that matter: s4a's 2 B stores (9.3%) and 8 B loads (12.7%), s4b's 8 B loads (6.9%), wu's 8 B
+  loads / stores (8.1%).  First ceiling: s4a with the 2 B stores merged (timing only), then s4a / s4b 8 B loads.
+- New, kernel-wide: **VALU int / move 10-36% of wave time** (bwd_tail 36%, wu 21%, s4b 13%, s4a 10%): 64-bit
+  address arithmetic per access (v_lshlrev_b64 / v_add_co among the top stall PCs), index math and bf16 packing.
+  gfx938's VALU is 22% weaker than gfx936's; addressing through SGPR bases + 32-bit VGPR offsets (global saddr /
+  buffer loads) removes the 64-bit per-lane math.  Second ceiling: count the address instructions per kernel in the
+  ISA and estimate their share.
