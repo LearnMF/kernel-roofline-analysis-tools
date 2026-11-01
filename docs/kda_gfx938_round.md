@@ -1851,3 +1851,20 @@ Share of wave time (issue + stall charged to the instruction), the top items per
   0.84), dhu (23%, on the recurrence chain), fwd_h, dav, s4a, wu.  Rule (R68): on gfx938 address with SGPR bases +
   32-bit offsets; size_t index expressions cost per-lane 64-bit VALU on a VALU-bound card.  Watch negative clamped
   rows / offsets (varlen) when switching to unsigned 32-bit offsets.
+
+## 104. P-938sa rolled out kernel by kernel (CTA-uniform bases + 32-bit offsets): where it pays
+| kernel | 64-bit addr ops (prod. instance) | instructions | kernel ABBA | kept |
+|---|---|---|---|---|
+| bwd_tail (VALU 0.90) | ~1000 -> 566 | 4378 -> 4067 | 1.04-1.10x | yes, f906f04 |
+| dhu (recurrence chain) | 142 -> 51 | 615 -> 531 | 1.04-1.10x at 8 / 9 shapes | yes, 5b880d0 |
+| wu | 411 -> 288 | 3378 -> 3252 | 1.027-1.039x (1.00x on the 16 KB small-grid layout) | yes, d5ac572 |
+| s4b (TA 0.64, VALU 0.49) | 777 -> 672 | 4512 -> 4398 | 0.978-0.996x (one 1.094x) | no |
+| fwd_h wide | 139 -> 37 (NVH 4), 95 -> 21 (NVH 1) | 1153 -> 1190, 498 -> 460 | H = 64 0.994-1.008x, H = 8 0.94-0.98x | no |
+| gate | 139 -> 7 | 867 -> 786 | 0.983-1.048x, fwd+bwd ~1.000x | no |
+All variants bit-identical (gate 84/84 each).  Partial varlen chunks keep the 64-bit form wherever a clamped row can
+be -1.  Combined (d5ac572 = de11e84 + the three kept) vs de11e84, ABBA fwd+bwd on 12 shapes: **1.005-1.022x**
+(1024/16 1.013, 2048/64 1.005, 8192/64 1.012, 4096/32 1.009, 16384/8 1.022, 32768/16 1.016, 2048/8 1.011,
+8192/16 1.014, 32768/64 1.015, 1024/64 1.006, 4096/64 1.012, 16384/32 1.010).
+- Reading: removing per-lane 64-bit address math pays where those instructions sit on the binding path (VALU-bound
+  bwd_tail, the dhu recurrence step, wu's row loops); it does nothing or loses where the kernel is TA-bound (s4b)
+  or where saddr changes the schedule of a latency chain (fwd_h's NVH = 1 form).  R68 refined: measure per kernel.
