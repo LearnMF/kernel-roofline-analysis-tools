@@ -1782,3 +1782,20 @@ One wave, lane address = lane x stride, s_memtime ticks per ds instruction (late
   ds_read_m32x16 reads of the natural vb rows, P-938r LEAN), and bwd_tail's 0.44 -> 1.57 from the P-938t2 tree-sum
   exchange.  Next: attribute the conflicts per instruction (SQTT LDS stalls or a ds_read_m32x16 pattern microbench)
   before changing any layout.
+
+## 99. Global access widths per kernel (static counts in the w5 gfx938 assembly, production instances)
+| kernel | dword (4 B) loads | dwordx2 (8 B) | dwordx4 (16 B) | stores | other |
+|---|---|---|---|---|---|
+| dhu | 0 | 4 | 18 | x2 7, short 4 | -- |
+| fwd_h wide | 4 | 2 | 56 | x2 15 | -- |
+| fwd_h v8o4 | 2 | 0 | 34 | x2 6 | -- |
+| s4a (AFSR) | 2 | **88** | 16 | x2 8, x4 4, **short 32** | -- |
+| dav | 0 | 24 | 0 | x2 16, x4 8 | **ushort loads 16** |
+| wu (P-938k) | 1 | 47 | 13 | x2 32, x4 10 | ds_read_m32x16 48 |
+| bwd_tail | **86** | 49 | 16 | **dword 83**, x2 16 | ds_bpermute 198 |
+| s4b | **88** | 82 | 44 | x2 6, x4 9 | ds_bpermute 126, matrix_load 12 |
+- Section 97's item 1 splits in two: dhu and fwd_h already load 16 B per lane (KgA / Qg / Wb paired since L16);
+  their high VMEM-per-byte (2988-3415 per MB) is the K-side re-read by every V-slab CTA (L2 / HBM 1.30-1.31) -- a
+  tiling lever (fewer, wider V slabs, as P-938wd did for fwd_h at H >= 64), not a width lever.  The width lever is
+  s4a (88 x 8 B loads, 32 x 2 B stores), dav (2 B loads), wu (47 x 8 B), bwd_tail (86 x 4 B loads, 83 x 4 B stores)
+  and s4b (88 x 4 B + 82 x 8 B loads).  Static counts: runtime weights come from the hot loops (next: SQTT / ceilings).
