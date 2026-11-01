@@ -1732,3 +1732,38 @@ Timing-only ceilings on de11e84 (ABBA, 6 shapes):
 - Third confirmation of section 79's reading (P-938aq, P-938ow, now P-938nb): inside these kernels a whole-line store
   form does not reduce the store cost -- the deletion ceilings measure bytes, and only fewer bytes remove them.  And a
   layout that suits the producer's stores costs the consumer's loads (R60 / R64: pick a layout for both ends).
+
+## 97. gfx938-first re-evaluation: which gfx936-era design choices are now the bottleneck
+Official 24-shape run on de11e84 started (nmz5 GPU 0, g938_seq_w5) for the stage report.
+From the 24-shape cards (de11e84) and the gfx936 cards (bw52, same kernels), per kernel:
+| kernel | share | LDS conflicts / LDS inst 936 -> 938 | VMEM insts per MB of HBM 936 -> 938 (1 KB per inst = 977) | L2 / HBM bytes |
+|---|---|---|---|---|
+| s4b | 28.0% | 1.18 -> 1.28 | 1656 -> 1443 | 1.10 |
+| wu | 13.8% | **1.90 -> 4.26** | 1641 -> 1548 | 1.14 |
+| dhu | 10.7% | 0.22 | **3415** | 1.31 |
+| fwd_h | 10.3% | 0.00 | **2988** | 1.30 |
+| prep_a | 10.2% | 0.00 | 1656 | 0.96 |
+| s4a | 8.0% | 0.80 -> 0.90 | 1998 -> **2341** | 1.15 |
+| prep_b | 6.5% | 0.67 -> 0.93 | 1692 -> 1165 | 1.17 |
+| dav | 5.4% | **4.00 -> 3.87** | 2201 -> 2271 | 1.07 |
+| bwd_tail | 4.4% | **0.44 -> 1.57** | 2792 -> 3073 | 0.98 |
+Three gfx936-era choices that now sit on gfx938's binding resources:
+1. **8 B-per-lane operand loads.**  The native operand layouts were built around one 16x16x16 MMAC fragment (4 bf16 =
+   8 B per lane, 512 B per instruction).  On gfx938 the TA cost is per instruction (~16-22 cycles per wave instruction
+   up to 1 KB) and TA is the primary resource of 8 of 10 kernels: dhu / fwd_h / s4a / dav / bwd_tail issue 2.3-3.4x
+   the instructions per byte of a 16 B-per-lane stream.  Lever: producers emit fragment *pairs* (16 B per lane) or
+   MLS-able blocks; consumers load two fragments per instruction (or ds_read_m32x16 from LDS: 2 MMAC operands per
+   LDS instruction, which FLA uses 5056 times and we use only in wu).  First ceiling: per kernel, halve the operand
+   load instructions (timing only) and measure.
+2. **LDS padding / swizzles tuned on gfx936.**  wu's conflict rate doubled on gfx938 (1.90 -> 4.26 per instruction,
+   u_lds 0.26 -> 0.42), bwd_tail's tripled (0.44 -> 1.57, the P-938t2 tree sum), dav sits at ~4 on both.  The bank
+   layout of gfx938's LDS has not been measured (lds microbench per stride / ds_read width), so every pad of 4 / 8 / 68
+   floats is a gfx936 assumption.  First step: LDS bank microbench on gfx938, then a conflict-free layout per kernel
+   (wu, dav, bwd_tail first), A-class.
+3. **Staging through VGPRs (global -> VGPR -> LDS) with VGPR-bound residency.**  s4b (h / dh tiles: 8 VGPRs of int4
+   prefetch per kt), wu, dhu, dav stage tiles through registers; on gfx938 MLS writes HBM -> LDS without VGPRs, which
+   frees registers for residency / deeper prefetch (buffering and pipelining without the VGPR cost).  Earlier MLS
+   in-loop attempts lost on barrier placement (section 52); the redesign has to place the MLS issue a full stage ahead
+   (double-buffered LDS) -- measured per kernel against an MLS-free deletion ceiling.
+Fusion / pipelining between adjacent kernels (sections 56-57, 76-77, 90) stays bounded by residency; the three
+items above are per-kernel and attack the TA instruction count, the LDS replays and the VGPR budget directly.
