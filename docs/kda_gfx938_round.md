@@ -1834,3 +1834,20 @@ Share of wave time (issue + stall charged to the instruction), the top items per
 - Method note (R67): SQTT charged these stores 9.3% of s4a's wave time; deleting them saves ~3%.  The issue-gap
   attribution charges a stall to the instruction that waits, while the latency it waits on is shared with the
   surrounding loads -- SQTT shares rank candidates, only a deletion ceiling sizes them.
+
+## 103. 64-bit per-lane address math (a gfx936-era indexing habit) and P-938sa (bwd_tail, local commit f906f04)
+- bwd_tail (VALU-bound, valu int / move 36% of wave time in SQTT): 251 of 252 global accesses used a 64-bit VGPR
+  address built from size_t index expressions; ~1000 of its 4378 instructions were 64-bit address ops (v_add_co /
+  v_addc_co pairs 692, v_lshlrev_b64 129, v_mul_lo_u32 104, v_mad_u64_u32 46, v_mov_b64 32).
+- **P-938sa**: phase-A row accesses (dg, dg_raw, g_raw) as a CTA-uniform base + a 32-bit byte offset -> saddr global
+  ops (67 accesses), 64-bit address ops 566, instructions 4067.  Partial varlen chunks keep the 64-bit form for g_raw
+  (its clamped row is -1 when cl == 0; with a 32-bit unsigned offset that became a ~4 GB offset: the first build hit
+  a VM fault on the three varlen + in-kernel-gate cases, bisected to the g_raw read).  Gate 84/84 bit-identical;
+  bwd_tail 1.04-1.10x, fwd+bwd 1.000-1.004x (9 shapes).
+- The same habit everywhere (static counts, production instances): 64-bit address ops / instructions:
+  s4b 777 / 4512 (17%), dav 272 / 1648 (17%), dhu 142 / 615 (23%), fwd_h wide 234 / 1651 (14%), s4a 264 / 1935 (14%),
+  gate 406 / 3040 (13%), wu 411 / 3378 (12%), prep_a 360 / 3809 (9%); vaddr64 dominates the global ops of all.
+  The gain follows how VALU-bound each kernel is (bwd_tail 0.90 -> 1.04-1.10x): next s4b (28% of time), gate (VALU
+  0.84), dhu (23%, on the recurrence chain), fwd_h, dav, s4a, wu.  Rule (R68): on gfx938 address with SGPR bases +
+  32-bit offsets; size_t index expressions cost per-lane 64-bit VALU on a VALU-bound card.  Watch negative clamped
+  rows / offsets (varlen) when switching to unsigned 32-bit offsets.
