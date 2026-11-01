@@ -1541,3 +1541,10 @@ Kernel time vs H at T = 1024 (16 x H CTAs), d t build, 3 reps:
   transposed-operand GEMMs (section 10).  Our kernels pay for gfx936's fixed layout with selector MMACs (fwd_h P-63),
   LDS staging (prep_b solve stage(), s4b), ds_bpermute, pi16 permutations and g2_c2a_sel.  Next: inventory of those
   conversions per kernel, ceiling, prototype (bit-identity to be checked per kernel: the accumulation order may differ).
+
+## 87. prep_a input loads by MLS: ceiling -> not pursued
+Timing-only build (de11e84 + prep_a's q / k / g_raw per-lane loads skipped by a runtime-zero uniform constant flag,
+constants instead), ABBA: prep_a 1.12x at 2048/16 and 1024/64, 1.08-1.09x at 8192/64 and 4096/32, 1.06-1.07x at
+16384/8 and 32768/16; fwd+bwd 1.003-1.010x.  An MLS version still pays 0.29x of the TA plus the LDS writes and a
+barrier, so it gets less than half of that.  Not built.  prep_a's time is in its VALU work, the LDS exchanges and the
+stores, not in the input loads.
