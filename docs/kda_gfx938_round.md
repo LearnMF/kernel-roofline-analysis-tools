@@ -1940,3 +1940,16 @@ memret.py).  Saving w / u in the forward is the FLA fast mode's memory-for-speed
 - Swap "save w / u instead of h" (same 512 B): FTRAIN_KDA_SAVE_H=0 (h recomputed by fwd_h_bn in the backward) costs
   0.900-0.951x end to end (6 shapes), i.e. the saved h is worth 5-10%.  A w / u save would only remove wu's two MMAC
   phases (the other four outputs still need wu's fills), well below 5-10%.  Rejected.
+
+## 110. dav analysis (5.4% of the time; 2.9x FLA's chunk_kda_bwd_dAv at 1024/64)
+- dav reads do (row-major), Vn (native), Aqk (row-major) and writes dA (fp32 row-major, -> s4), dVn (native, -> dhu)
+  and dOT (B form of do, -> dhu).  FLA's dAv writes only dA and dv; dOT is our extra layout for dhu.
+- SQTT (8192/64, de11e84+sa): valu int / move 22.3% (12.5k per wave: b16 transposes, packing, addresses),
+  global_load_dwordx2 16.2%, wait_vm 11.7%, salu 11.6%, ds_write_b16 + d16_hi 9.1% (2 B LDS writes = transposes
+  through LDS), global_load_ushort 4.8% (2 B global loads), store_dwordx4 4.8%, barrier 4.6%, MMAC 1.8%.
+- Store-deletion ceilings (timing only, ABBA): dA 0.94-0.98x (not on the path); dVn **1.15-1.28x dav**, fwd+bwd
+  1.009-1.013x; dOT 1.07x at 8192/64 (GPU 2 was disturbed during that run: its baselines were 2-3x off; the 2048/16
+  and 16384/8 dOT rows are invalid).
+- Reading: dav's cost is the gfx936-era transposes (b16 LDS scatter + per-element packing + 2 B loads), not its
+  MMACs (1.8%).  gfx938 lever: ds_read_m32x16 transposed operand reads (as wu's P-938m: 1.06-1.10x) and 16 B loads,
+  plus the dVn emit.  Bound: dav is 5.4% of the time, so ~1-2% end to end.
