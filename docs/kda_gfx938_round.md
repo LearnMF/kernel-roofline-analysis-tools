@@ -1966,3 +1966,9 @@ memret.py).  Saving w / u in the forward is the FLA fast mode's memory-for-speed
   pi16 indexing, then 8 B stores).  gfx938 levers: ds_read_m32x16 transposed reads of the dh tile, or the MMAC
   lit / lts output layout that matches s4b's operand order (section 86), so the emit becomes 16 B rows.  Bound:
   ~1-1.5% end to end for dhu, similar for dav (section 110); together ~2-3%.
+
+## 112. A1: P-938sa on s4a -- bit-identical, neutral -> reverted
+- s4a (AFSR instance): A_ / v_ / dv2_ / vBN / aN-operand addresses as uniform base + 32-bit byte offset: instructions
+  1935 -> 1783, 64-bit address ops 264 -> 182, saddr global ops 48 -> 104.  Gate 84/84 bit-identical.
+- ABBA (9 shapes): s4a 0.993-1.020x, fwd+bwd 0.989-1.009x.  s4a is TA-bound (0.90): fewer VALU address instructions
+  do not move it, as with s4b (section 104).  Reverted.  dav (TA 0.82) is expected to behave the same; tested next.
