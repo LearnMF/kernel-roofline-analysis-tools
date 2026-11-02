@@ -1953,3 +1953,16 @@ memret.py).  Saving w / u in the forward is the FLA fast mode's memory-for-speed
 - Reading: dav's cost is the gfx936-era transposes (b16 LDS scatter + per-element packing + 2 B loads), not its
   MMACs (1.8%).  gfx938 lever: ds_read_m32x16 transposed operand reads (as wu's P-938m: 1.06-1.10x) and 16 B loads,
   plus the dVn emit.  Bound: dav is 5.4% of the time, so ~1-2% end to end.
+
+## 111. dhu analysis (10.7% of the time; 1.6x FLA's bwd_dhu at 1024/64)
+- Production call (saved-h route): dhu writes the per-chunk dh states (HbN form, -> s4b) and aN(dv2) (ANv2, -> s4);
+  dv2 itself is not written (null).
+- SQTT (8192/64): barrier 21.2% (the two step barriers of the recurrence), global_load_dwordx4 17.7%, valu int / move
+  12.6%, global_store_dwordx2 8.1%, MMAC 7.2%, ds_read_u16 6.4% (2 B LDS gathers of the dh transpose), lgkm waits
+  5.4%, ds_write_b16_d16_hi 4.3%, ds_read2_b64 4.2%.  The dh emit (u16 gathers + b16 writes + 8 B stores) is ~19%.
+- Store-deletion ceilings (timing only, ABBA 2048/16, 8192/64, 16384/8): dh states **1.13-1.18x dhu**, fwd+bwd
+  1.007-1.015x; ANv2 1.04-1.07x dhu, fwd+bwd 1.010-1.011x.
+- Reading: as in dav, the cost beyond the chain is the gfx936-era transposed emit (per-element 2 B LDS gathers with
+  pi16 indexing, then 8 B stores).  gfx938 levers: ds_read_m32x16 transposed reads of the dh tile, or the MMAC
+  lit / lts output layout that matches s4b's operand order (section 86), so the emit becomes 16 B rows.  Bound:
+  ~1-1.5% end to end for dhu, similar for dav (section 110); together ~2-3%.
