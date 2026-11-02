@@ -1972,3 +1972,6 @@ memret.py).  Saving w / u in the forward is the FLA fast mode's memory-for-speed
   1935 -> 1783, 64-bit address ops 264 -> 182, saddr global ops 48 -> 104.  Gate 84/84 bit-identical.
 - ABBA (9 shapes): s4a 0.993-1.020x, fwd+bwd 0.989-1.009x.  s4a is TA-bound (0.90): fewer VALU address instructions
   do not move it, as with s4b (section 104).  Reverted.  dav (TA 0.82) is expected to behave the same; tested next.
+
+## 113. A1: P-938sa on dav -- bit-identical, slower (0.87-0.98x dav) -> reverted
+Gate 84/84; dav 0.872-0.979x, fwd+bwd 0.988-1.008x (9 shapes). A1 closed: saddr pays only on VALU / chain-bound kernels (bwd_tail, dhu, wu, prep_a).
