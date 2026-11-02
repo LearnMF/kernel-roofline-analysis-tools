@@ -1975,3 +1975,6 @@ memret.py).  Saving w / u in the forward is the FLA fast mode's memory-for-speed
 
 ## 113. A1: P-938sa on dav -- bit-identical, slower (0.87-0.98x dav) -> reverted
 Gate 84/84; dav 0.872-0.979x, fwd+bwd 0.988-1.008x (9 shapes). A1 closed: saddr pays only on VALU / chain-bound kernels (bwd_tail, dhu, wu, prep_a).
+
+## 114. A2: bwd_tail packed Kahan scan (P-938pk, local commit) -- bit-identical, bwd_tail 1.007-1.014x
+Only add/sub are packed (the gate-backward fmas stay scalar on purpose: packing them would un-fuse them). scalar fp32 1130 -> 1098, packed 129 -> 145. fwd+bwd within noise (0.999-1.001x).
