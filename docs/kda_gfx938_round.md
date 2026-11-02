@@ -1921,3 +1921,22 @@ the same policy as flash-train's saved-h route).  mk3_fb.py: FLA_NORECOMP=1.
 | gfx936 ft vs gfx936 FLA no-recompute | 1.933 | 1.835 | **1.860** | 24 / 24 |
 | gfx936 ft vs H20 FLA default | 0.763 | 0.872 | **0.844** | 1 / 24 |
 | gfx936 ft vs H20 FLA no-recompute | 0.815 | 0.728 | **0.751** | 0 / 24 |
+
+## 109. Under "no more retained memory": wu output ceilings and the h <-> w/u swap
+Retained state per token-head: FLA default 256 B (Aqk, Akk), flash-train 768 B (+ h), FLA disable_recompute 2560 B
+(+ w, u, qg, kg, v_new, h, g cumsum); single-layer fwd+bwd peak: flash-train 3.12 GB, FLA (both) 3.77 GB (8192/64,
+memret.py).  Saving w / u in the forward is the FLA fast mode's memory-for-speed trade, excluded here.
+- Backward wu (saved-h route) emits Wb -> dhu, KgA -> dhu, Qn -> dhu, kgB -> s4a, Vn (v_new) -> dav / s4b.  Timing-
+  only deletion of one store group at a time (WU_SKIP 1..5), ABBA 2048/16, 8192/64, 16384/8:
+| output | wu | fwd+bwd |
+|---|---|---|
+| Wb (B form of W) | 1.057-1.076x | 1.008-1.009x |
+| KgA | 1.082-1.103x | 1.009-1.011x |
+| Qn (emit only) | 1.046-1.057x | 1.006-1.007x |
+| kgB | 1.074-1.097x | 1.010-1.012x |
+| Vn (v_new) | 1.082-1.121x | 1.010-1.015x |
+  Each output costs ~1% end to end, and each is consumed downstream -- removing one means the consumer recomputes
+  it from k / q / g / h, which is not free.  The wu-slimming lever is ~1-2% at best.
+- Swap "save w / u instead of h" (same 512 B): FTRAIN_KDA_SAVE_H=0 (h recomputed by fwd_h_bn in the backward) costs
+  0.900-0.951x end to end (6 shapes), i.e. the saved h is worth 5-10%.  A w / u save would only remove wu's two MMAC
+  phases (the other four outputs still need wu's fills), well below 5-10%.  Rejected.
