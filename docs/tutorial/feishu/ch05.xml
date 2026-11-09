@@ -1,0 +1,19 @@
+<title>第 5 章　kernel 在 CU 上如何执行</title>
+<p><b>本章目标。</b>解释一个 kernel 为什么离屋顶还远：驻留与占用率、延迟隐藏、MMAC 粒度、同步、分块、LDS bank、全局访存与归约。</p>
+<p><span text-color="gray">本章待写，下面是已确认的小节结构。</span></p>
+<h1>5.1 驻留与占用率</h1>
+<p><span text-color="gray">（待写）</span></p>
+<h1>5.2 延迟隐藏与 Little 定律</h1>
+<p><span text-color="gray">（待写）</span></p>
+<h1>5.3 MMAC 指令粒度与片段布局</h1>
+<p><span text-color="gray">（待写）</span></p>
+<h1>5.4 barrier 与 CTA 内分工</h1>
+<p><span text-color="gray">（待写）</span></p>
+<h1>5.5 分块与复用</h1>
+<p><span text-color="gray">（待写）</span></p>
+<h1>5.6 LDS bank：padding、swizzle 与 bank 模型</h1>
+<p><span text-color="gray">（待写）</span></p>
+<h1>5.7 全局访存：合并、宽度与 SGPR 基址</h1>
+<p><span text-color="gray">（待写）</span></p>
+<h1>5.8 切分维度、部分和、原子与确定性归约</h1>
+<p><span text-color="gray">（待写）</span></p>

@@ -1,0 +1,66 @@
+<title>第 6 章　四个下限：离极限还有多远</title>
+<p><b>本章目标。</b>本章回答主线一"是否已经到达优化上限"。读完本章，你应该能为一个算子算出四个下限（理论、拆分、满载、实测），把实测与理论之间的差距拆成三项开销，知道每一项开销对应哪一类手段、哪些手段对它无效；能在模型预测与实测对不上时先排查口径；能说清"到顶"指的是哪一种到顶，并用 BW1000 上 KDA 的完整数据看懂一个真实的判断过程。</p>
+<h1>6.1 为什么 Roofline 不够</h1>
+<p>第 3 章的 Roofline 给出的是 <latex>T \ge \max(F / P_{peak},\ B / BW)</latex>，它隐含了三个很强的假设：整个算子可以完全融合成一个 kernel，计算与访存可以完美重叠，所有工作都可以并行。真实算子往往三条都不满足。</p>
+<p>第一，<b>串行依赖</b>。KDA 的递推要求每个 chunk 的状态必须等上一个 chunk 算完，这条链的时间无法被带宽或算力缩短。16K/TP8 下按 Roofline 算，完全融合时最快 0.61 ms，而考虑串行链后的理论下限是 0.83 ms。第二，<b>片上容量</b>。一个任务单元的工作集放不进片上存储时，算子只能拆成多个 kernel，中间结果要经过显存交接，字节数随之成倍增加。第三，<b>实际指令流</b>。每个 kernel 真正执行的指令可能先压满访存发射单元（TA）或 VALU，而不是带宽或算力。</p>
+<p>所以我们需要一组逐步加入现实约束的下限：每往下一层，就多承认一种现实限制，下限也随之抬高。相邻两层之间的差距，恰好对应一类可以单独处理的开销。</p>
+<h1>6.2 四个下限与三项开销</h1>
+<p>四个下限的定义、算法和工具如下（KDA 一列为 BW1000 上 16K/TP8 的值）。</p>
+<table>
+  <colgroup><col width="110"/><col width="280"/><col width="290"/><col width="110"/></colgroup>
+  <thead><tr><th background-color="light-gray">下限</th><th background-color="light-gray">含义</th><th background-color="light-gray">怎么算</th><th background-color="light-gray">KDA 16K/TP8</th></tr></thead>
+  <tbody>
+    <tr><td>理论下限 <latex>T_{theory}</latex></td><td>完全融合：每个输入读一次、每个输出写一次，加上前向留给反向的状态；与 kernel 怎么拆无关</td><td><latex>\max\left(\frac{B_{min}}{BW},\ \frac{F_{MMAC}}{P_{MMAC}},\ \frac{F_{VALU}}{P_{VALU}},\ T_{chain}\right)</latex>，用第一性原理模型算</td><td>0.83 ms（受串行链限制）</td></tr>
+    <tr><td>拆分下限 <latex>T_{split}</latex></td><td>按现有的 kernel 划分，每个 kernel 只读写自己的输入输出张量，且访问方式理想</td><td><latex>\sum_k \frac{B_k^{iface}}{BW}</latex>，<latex>B_k^{iface}</latex> 由逐张量的字节账目得到</td><td>3.35 ms</td></tr>
+    <tr><td>满载下限 <latex>T_{full}</latex></td><td>按每个 kernel 当前真实的指令流和字节，让其中最忙的硬件单元一刻不停</td><td><latex>\sum_k \max_r \frac{W_{k,r}}{P_r}</latex>，<latex>r</latex> 取 HBM、TA、VALU、MMAC、LDS、串行链；由计数器除以标定峰值得到</td><td>4.41 ms</td></tr>
+    <tr><td>实测 <latex>T_{meas}</latex></td><td>实际耗时</td><td>hipprof 设备时间，多进程中位数</td><td>5.32 ms</td></tr>
+  </tbody>
+</table>
+<p>四个下限一定满足 <latex>T_{theory} \le T_{split} \le T_{full} \le T_{meas}</latex>，相邻两层之比定义了三项开销：</p>
+<table>
+  <colgroup><col width="150"/><col width="190"/><col width="250"/><col width="200"/></colgroup>
+  <thead><tr><th background-color="light-gray">开销</th><th background-color="light-gray">定义</th><th background-color="light-gray">有效手段</th><th background-color="light-gray">无效手段（反例）</th></tr></thead>
+  <tbody>
+    <tr><td>kernel 间交接 <latex>O_{handoff}</latex></td><td><latex>T_{split} / T_{theory}</latex>；KDA 4.04</td><td>融合、前向直接保存反向要用的结果、换算法形式、改数值格式</td><td>任何 kernel 内部的调优</td></tr>
+    <tr><td>kernel 内冗余 <latex>O_{redund}</latex></td><td><latex>T_{full} / T_{split}</latex>；KDA 1.32</td><td>改布局、合并访问、去掉重复读取和布局副本</td><td>调度：重排读取只会把等待挪个地方</td></tr>
+    <tr><td>硬件空等 <latex>O_{idle}</latex></td><td><latex>T_{meas} / T_{full}</latex>；KDA 1.21</td><td>预取、调整指令顺序、发射节奏、占用率、grid 顺序</td><td>减少字节：硬件本来就不忙</td></tr>
+  </tbody>
+</table>
+<p align="center"><latex>T_{meas} = T_{theory} \times O_{handoff} \times O_{redund} \times O_{idle}, \qquad 5.32 \approx 0.83 \times 4.04 \times 1.32 \times 1.21</latex></p>
+<p>可以用搬家来理解。理论下限是只搬非搬不可的东西、走最短的路。拆分下限是分给几个工种接力，每两个工种之间要先把东西放进中转仓库（显存）再取出来，多出来的是 kernel 间交接开销。满载下限是每个工种干活时车没装满、路线绕远或同一样东西搬了两遍，多出来的是 kernel 内冗余开销。实测还要加上路上等红灯、等交接的时间，这是硬件空等开销。</p>
+<p>这套分法最重要的价值，是<b>每项开销都有自己的手段，用错手段就不会有收益</b>，而且这是被实验反复证明过的。KDA 的 P-79 在 s4b 里重新排列读取顺序，用的是压硬件空等的手段，但 s4b 的问题在工作量本身，等待点只是从一处挪到另一处，收益为零；P-13 把 l2n_apply 并进它的消费方，想压 kernel 间交接，但消费方本来就受计算限制，重算的代价吃掉了省下的流量，只快了 0.2% 到 0.5%。</p>
+<h1>6.3 满载下限：逐项检查每种资源</h1>
+<p>满载下限的关键，是对每个 kernel 逐项检查所有硬件资源，取占用最高的一项作为它的主要受限因素。只看带宽和算力会漏掉真正的瓶颈：KDA 的递推 kernel 在 HBM 约 30%、计算约 30% 的情况下，被 TA 卡在了 86% 到 88%。</p>
+<table>
+  <colgroup><col width="130"/><col width="350"/><col width="140"/><col width="170"/></colgroup>
+  <thead><tr><th background-color="light-gray">资源</th><th background-color="light-gray">指标</th><th background-color="light-gray">BW1000 饱和值</th><th background-color="light-gray">说明</th></tr></thead>
+  <tbody>
+    <tr><td>HBM 带宽</td><td><latex>u_{HBM} = (B_{DRAM}/T) / BW_{HBM}</latex></td><td>1.34 TB/s</td><td>小网格时按 CTA 数修正可达带宽</td></tr>
+    <tr><td>访存发射（TA）</td><td><latex>u_{TA} = \sum \text{TA\_TA\_BUSY} / (\text{GRBM\_GUI\_ACTIVE} \times N_{CU})</latex></td><td>约 0.92</td><td>忙碌时间含等待数据返回</td></tr>
+    <tr><td>VALU 发射</td><td><latex>u_{VALU} = \text{SQ\_ACTIVE\_INST\_VALU} / (\text{cycles} \times N_{CU})</latex></td><td>0.97 到 1.00</td><td>打包 fp32 才能达到峰值</td></tr>
+    <tr><td>MMAC</td><td><latex>u_{MMAC} = F_{exec} / (T \times P_{MMAC})</latex></td><td>476 TFLOPS（bf16）</td><td>按实际执行的 MMAC 运算量</td></tr>
+    <tr><td>LDS</td><td>冲突周期每条指令、<latex>\text{SQ\_WAIT\_INST\_LDS}</latex> 占比</td><td>—</td><td>看冲突是否在关键路径上</td></tr>
+    <tr><td>串行链</td><td><latex>T_{chain} / T</latex>，<latex>T_{chain} = t_{step} \times N_{step}</latex></td><td>—</td><td>递推、扫描类 kernel</td></tr>
+    <tr><td>并行度</td><td><latex>N_{CU}^{active} / N_{CU}</latex></td><td>—</td><td>网格太小时 CU 占不满</td></tr>
+    <tr><td>系统层</td><td>kernel 间空隙、启动开销占比</td><td>每次启动约 2 µs</td><td>小形状时显著</td></tr>
+  </tbody>
+</table>
+<p>判定规则如下。某项资源利用率 <latex>u_r \ge 80\%</latex>：已饱和，只能减少落在它上面的工作量（字节数、指令数、请求数）。<latex>60\% \le u_r &lt; 80\%</latex>：受吞吐限制，可以减少工作量，或者提高这项资源的使用效率。所有资源都 <latex>u_r &lt; 60\%</latex>：受延迟限制，用 SQTT 找出暴露的等待点，并对应到源代码行。实测已经接近满载下限：这份指令流已经到头，只能减少工作量，或者重构。</p>
+<p>有两点要注意。第一，满载下限假设所有等待都被完美掩盖，而真实 kernel 里指令之间有依赖、有屏障，做不到完美重叠，所以 <latex>T_{meas} / T_{full} = 1.2</latex> 并不等于还能挖出 20%。第二，满载下限不是固定的：改善访问局部性（例如调整 grid 顺序让同时驻留的 CTA 访问相邻数据）会减少实际的请求和字节，满载下限本身也会下降。</p>
+<h1>6.4 预测与实测对不上时：先修正口径，再找开销</h1>
+<p>按模型算出的时间和实测对不上，是常态而不是例外。处理顺序是固定的：先修正口径，再归因到开销。口径问题包括：用了代码里的逻辑字节而不是 DRAM 计数（命中 L2 的部分不占带宽）；用了模型运算量而不是实际执行的运算量；分母用了理论峰值而不是可达值；时钟没有固定、或者机器上有别人的任务；对不到 10 µs 的 kernel 采信了计数器；多次 hipprof 的结果没有按 kernel 序号对齐。这些都排除以后，剩下的差距才是真正的开销，才值得去找原因。</p>
+<p>模型本身也要按用途区分可信度。用构造式模型估算现有 kernel 的绝对时间，误差约 <latex>\pm 20\%</latex> 到 <latex>\pm 30\%</latex>；用它否决明显负收益的方案很可靠；但用它批准小于约 5% 的收益并不可靠。KDA 上有两个教训：P-57 模型预测 1.8% 到 2.1%，实测只有 0.2% 到 1%；P-55 模型预测快 9%，实测慢了 18% 到 25%。规则是：<b>模型用来否决方案和给方案排序，预测收益低于约 5% 的一律以实测为准</b>。</p>
+<h1>6.5 三种"到顶"</h1>
+<p>有了四个下限，就可以把"到顶了"说得精确。它至少有三种不同的含义，对应的后续动作完全不同。</p>
+<table>
+  <colgroup><col width="130"/><col width="250"/><col width="200"/><col width="210"/></colgroup>
+  <thead><tr><th background-color="light-gray">哪一种到顶</th><th background-color="light-gray">判据</th><th background-color="light-gray">含义</th><th background-color="light-gray">还能做什么</th></tr></thead>
+  <tbody>
+    <tr><td>指令流到顶</td><td><latex>O_{idle}</latex> 很小，且每个 kernel 剩下的 <latex>T_{meas} - T_{full}</latex> 都已对到源代码、单项可回收不到约 1%</td><td>当前的指令和字节已经几乎满速执行</td><td>只能减少工作量（压 kernel 内冗余），或者换拆法</td></tr>
+    <tr><td>拆法到顶</td><td><latex>O_{redund}</latex> 接近 1，或剩下的多余读写都被证明去不掉</td><td>每个 kernel 内部已经没有可省的读写</td><td>只能换拆法：融合、保存代替重算、换算法形式</td></tr>
+    <tr><td>算法与硬件到顶</td><td><latex>O_{handoff}</latex> 的每一份都被实测的硬件限制（容量、延迟、争用）或明确的约束（精度、显存）挡住</td><td>在当前约束和硬件下，没有更好的数据流</td><td>只能放开约束、换算法，或者等新硬件</td></tr>
+  </tbody>
+</table>
+<p>"到顶"永远是相对于一组约束而言的，例如结果逐位一致、不改算法、显存不超过某个预算。不能脱离约束说"已到物理极限"。规范的结论写法是：<b>在约束 X 下，剩下所有能看到的空间上界是 a%，现实能拿到的是 b%，每一项为什么拿不到都有实测证据</b>。判断是否到顶的完整准则，以及如何确认没有遗漏更好的方向，在第 11 章展开。</p>
+<h1>6.6 BW1000 示例：KDA 的四个下限</h1>
+<p>图 6-1 是 KDA 前向加反向在 BW1000 上两个形状的四个下限。两个形状呈现出同样的结构：kernel 间交接是最大的一项（4.04 倍和 5.10 倍），kernel 内冗余和硬件空等都只剩 1.2 到 1.35 倍。</p>

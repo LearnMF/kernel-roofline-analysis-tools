@@ -1,0 +1,98 @@
+<title>第 12 章　工具链（喂饭级命令）</title>
+<p><b>本章目标。</b>把前面各章用到的工具整理成可以直接执行的命令。每一节按"做什么 → 命令 → 产出 → 注意事项"写。命令以 BW1000（gfx936）和 DTK 为准，工具脚本来自 kernel-roofline-analysis-tools 仓库（下文简称 kra 仓库）。路径中的容器名、目录请换成你自己的环境。</p>
+<h1>12.1 准备：环境与卡的状态</h1>
+<p>所有采集都在目标机器的容器里进行，容器需要能调用 <code>hipcc</code> 和 <code>hipprof</code>（DTK 位于 <code>/opt/dtk</code>）。开始任何测量之前，先确认要用的卡是空闲的：</p>
+<pre lang="bash" caption="确认卡空闲"><code>hy-smi --showuse        # 看 HCU 利用率；--showmemuse 只看显存，不能说明卡是否在忙
+export HIP_VISIBLE_DEVICES=0   # 只让程序看到要用的那张卡</code></pre>
+<p>注意事项：在宿主机上 <code>hy-smi</code> 的输出里，HCU% 和 Dec% 是相邻的两列，不要看错；机器多人共用时，计时脚本最好在启动每个进程前等待利用率归零。</p>
+<h1>12.2 标定一张卡</h1>
+<p><b>做什么。</b>测出各项资源的实测可达峰值、延迟和启动开销，生成后续所有上限计算的输入文件（第 2.7 节）。</p>
+<pre lang="bash" caption="标定（在目标卡的容器里运行）"><code>cd kernel-roofline-analysis-tools
+HIP_VISIBLE_DEVICES=0 python -m kra calibrate --id gfx936-bw1000 --out machines/gfx936-bw1000.json</code></pre>
+<p><b>产出。</b><code>machines/gfx936-bw1000.json</code>：HBM、L2、LDS 带宽，各数据类型的 MMAC 峰值，VALU 与 SFU 峰值，访存发射成本，各级延迟，barrier 与启动开销，以及每项的最佳配置和指令核对结果（<code>isa_check</code>）。</p>
+<p><b>注意事项。</b>确认时钟固定、卡独占；<code>isa_check.ok</code> 为 false 的峰值不能引用；换卡、换 DTK 版本后要重新标定。</p>
+<h1>12.3 时间线：每个 kernel 的耗时与空隙</h1>
+<p><b>做什么。</b>得到一次算子调用里每个 kernel 的设备时间、kernel 之间的空隙和启动开销。</p>
+<pre lang="bash" caption="采集 trace 并分析"><code>hipprof --hip-trace --output-type 0 -o /tmp/tl/run  python3 your_case.py --iters 5
+python -m kra timeline /tmp/tl/run.json --marker spin_kernel \
+       --machine machines/gfx936-bw1000.json --reference-ms &lt;不开 profiler 时每次调用的耗时&gt;</code></pre>
+<p><b>产出。</b>每个窗口（一次算子调用）的 kernel 时间表、空泡占比、空隙成因。被测程序在每次调用前插入一个标记 kernel（例如 <code>torch.cuda._sleep</code>），用于切分窗口。</p>
+<h1>12.4 硬件计数器：分层字节、TA、VALU</h1>
+<p><b>做什么。</b>采集第 4 章分层 Roofline 和第 6 章满载下限需要的计数器。一次 hipprof 采不全，HBM 的读和写也不能放在同一次里，所以分四次跑：</p>
+<pre lang="bash" caption="四次 hipprof 采集计数器"><code>echo 'pmc: SQ_INSTS_MMOP SQ_ACTIVE_INST_MMOP SQ_LDS_IDX_ACTIVE SQ_LDS_BANK_CONFLICT SQ_INSTS_LDS SQ_INSTS_VALU GRBM_GUI_ACTIVE' &gt; pmc_s.txt
+echo 'pmc: TCC_REQ_sum TCC_READ_sum TCC_WRITE_sum TCC_HIT_sum' &gt; pmc_req.txt
+echo 'pmc: TCC_EA_RDREQ_sum TCC_EA_RDREQ_32B_sum' &gt; pmc_rd.txt
+echo 'pmc: TCC_EA_WRREQ_sum TCC_EA_WRREQ_64B_sum' &gt; pmc_wr.txt
+for p in s req rd wr; do
+  HIPPROF_INPUT_FILE=$PWD/pmc_$p.txt hipprof --pmc --pmc-type 3 -o hr_$p python3 your_case.py --iters 1
+done</code></pre>
+<p><b>产出。</b>四份 CSV，每个 kernel 一行，按序号对齐后套用第 4.3 节的换算公式。TA 忙碌率需要另加计数器 <latex>\text{TA\_TA\_BUSY}</latex>（所有实例求和）。kra 仓库也提供了封装：</p>
+<pre lang="bash" caption="kra 的 PMC 采集与上限评估"><code>python -m kra pmc --out /tmp/wl/case --marker spin_kernel -- python3 your_case.py --iters 1
+python -m kra analyze --machine machines/gfx936-bw1000.json --pmc /tmp/wl/case.pmc.json \
+       --opspec your_op_spec.json --optrace /tmp/wl/case.optrace.json --shape T=8192,H=12 --out /tmp/wl/case</code></pre>
+<p><b>注意事项。</b>被测程序只跑一次前向加反向；不到 10 µs 的 kernel 计数不可靠；计数器统计整卡流量，必须在空闲的卡上采集。</p>
+<h1>12.5 体检卡与分层 Roofline 画图</h1>
+<p><b>做什么。</b>把计数器、时间和标定值合成每个 kernel 的"体检卡"：各资源利用率、满载下限、主要受限资源、工作量放大倍数，并画出第 4 章的分层 Roofline 和热力图。</p>
+<pre lang="bash" caption="体检卡流水线（examples/kda/ceiling/）"><code>bash examples/kda/ceiling/collect.sh ...      # 在目标机上采集 trace 与四组 PMC
+python3 examples/kda/ceiling/parse_raw.py ...  # 解析原始数据
+python3 examples/kda/ceiling/cards.py ...      # 生成 cards.json（利用率、下限、判定）
+python3 examples/kda/ceiling/plot_cards.py ... # 画分层 Roofline（图 A）与热力图（图 D）</code></pre>
+<p>单层 Roofline 的画法见第 3 章配套脚本 <code>docs/tutorial/figs/plot_ch3_roofline.py</code>：读入标定文件，画斜线和各算力平顶，再按第 3.3 节的四步把算子放上去。具体参数以各脚本开头的说明为准，换算子时需要提供该算子的运算量定义（op_spec）。</p>
+<h1>12.6 SQTT：逐指令找等待点</h1>
+<p><b>做什么。</b>当一个 kernel 的所有资源都不满（延迟受限）时，用 SQTT 采集逐指令的发射和停顿，找出等待点并对应到源代码行。</p>
+<pre lang="bash" caption="SQTT 采集与按源码行归因"><code># DTK 自带 hipprof 的 SQTT（输出 json）
+hipprof --sqtt --sqtt-type 1 --output-type 0 -o /tmp/sq/run python3 your_case.py --iters 1
+# 或者在 XProf 容器中采集生产 kernel（kra 仓库脚本）
+bash examples/kda/sqtt_capture.sh TREE TAG T H "kernel1,kernel2" [GPU]
+# 逐指令归因到源代码行（ISA 用 -gline-tables-only 编译）
+python -m kra.sqtt.pcmap --perf X.perf --dispatch 91 --asm kernel_dbg.s --symbol &lt;mangled kernel&gt;</code></pre>
+<p><b>注意事项。</b>SQTT 给某段指令记的占比，不等于删掉它能省的时间，最终以删除上限为准（第 11.3 节）；hipprof 新版本默认输出 <code>.pftrace.gz</code>，加 <code>--output-type 0</code> 才得到 json。</p>
+<h1>12.7 ISA 与资源检查</h1>
+<p><b>做什么。</b>在不运行的情况下，检查每个 kernel 实例的寄存器、LDS、scratch 和指令分布，用于第 10.4 节的资源预检。</p>
+<pre lang="bash" caption="只编译设备代码并统计"><code>/opt/dtk/bin/hipcc -O3 -std=c++17 --offload-arch=gfx936 --cuda-device-only -S your_kernels.hip -o /tmp/k.s
+grep -E '\.vgpr_count|\.sgpr_count|\.group_segment_fixed_size|\.private_segment_fixed_size' /tmp/k.s
+grep -cE 'v_mmac|v_pk_fma_f32|global_load_dwordx4' /tmp/k.s</code></pre>
+<p><b>产出。</b>每个 kernel 的 VGPR（<code>.vgpr_count</code>）、SGPR、LDS（<code>.group_segment_fixed_size</code>）和 scratch（<code>.private_segment_fixed_size</code>，必须为 0），以及关键指令的出现次数。kra 仓库的 <code>examples/kda/gfx938/isa_k.sh</code> 给出了按 kernel 名统计指令直方图的完整示例。</p>
+<p><b>注意事项。</b>不要相信汇编里的 <code>; Occupancy:</code> 注释，驻留数按第 5.1 节的规则算或实测；静态指令条数不等于运行时占比。</p>
+<h1>12.8 正确性门禁</h1>
+<p><b>做什么。</b>对候选与基准各跑一次前向加反向，保存所有输出和梯度，逐元素比较。</p>
+<pre lang="bash" caption="逐位门禁（KDA 示例脚本）"><code>python3 examples/kda/bitwise_gate.py dump --tree BASE --T 8192 --H 12 --out base.pt
+python3 examples/kda/bitwise_gate.py dump --tree CAND --T 8192 --H 12 --out cand.pt
+python3 examples/kda/bitwise_gate.py cmp base.pt cand.pt     # torch.equal，不允许任何容差</code></pre>
+<p><b>注意事项。</b>用例要覆盖所有执行路径（变长、保存状态、重算、极端输入值）；输入由固定种子生成；会改变数值的改动改用 FP64 精度门禁，对每个张量比较与 FP64 参考的误差。</p>
+<h1>12.9 A/B 计时</h1>
+<p><b>做什么。</b>在同一张卡上交替测量两个版本，得到可信的比值。</p>
+<pre lang="bash" caption="交替计时（kra 仓库示例脚本）"><code># 单 kernel 级：两个构建各跑两轮，交替进行
+bash examples/kda/gfx938/ab_fast.sh KEY "8192x64,16384x8" 0 "base=/path/to/base_site" "cand=/path/to/cand_site"
+# 算子级（前向、反向分开）：每个形状 8 个独立进程，ABBA 顺序重复两轮，进程启动前等待卡空闲
+IMPL=ft python3 results/kda-benchmark-table-20261025/mk3_fb.py T H   # 输出 fwd_ms、bwd_ms、峰值显存的 json
+# ABBA 加空闲等待的封装见 results/kda-gfx938-24shape-bw1300-20261104/fb_guard.sh</code></pre>
+<p><b>注意事项。</b>样本是独立进程，每边至少 5 个；只比较同卡、同会话的数据；L2 热的单 kernel 基准会高估去重复读一类改动，最终以算子级测量为准。</p>
+<h1>12.10 对标采集</h1>
+<p><b>做什么。</b>为第 7 章的三方对比采集数据：参考实现在 NV 卡和本卡上的分阶段时间、字节数和指令。</p>
+<ul>
+  <li><b>分阶段时间。</b>用同一个计时脚本（例如 <code>mk3_fb.py</code>，以环境变量切换被测实现），在三方各跑同一组形状。</li>
+  <li><b>NV 侧字节数。</b>用 Nsight Compute 逐 kernel 记录 DRAM 读写字节与时长，与 CUPTI 计时核对（误差应小于 1%）。</li>
+  <li><b>NV 侧指令。</b>导出 Triton 生成的 PTX，查看近似指令和快速路径（例如 <code>ex2.approx.f32</code>）。</li>
+  <li><b>本卡上参考实现的指令。</b>统计 Triton 缓存目录里的 AMDGCN 汇编中关键指令的出现次数（kra 仓库 <code>examples/kda/gfx938/insn_probe.sh</code>）。注意匹配规则要能识别写在指令末尾的修饰符，并记住缓存里包含所有自动调优候选。</li>
+</ul>
+<h1>常见误区</h1>
+<p><b>在没确认空闲的卡上采集。</b>计数器和计时都会被污染。</p>
+<p><b>直接相信工具的派生指标。</b>例如编译器的占用率注释、SQTT 的占比，都要用实测或删除实验核对。</p>
+<p><b>只保存汇总，不保存原始数据。</b>原始 CSV、trace、门禁输出都要留档，结论才能复查。</p>
+<h1>速查</h1>
+<table>
+  <colgroup><col width="200"/><col width="580"/></colgroup>
+  <thead><tr><th background-color="light-gray">要做的事</th><th background-color="light-gray">工具 / 命令</th></tr></thead>
+  <tbody>
+    <tr><td>确认卡空闲</td><td><code>hy-smi --showuse</code></td></tr>
+    <tr><td>标定</td><td><code>python -m kra calibrate --id &lt;卡&gt; --out machines/&lt;卡&gt;.json</code></td></tr>
+    <tr><td>时间线</td><td><code>hipprof --hip-trace --output-type 0</code> + <code>python -m kra timeline</code></td></tr>
+    <tr><td>计数器</td><td><code>HIPPROF_INPUT_FILE=pmc.txt hipprof --pmc --pmc-type 3</code>，分四次</td></tr>
+    <tr><td>体检卡与分层 Roofline</td><td><code>examples/kda/ceiling/</code>：collect、parse_raw、cards、plot_cards</td></tr>
+    <tr><td>SQTT</td><td><code>hipprof --sqtt --sqtt-type 1 --output-type 0</code>；<code>python -m kra.sqtt.pcmap</code></td></tr>
+    <tr><td>ISA 与资源</td><td><code>hipcc --cuda-device-only -S</code>，查 vgpr、lds、scratch 与关键指令</td></tr>
+    <tr><td>正确性</td><td><code>bitwise_gate.py dump / cmp</code>；FP64 精度门禁</td></tr>
+    <tr><td>A/B</td><td><code>ab_fast.sh</code>（kernel 级）、<code>mk3_fb.py</code>（算子级，ABBA）</td></tr>
+  </tbody>
+</table>

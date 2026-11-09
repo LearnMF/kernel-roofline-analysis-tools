@@ -1,0 +1,43 @@
+<p>三项开销在优化过程中是怎样被压缩的，可以从下表看出（16K/TP8；10-09 一行用的是早期 8K/12 的模型，只看趋势）：</p>
+<table>
+  <colgroup><col width="190"/><col width="120"/><col width="120"/><col width="120"/><col width="240"/></colgroup>
+  <thead><tr><th background-color="light-gray">时间点</th><th background-color="light-gray"><latex>O_{idle}</latex></th><th background-color="light-gray"><latex>O_{redund}</latex></th><th background-color="light-gray"><latex>O_{handoff}</latex></th><th background-color="light-gray">这一阶段压缩的是</th></tr></thead>
+  <tbody>
+    <tr><td>10-09（起点）</td><td>1.17</td><td>2.18</td><td>5.80</td><td>—</td></tr>
+    <tr><td>10-13</td><td>1.26</td><td>1.40</td><td>4.46</td><td>kernel 内冗余：2.18 → 1.40</td></tr>
+    <tr><td>10-17（P-88）</td><td>1.21</td><td>1.32</td><td>4.04</td><td>kernel 间交接：4.46 → 4.04；硬件空等：1.26 → 1.21</td></tr>
+  </tbody>
+</table>
+<p>到 P-88 时，KDA 在三条约束下（结果逐位一致、不改算法、前向留给反向的显存总量不超过 FLA 默认的 1032 B/token·head）被判定到顶。下面逐项给出证据，这也是一份"到顶报告"应有的样子。</p>
+<p><b>kernel 间交接（4.04 到 5.10 倍）：被片上容量锁死。</b>反向每个 chunk·head 的工作集约 180 到 200 KB（状态 h、dh 各 32 KB，dq/dk/dg 共 96 KB，再加中间矩阵），而每个 CU 只有 64 KB 的 LDS，所以只能拆成多个 kernel、经显存交接。融合就必须降低占用率，而降低占用率的代价是实测出来的：s4b 降到每 CU 1 个 CTA 多花 355 µs（16K/12）；prep_a 与 prep_b 合并多花 565 µs；即使把所有读取改成直接写进 LDS、等待全部手工管理（P-92），每 CU 只放 1 个 CTA 时仍慢 19% 到 30%，因为每个 SIMD 只剩一个 wave，LDS 往返、指令依赖和发射延迟都没有别的 wave 来填补。融合与并发类实验共 13 次，0 次成功。不需要片上容量的那部分交接已经做完：前向直接保存反向要用的 qn/kn 和状态 h（P-77b、P-82、P-87），把拆分下限从 3.70 ms 降到 3.35 ms，显存已经用到批准的上限。中间结果改成 bf16 可以再快 2.6% 到 3.2%，但 dq/dk 误差会升到 FLA 的 1.05 到 1.06 倍，被精度政策否决。</p>
+<p><b>kernel 内冗余（1.32 倍）：访问方式已经贴近物理规律。</b>访问已经合并时，访存代价只看字节数而不看指令条数：4 条每 lane 4 B 的读与 1 条每 lane 16 B 的读耗时相同（10.72 µs 对 10.56 µs）。剩下的布局副本之所以去不掉，是因为读它们的消费方本身受 TA 限制，跨布局读每条约 169 个周期，原生布局约 22 个周期；改成分块布局（P-57）实测只有 0.2% 到 1%，在噪声范围内；去掉 Wb 副本（P-80a）让 wu 省 42 到 166 µs，却让 dhu 做转置多花 70 到 327 µs，净变慢。</p>
+<p><b>硬件空等（1.21 倍）：剩下的等待逐项查明是结构性的。</b>每个 kernel 剩下的 <latex>T_{meas} - T_{full}</latex> 都已对到源代码并做过探针。最大的 s4b 在 TP8 下剩 397 µs（7.5%），已排除的路包括调整读取顺序（等待只是挪地方）、去掉屏障（上限不到 8 µs）、换布局（净 0.3% 到 0.8%）、重算 dAqk（慢 18% 到 25%）、每 CU 放 3 个 CTA（LDS 压不到所需的 21 KB）。最近连续 4 个逐位一致的探针（P-89 到 P-92），最好只有 +0.4%。</p>
+<p>汇总起来：<b>在上述约束下，剩下所有能看到的空间上界是 5% 到 8%，现实能拿到 2% 到 4%</b>，除了一项需要改算法形式的候选（预估 2% 到 4%，且无法逐位一致）之外，每一项都不到约 1%。这就是一个有证据支撑的"到顶"结论：差距（实测是理论下限的 6.4 倍）看起来很大，但每一份差距都找到了不可回收的原因。</p>
+<h1>常见误区</h1>
+<p><b>拿实测除以理论下限当作"空间"。</b>KDA 是 6.4 倍，但其中 4.04 倍被容量锁死，真正可回收的只有几个百分点。必须拆开看每一项开销。</p>
+<p><b>拿 <latex>T_{meas} / T_{full}</latex> 直接当可回收比例。</b>满载下限假设完美重叠，1.2 不等于还能挖 20%；判断要看每个 kernel 剩余差距是否已对到源代码、单项是否还能回收 1% 以上。</p>
+<p><b>用错开销对应的手段。</b>压硬件空等用减字节、压 kernel 间交接用 kernel 内调优，都不会有收益。</p>
+<p><b>脱离约束说到顶。</b>到顶结论必须写明约束；约束一旦放开（精度、显存、算法），空间可能重新出现。</p>
+<p><b>口径没对齐就找开销。</b>先排除逻辑字节、理论峰值、被污染的机器等口径问题，再归因。</p>
+<h1>小练习</h1>
+<ol>
+  <li seq="auto">某算子 <latex>T_{theory} = 1.0</latex> ms、<latex>T_{split} = 1.5</latex> ms、<latex>T_{full} = 3.0</latex> ms、<latex>T_{meas} = 3.3</latex> ms。三项开销各是多少？最该先压哪一项、用什么手段？（答：<latex>O_{handoff} = 1.5</latex>、<latex>O_{redund} = 2.0</latex>、<latex>O_{idle} = 1.1</latex>；先压 kernel 内冗余，用改布局、合并访问、去重复读写，而不是融合或调度。）</li>
+  <li seq="auto">一个 kernel 的 <latex>u_{HBM} = 45\%</latex>、<latex>u_{TA} = 0.84</latex>、<latex>u_{VALU} = 0.30</latex>。它受什么限制？（答：<latex>0.84 / 0.92 \approx 91\%</latex>，TA 已饱和；应减少它发出的访存请求，而不是提高 L2 命中或调度。）</li>
+  <li seq="auto">为什么 KDA 在 BW1000 上 <latex>O_{handoff} = 4.04</latex> 却仍被判定到顶？（答：融合需要的工作集约 180 到 200 KB，远超每 CU 64 KB 的 LDS；降低占用率去融合的代价已实测大于收益，13 次融合实验均失败；不需要片上容量的保存方案已用满显存预算；bf16 交接被精度政策否决。每一份交接都被实测的硬件限制或明确的约束挡住。）</li>
+</ol>
+<h1>速查</h1>
+<table>
+  <colgroup><col width="200"/><col width="580"/></colgroup>
+  <thead><tr><th background-color="light-gray">项</th><th background-color="light-gray">内容</th></tr></thead>
+  <tbody>
+    <tr><td>四个下限</td><td><latex>T_{theory} \le T_{split} \le T_{full} \le T_{meas}</latex></td></tr>
+    <tr><td>理论下限</td><td><latex>\max(B_{min}/BW,\ F_{MMAC}/P_{MMAC},\ F_{VALU}/P_{VALU},\ T_{chain})</latex></td></tr>
+    <tr><td>拆分下限</td><td><latex>\sum_k B_k^{iface} / BW</latex></td></tr>
+    <tr><td>满载下限</td><td><latex>\sum_k \max_r W_{k,r} / P_r</latex></td></tr>
+    <tr><td>三项开销</td><td><latex>O_{handoff} = T_{split}/T_{theory}</latex>，<latex>O_{redund} = T_{full}/T_{split}</latex>，<latex>O_{idle} = T_{meas}/T_{full}</latex></td></tr>
+    <tr><td>判定阈值</td><td><latex>u_r \ge 80\%</latex> 饱和；<latex>60\%</latex> 到 <latex>80\%</latex> 吞吐受限；全部 <latex>&lt; 60\%</latex> 延迟受限</td></tr>
+    <tr><td>模型用法</td><td>否决、排序可靠；批准 <latex>&lt; 5\%</latex> 的收益必须实测</td></tr>
+    <tr><td>到顶写法</td><td>在约束 X 下，剩余空间上界 a%、现实 b%，每项拿不到都有证据</td></tr>
+  </tbody>
+</table>
+<p>数据来源：KDA 在 BW1000 上 2026-10-09 至 10-17 的优化记录（老文档《算子kernel性能优化经验》2.1 节），图 6-1 由 <code>docs/tutorial/figs/plot_ch6_bounds.py</code> 生成。</p>

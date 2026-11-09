@@ -1,0 +1,49 @@
+<p>读图 3-1 时先看最粗的黑色斜线（HBM 实测可达 <latex>BW_{HBM} = 1.34\ \text{TB/s}</latex>），再看你的算子用的是哪一种运算单元，找对应颜色的平顶。以 bf16 MMAC 为例，拐点 <latex>I^{*} = 355\ \text{FLOP/B}</latex>：计算强度低于 355 的算子，性能上限由带宽决定；高于 355 才轮到 MMAC 的算力。拐点这么靠右，意味着在 BW1000 上，只要不是大矩阵乘这类高复用的计算，绝大多数算子都在访存受限区。虚线是理论带宽，只用来提醒自己"标称值是多少"，不作为判断依据。</p>
+<h1>3.3 怎么把一个算子放到图上</h1>
+<p>把一个算子放上图需要四个测量值，它们的口径必须先说清楚，否则同一个算子会被画到完全不同的位置。</p>
+<p><b>第一步，运算量。</b>默认用<b>模型运算量</b> <latex>F_{model}</latex>，也就是按算法公式数出来的 FLOP，与实现无关，便于比较不同实现。另一个口径是<b>实际执行的运算量</b> <latex>F_{exec}</latex>，由硬件计数器数出 MMAC 指令条数再乘以每条指令的 FLOP（bf16 <latex>16 \times 16 \times 16</latex> 的 MMAC 每条 <latex>2 \times 16^3 = 8192</latex> FLOP），它包含了补零、重复计算等额外工作。两者之比 <latex>F_{exec} / F_{model}</latex> 就是实现多算了多少，第 4 章会用到。</p>
+<p><b>第二步，字节量。</b>算法强度用"每个输入读一次、每个输出写一次"的最少字节 <latex>B_{min}</latex>；实现强度用实测 DRAM 字节 <latex>B_{DRAM}</latex>，来自 hipprof 的 HBM 计数器（具体计数器和换算公式见第 4.3 节）。不要用"代码里读写了多少字节"来估计 DRAM 字节：命中 L2 的部分不占 HBM 带宽，按代码估会高估字节、低估强度。</p>
+<p><b>第三步，时间。</b>用 hipprof 记录的设备时间 <latex>T</latex>（kernel 起止时间之差，多个 kernel 求和），每个形状跑多个独立进程取中位数。不要用包含 host 开销的 Python 计时。</p>
+<p><b>第四步，算出位置和利用率。</b>实际性能和实际带宽分别是</p>
+<p align="center"><latex>P = \frac{F}{T}, \qquad BW_{real} = \frac{B_{DRAM}}{T}</latex></p>
+<p>算力利用率和带宽利用率分别是</p>
+<p align="center"><latex>\text{MFU} = \frac{P}{P_{peak}}, \qquad \text{MBU} = \frac{BW_{real}}{BW_{HBM}}</latex></p>
+<p>本教程的分母一律取实测可达值，若引用理论值要在旁边注明。最后看点离它上方那条线有多远：<latex>\eta_{roof} = P / P_{attainable}(I)</latex>。下面这段 Python 可以直接拿来用：</p>
+<pre lang="python" caption="把一个算子放到 BW1000 Roofline 上"><code># BW1000 标定值（实测可达，来自 machines/gfx936-bw1000.json）
+BW_HBM = 1.339e12   # B/s
+PEAK = {"bf16_mmac": 476.0e12, "tf32_mmac": 237.7e12,
+        "fp32_mmac": 61.0e12, "fp32_valu": 29.7e12}
+
+def place(flops, dram_bytes, seconds, roof="bf16_mmac"):
+    I = flops / dram_bytes                      # 计算强度（实现）
+    perf = flops / seconds                      # 实际性能 FLOP/s
+    bw = dram_bytes / seconds                   # 实际带宽 B/s
+    attainable = min(PEAK[roof], BW_HBM * I)    # 该强度下的上限
+    return dict(I=round(I, 1), TFLOPS=round(perf / 1e12, 1),
+                MFU=round(perf / PEAK[roof], 3), MBU=round(bw / BW_HBM, 3),
+                to_roof=round(perf / attainable, 3), ridge=round(PEAK[roof] / BW_HBM))
+
+# KDA 前向+反向，16K 序列、TP8（每卡 12 个 head）
+print(place(99.1e9, 4.722e9, 5.32e-3))
+# {'I': 21.0, 'TFLOPS': 18.6, 'MFU': 0.039, 'MBU': 0.663, 'to_roof': 0.663, 'ridge': 355}</code></pre>
+<p>输出里 <latex>\eta_{roof}</latex>（to_roof）和 MBU 相等并不是巧合：点在访存受限区时，上方的线就是带宽斜线，<latex>P_{attainable} = BW_{HBM} \times I</latex>，于是 <latex>\eta_{roof} = \frac{F/T}{BW_{HBM} \cdot F/B_{DRAM}} = \text{MBU}</latex>；点在算力受限区时，它等于 MFU。</p>
+<h1>3.4 落点在哪里，意味着什么</h1>
+<p>落点可以归为四种情况，每种对应不同的判断依据和优化方向。</p>
+<table>
+  <colgroup><col width="190"/><col width="170"/><col width="130"/><col width="320"/></colgroup>
+  <thead><tr><th background-color="light-gray">位置</th><th background-color="light-gray">含义</th><th background-color="light-gray">看哪个指标</th><th background-color="light-gray">往哪里优化</th></tr></thead>
+  <tbody>
+    <tr><td><latex>I \ll I^{*}</latex>，且贴近斜线</td><td>访存受限，带宽已经用得比较满</td><td>MBU</td><td>少搬字节：融合相邻 kernel、去掉重复读写、换更省字节的布局或精度</td></tr>
+    <tr><td><latex>I \gg I^{*}</latex>，且贴近平顶</td><td>算力受限</td><td>MFU</td><td>少算：去掉补零和重复计算；换更快的运算单元或精度；提高 MMAC 的利用率</td></tr>
+    <tr><td><latex>I \approx I^{*}</latex></td><td>两种限制同时起作用</td><td>MBU 和 MFU 都看</td><td>两头都要压，任何一项单独优化收益都有限</td></tr>
+    <tr><td>离两条线都很远（<latex>\text{MBU},\ \text{MFU} &lt; 60\%</latex>）</td><td>受延迟、指令发射或并行度限制，Roofline 本身说不清原因</td><td>—</td><td>换分层 Roofline（第 4 章）找瓶颈层和"隐形屋顶"，再用第 5、6 章定位</td></tr>
+  </tbody>
+</table>
+<p>第四种情况在实际算子里非常常见，也是新人最容易误判的地方：点离斜线很远，于是以为"带宽还有很大空间，继续减 HBM 字节就行"，结果 HBM 字节减了时间却不动。原因是真正的瓶颈不在 HBM，而在访存指令的发射单元、某一级缓存、或者一条串行依赖链上。这些都画不在单层 Roofline 上。</p>
+<h1>3.5 选对屋顶</h1>
+<p><b>按实际使用的运算单元选平顶。</b>同样是 fp32 运算，走 MMAC（<latex>16 \times 16 \times 8</latex>，61 TFLOPS）和走 VALU（打包 FMA 29.7 TFLOPS，不打包约 15 TFLOPS）差了 2 到 4 倍。判断依据是 ISA 里实际出现的指令，而不是源码里的数据类型：bf16 输入、fp32 累加的矩阵乘对应 bf16 MMAC 的平顶；逐元素的 fp32 运算对应 VALU 的平顶。</p>
+<p><b>一个算子用到多种运算单元时，取各资源耗时的最大值。</b>Roofline 其实是下面这个更一般关系的特例：每种资源完成落在它身上的工作需要一段时间，总时间不会短于其中最长的那一段。</p>
+<p align="center"><latex>T \ge \max\left(\frac{F_{MMAC}}{P_{MMAC}},\ \frac{F_{VALU}}{P_{VALU}},\ \frac{N_{exp}}{P_{SFU}},\ \frac{B_{HBM}}{BW_{HBM}}\right)</latex></p>
+<p>例如一个算子做 <latex>N_{exp} = 10^9</latex> 次 exp2，BW1000 的 SFU 实测吞吐 <latex>P_{SFU} \approx 1.92 \times 10^{12}</latex> 次/秒，仅这一项就需要 <latex>T \ge 10^9 / (1.92 \times 10^{12}) \approx 0.52\ \text{ms}</latex>，不管它的矩阵乘多快、字节多少。KDA 里的 prep_a kernel 就是这样：整个 KDA 是访存受限的，但 prep_a 自己被 VALU 指令发射卡住（VALU 忙碌率 0.74 到 0.90），这种 kernel 在算子级的 Roofline 上完全看不出来。</p>
+<h1>3.6 三个示例</h1>
+<p>图 3-2 把三个真实算子放到了 BW1000 的 Roofline 上，分别代表算力受限、纯访存受限，以及"访存受限但离线还有距离"三种典型情况。</p>

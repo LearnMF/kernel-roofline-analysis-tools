@@ -1,0 +1,31 @@
+<title>第 3 章　Roofline：判断算子落在哪个区</title>
+<p><b>本章目标。</b>读完本章，你应该能在 BW1000 上画出 Roofline，给任意一个算子算出计算强度并放到图上，根据落点判断它受访存还是受算力限制、离上限还有多远，并且知道什么时候 Roofline 不够用、需要换分层 Roofline（第 4 章）或下限分析（第 6 章）。本章所有数字都来自 BW1000（gfx936，80 CU，1500 MHz）的实测标定。</p>
+<h1>3.1 两个量和一个比值</h1>
+<p>Roofline 只需要两个量。第一个是<b>运算量</b> <latex>F</latex>，单位 FLOP：一次乘加记 2 FLOP，所以一个 <latex>M \times N \times K</latex> 的矩阵乘是 <latex>2MNK</latex> FLOP。第二个是<b>字节量</b> <latex>B</latex>，指算子在 HBM 与芯片之间搬运的字节数。两者的比值就是<b>计算强度</b> <latex>I = F / B</latex>，单位 FLOP/B，表示每从显存搬 1 个字节，能做多少次运算。</p>
+<p>同一个算子要区分两种计算强度。<b>算法本身的强度</b>假设整个计算完全融合：每个输入只读一次，每个输出只写一次，中间结果一律不落显存，用这时的最少字节 <latex>B_{min}</latex> 去除运算量，记为 <latex>I_{alg} = F / B_{min}</latex>。<b>当前实现的强度</b>用实测的 DRAM 字节 <latex>B_{DRAM}</latex> 去除运算量，记为 <latex>I_{impl} = F / B_{DRAM}</latex>。前者是算法给的上限，后者是你的代码实际做到的；两者之比 <latex>I_{alg} / I_{impl} = B_{DRAM} / B_{min}</latex> 就是实现多搬了几倍字节，这部分差距主要来自 kernel 之间经显存交接中间结果（第 6 章称为 kernel 间交接开销）。</p>
+<p>先用两个例子熟悉一下量级。bf16 矩阵乘 <latex>M = N = K = 8192</latex>：运算量 <latex>F = 2 \times 8192^3 \approx 1.10\ \text{TFLOP}</latex>；最少字节是 A、B、C 三个矩阵各读写一次，<latex>B_{min} = 3 \times 8192^2 \times 2\ \text{B} \approx 403\ \text{MB}</latex>；计算强度 <latex>I \approx 2731\ \text{FLOP/B}</latex>。一个 bf16 逐元素缩放（例如 L2 归一化后的乘法）：每个元素做 1 次乘法，读 2 B、写 2 B，计算强度只有 <latex>I \approx 1/4 = 0.25\ \text{FLOP/B}</latex>。两者相差四个数量级，后面会看到它们落在 Roofline 的两端。</p>
+<h1>3.2 画出 BW1000 的 Roofline</h1>
+<p>一个算子能达到的最高性能，受两件事限制：算力不能超过峰值 <latex>P_{peak}</latex>，搬运字节的速度不能超过带宽 <latex>BW</latex>。计算与搬运充分重叠时，可达性能为</p>
+<p align="center"><latex>P_{attainable}(I) = \min\left(P_{peak},\ BW \times I\right)</latex></p>
+<p>在对数坐标下，<latex>BW \times I</latex> 是一条斜率为 1 的斜线，<latex>P_{peak}</latex> 是一条水平线，两者的交点称为<b>拐点</b>，横坐标为</p>
+<p align="center"><latex>I^{*} = \frac{P_{peak}}{BW}</latex></p>
+<p>计算强度 <latex>I &lt; I^{*}</latex> 时，性能被斜线（带宽）压住；<latex>I &gt; I^{*}</latex> 时，被平顶（算力）压住。</p>
+<p>画图用的不是厂商标称值，而是<b>实测可达值</b>：用标定微基准对每一项资源扫描多种配置，取最好的一组。原因很简单，理论值往往达不到（BW1000 的 HBM 实测只能到理论值的 <latex>1.34 / 1.84 \approx 73\%</latex>），拿理论值当屋顶，会把所有算子都判成"离上限很远"。下表是 BW1000 的屋顶与拐点（标定于 2026-10-10，bw7；MMAC 峰值在 2026-10-30 于 bw52 复测，bf16 为 477.9 TFLOPS，与此一致）。</p>
+<table>
+  <colgroup><col width="210"/><col width="150"/><col width="150"/><col width="230"/></colgroup>
+  <thead><tr><th background-color="light-gray">资源</th><th background-color="light-gray">理论峰值</th><th background-color="light-gray">实测可达</th><th background-color="light-gray">拐点 <latex>I^{*} = P_{peak} / BW_{HBM}</latex>（FLOP/B）</th></tr></thead>
+  <tbody>
+    <tr><td>HBM 读带宽 <latex>BW_{HBM}</latex></td><td>1.84 TB/s</td><td>1.34 TB/s</td><td>—</td></tr>
+    <tr><td>bf16 MMAC</td><td>491.5 TFLOPS</td><td>476.0 TFLOPS</td><td>355</td></tr>
+    <tr><td>f16 MMAC</td><td>491.5 TFLOPS</td><td>480.3 TFLOPS</td><td>359</td></tr>
+    <tr><td>tf32 MMAC</td><td>245.8 TFLOPS</td><td>237.7 TFLOPS</td><td>178</td></tr>
+    <tr><td>fp32 MMAC（<latex>16 \times 16 \times 8</latex>）</td><td>61.4 TFLOPS</td><td>61.0 TFLOPS</td><td>45.5</td></tr>
+    <tr><td>fp32 VALU（打包 FMA）</td><td>30.7 TFLOPS</td><td>29.7 TFLOPS</td><td>22.2</td></tr>
+    <tr><td>i8 MMAC</td><td>983 TOPS</td><td>951 TOPS</td><td>710（OP/B）</td></tr>
+  </tbody>
+</table>
+<p>表中的理论值按下面三个式子算出（<latex>N_{CU} = 80</latex>，<latex>f = 1500\ \text{MHz}</latex>）：</p>
+<p align="center"><latex>P_{MMAC} = N_{CU} \times f \times n_{op}, \quad n_{op} = 4096\ (\text{bf16/f16}),\ 2048\ (\text{tf32}),\ 512\ (\text{fp32}),\ 8192\ (\text{i8})</latex></p>
+<p align="center"><latex>P_{VALU} = N_{CU} \times 4_{\,SIMD} \times 16_{\,lane} \times 2_{\,FMA} \times 2_{\,packed} \times f \approx 30.7\ \text{TFLOPS}</latex></p>
+<p align="center"><latex>BW_{HBM}^{theory} = 4096\ \text{bit} \times 1.8\ \text{GHz} \times 2 \div 8 \approx 1.84\ \text{TB/s}</latex></p>
+<p>注意 VALU 那一行用的是打包 FMA（<code>v_pk_fma_f32</code>）：不打包的标量 fp32 只有它的一半，约 15 TFLOPS。</p>

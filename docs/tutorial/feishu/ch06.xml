@@ -1,0 +1,15 @@
+<title>第 6 章　四个下限：离极限还有多远</title>
+<p><b>本章目标。</b>用理论、拆分、满载、实测四个下限把差距拆成三项开销，回答主线一“是否已经到达优化上限”：到顶要说清相对哪一层，每一层的差距对应哪一类手段。</p>
+<p><span text-color="gray">本章待写，下面是已确认的小节结构。</span></p>
+<h1>6.1 为什么 Roofline 不够</h1>
+<p><span text-color="gray">（待写）</span></p>
+<h1>6.2 四个下限与三项开销</h1>
+<p><span text-color="gray">（待写）</span></p>
+<h1>6.3 满载下限：逐项检查每种资源</h1>
+<p><span text-color="gray">（待写）</span></p>
+<h1>6.4 预测与实测：先修正口径，再找开销</h1>
+<p><span text-color="gray">（待写）</span></p>
+<h1>6.5 三种“到顶”：指令流到顶、拆法到顶、算法与硬件到顶</h1>
+<p><span text-color="gray">（待写）</span></p>
+<h1>6.6 BW1000 示例：KDA 16K/TP8 的四个下限</h1>
+<p><span text-color="gray">（待写）</span></p>

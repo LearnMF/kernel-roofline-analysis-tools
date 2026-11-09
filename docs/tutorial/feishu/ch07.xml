@@ -1,0 +1,98 @@
+<title>第 7 章　对标：从参考实现找优化方向</title>
+<p><b>本章目标。</b>新人接手一个算子时，手上几乎总有一个参考实现：业界开源库里的版本（例如 FLA），它可能跑在我们的卡上，也可能跑在 NV 的卡上。本章讲怎么用它来找方向：先把对比做公平，再按阶段对齐，用硬件参数做归一化，区分"硬件造成的差距"和"实现造成的差距"，然后到算法层和指令层看参考实现做了什么我们没做的事，最后输出一张决定下一步优化方向的差距表。这也是第 11 章"用对标佐证方向是否全局最优"的具体做法。主文档的示例是 BW1000 上的 KDA 与 A800、H20 上的 FLA（16K 序列、TP8），NV 卡只用到做归一化所需的几个实测参数。</p>
+<h1>7.1 先把对比做公平</h1>
+<p>不公平的对比比没有对比更有害，它会把团队引向错误的方向。开始之前，至少要对齐五件事。</p>
+<p><b>调用方式和形状。</b>两边用同一组形状、同一种调用方式（例如都按 Megatron 训练中的真实调用传参），输入由同一个随机种子生成。KDA 的对比统一用 24 个形状（序列 1K 到 32K，单卡 head 数 8 到 64）。</p>
+<p><b>正确性门槛。</b>两边都以 FP64 参考为基准，比较各输出张量的误差，并报告我们与参考实现的误差之比。精度更差换来的速度不能算数。</p>
+<p><b>运行模式和显存。</b>参考实现往往有多种模式。FLA 0.5.2 默认在反向里重算前向的状态，算法额外保留给反向的状态每 token·head 只有 256 B；打开 <code>disable_recompute</code> 后不重算、更快，但额外保留约 2560 B；我们额外保留 768 B（以上都不含输入张量本身；按单层前向加反向的峰值显存算，gfx938 上 8192/64 时我们是 3.12 GB，FLA 两种模式都是 3.77 GB）。对比时要分别报告两种模式，并注明各自的显存，否则"我们比不重算模式慢"和"我们比默认模式快"都会被误读。</p>
+<p><b>计时口径。</b>两边用同一个计时脚本：前向和反向分开，统计 profiler 记录的设备时间之和，多次取中位数，不包含 host 开销。</p>
+<p><b>会话与机器。</b>同一张卡上的 A/B 比较要在同一会话内交替进行；跨平台的绝对比值不可避免地跨会话，要接受约 2% 到 3% 的漂移，并在结论里注明。测量前确认卡是空闲的。</p>
+<h1>7.2 三方对比</h1>
+<p>只比"我们在本卡"和"参考实现在 NV 卡"，无法区分差距来自实现还是来自硬件。正确的做法是三方对比：我们在本卡上（A）、参考实现在同一张卡上（B）、参考实现在它自己的卡上（C）。</p>
+<p>A 与 B 之比是<b>实现差距</b>：同一张卡、同一套硬件约束下，谁的实现更好。B 与 C 之比是<b>平台差距</b>：同一份实现换了硬件之后差多少。KDA 在 2026-11 初的数据（24 个形状几何平均，总耗时）给出了一个清晰的例子：在 BW1000 上，我们比同卡上的 FLA 快 2.04 倍，而对 H20 上的 FLA 只有 0.844。前者说明在同一张卡上我们的实现明显更好，后者说明剩下的差距主要不在实现。</p>
+<p>如果在同一张卡上，参考实现的某个阶段比我们快，那就是<b>确定能追回的差距</b>，应该排在最前面；如果参考实现只是在它自己的卡上更快、在我们的卡上并不快，那更可能是硬件差距，要先用 7.4 节归一化再判断。</p>
+<h1>7.3 按阶段对齐，而不是只比总时间</h1>
+<p>总时间的比值只能说明"差多少"，说明不了"差在哪"。要把两边的 kernel 按功能对应起来，逐阶段计时。KDA 前向在 FLA 里依次是门控累加（gate_cumsum）、块内计算（fwd_intra）、状态递推（fwd_h）、输出（fwd_o）四个阶段，我们是 prep_a、prep_b、fwd_h 三个 kernel（输出合并进了 fwd_h），按功能可以归成"准备"和"递推加输出"两段来对比。</p>
+<p>KDA 在 BW1000 上与 H20 FLA 的阶段对比（16K/TP8）显示：在块内计算这类计算密集的阶段，我们比 H20 快 1.45 倍；在反向收尾、dAv 这类纯流式阶段，我们只有 H20 的 0.31 到 0.40。总时间的差距全部来自后者。这个结论直接告诉我们：继续优化计算密集的阶段收益有限，差距要从流式阶段的字节和带宽上找，而流式阶段的上限又由硬件带宽决定。</p>
+<p>阶段对齐时要注意两边的拆分方式可能不同，一个阶段在一边是一个 kernel，在另一边可能是两三个，要按"同一份数学工作"来归并，而不是按 kernel 名字一一对应。</p>
+<h1>7.4 硬件归一化：差距是硬件还是实现</h1>
+<p>对访存受限的算子，任何一个实现的耗时都可以写成 <latex>T = B / (u \times BW)</latex>，其中 <latex>B</latex> 是读写字节，<latex>u</latex> 是带宽利用率，<latex>BW</latex> 是峰值带宽。两个实现相比，速度比可以分解成三项：</p>
+<p align="center"><latex>\frac{T_{ref}}{T_{ours}} = \underbrace{\frac{B_{ref}}{B_{ours}}}_{\text{bytes}} \times \underbrace{\frac{u_{ours}}{u_{ref}}}_{\text{utilization}} \times \underbrace{\frac{BW_{ours}}{BW_{ref}}}_{\text{hardware}}</latex></p>
+<p>第一项是字节优势，第二项是利用率之比，第三项是峰值带宽之比。这是一个恒等式，三项相乘一定等于实测时间比，它的作用是说明差距落在哪一项。KDA（16K/TP8）的原始数据和分解如下：</p>
+<table>
+  <colgroup><col width="160"/><col width="140"/><col width="140"/><col width="160"/><col width="190"/></colgroup>
+  <thead><tr><th background-color="light-gray">实现</th><th background-color="light-gray">读写字节 <latex>B</latex></th><th background-color="light-gray">实测时间 <latex>T</latex></th><th background-color="light-gray">峰值带宽 <latex>BW</latex>（实测）</th><th background-color="light-gray">利用率 <latex>u = B/(T \cdot BW)</latex></th></tr></thead>
+  <tbody>
+    <tr><td>我们 @ BW1000</td><td>4.722 GB</td><td>5.61 ms</td><td>1.34 TB/s</td><td>62.8%</td></tr>
+    <tr><td>FLA @ A800</td><td>7.423 GB</td><td>7.38 ms</td><td>1.77 TB/s</td><td>56.8%</td></tr>
+    <tr><td>FLA @ H20</td><td>7.423 GB</td><td>5.16 ms</td><td>3.82 TB/s</td><td>37.7%</td></tr>
+  </tbody>
+</table>
+<table>
+  <colgroup><col width="150"/><col width="150"/><col width="150"/><col width="150"/><col width="190"/></colgroup>
+  <thead><tr><th background-color="light-gray">对手</th><th background-color="light-gray">字节优势</th><th background-color="light-gray">利用率之比</th><th background-color="light-gray">峰值带宽之比</th><th background-color="light-gray">速度比（实测核对）</th></tr></thead>
+  <tbody>
+    <tr><td>FLA @ A800</td><td><latex>7.423/4.722 = 1.57</latex></td><td><latex>62.8/56.8 = 1.10</latex></td><td><latex>1.34/1.77 = 0.76</latex></td><td><latex>1.32</latex>（<latex>7.38/5.61 = 1.32</latex>）</td></tr>
+    <tr><td>FLA @ H20</td><td><latex>1.57</latex></td><td><latex>62.8/37.7 = 1.66</latex></td><td><latex>1.34/3.82 = 0.35</latex></td><td><latex>0.92</latex>（<latex>5.16/5.61 = 0.92</latex>）</td></tr>
+  </tbody>
+</table>
+<p>读法是：对 A800，我们这边的优势是 <latex>1.57 \times 1.10 = 1.74</latex> 倍，大于 A800 多出来的带宽 <latex>1/0.76 = 1.32</latex> 倍，所以我们快；对 H20，我们的优势是 <latex>1.57 \times 1.66 = 2.62</latex> 倍，小于 H20 多出来的带宽 <latex>1/0.35 = 2.85</latex> 倍，所以我们慢。差距完全来自硬件带宽，而不是实现。</p>
+<p>使用这个分解时要注意两点。第一，三项里只有字节优势完全由我们的实现决定；利用率之比同时取决于双方，对 H20 的 1.66 倍里，有相当一部分来自 FLA 在 H20 上自身利用率偏低（H20 的矩阵算力被削减到约 138 TFLOPS，FLA 中受算力或延迟限制的阶段跟不上它的带宽）。第二，字节数必须用同一种口径测（两边都用 DRAM 计数器），L2 大小不同时要注明。</p>
+<p>对受计算限制的阶段，同样的思路换成算力：比较双方相关运算单元的吞吐。gfx938 上的例子是，KDA 前向的准备阶段受 VALU 和特殊函数限制，而 H20 每秒能执行的 fp32 lane 运算约为 <latex>78 \times 128 \times 1.98\ \text{GHz} \approx 19.8 \times 10^{12}</latex>，BW1102 约为 <latex>72 \times 64 \times 1.3\ \text{GHz} \approx 6.0 \times 10^{12}</latex>（打包 fp32 时翻倍），差 1.65 到 3.3 倍。当差距与这个比值相当时，就应判为硬件差距。</p>
+<h1>7.5 算法与数据流层对比</h1>
+<p>归一化之后如果还有说不清的差距，下一步是读参考实现的源码，从算法和数据流层对比：两边用的是不是同一类算法形式，拆成了多少个 kernel，哪些中间结果落了显存，哪些在反向里重算，数值格式有什么不同。这一层的对比决定"换算法"这条路值不值得走。</p>
+<p>KDA 的例子：FLA 大约拆成 22 个 kernel、默认在反向里重算前向状态，所以它读写的字节是必需量的 9.2 倍，我们是 5.8 倍，这部分差距是我们的优势，来源清楚。在 gfx938 上，读 FLA 的块内计算源码确认，它的非对角块用的是因子化衰减（每个 token 一次指数，再做矩阵乘），对角块用块中点作参考，求逆用分块方法，与我们的算法属于同一类。由此得出结论：前向相对 H20 的差距不是因为对方用了更省的算法，而是硬件吞吐，"换一种 chunk 算法"的方向被关闭。读源码这一步看起来慢，却能避免在算法层上做大量无效的尝试。</p>
+<h1>7.6 指令层对比</h1>
+<p>算法相同、归一化后仍有差距时，就要看指令层：参考实现编译出来的代码用了哪些指令、哪些快速路径，是我们没用的。这一层分三个视角。</p>
+<p><b>参考实现在 NV 卡上的指令。</b>从 Triton 生成的 PTX 可以看出对方用了哪些近似求值。例如 FLA 的 <code>tl.exp</code> 编译成 <code>ex2.approx.f32</code>，除法编译成 <code>div.full.f32</code>，都是硬件近似指令。这提示我们：在通过 FP64 精度门禁的前提下，可以采用同类的求值方式。KDA 在 gfx938 上把门控 sigmoid 改成 <code>v_exp_f32</code> 加 <code>v_rcp_f32</code>，就是由此而来，相关 kernel 快 7% 到 54%，误差相对上一版在 0.96 到 1.0005 倍之间。</p>
+<p><b>参考实现在我们卡上的指令。</b>FLA 在我们的卡上由 Triton 编译成 AMDGCN 汇编，统计其中的指令，可以发现它用了哪些我们手写 kernel 没用的指令，以及它的分块和 LDS 用法。下表是 KDA 相关 kernel 的静态指令统计：</p>
+<table>
+  <colgroup><col width="210"/><col width="150"/><col width="150"/><col width="250"/></colgroup>
+  <thead><tr><th background-color="light-gray">指令</th><th background-color="light-gray">FLA @ gfx936</th><th background-color="light-gray">FLA @ gfx938</th><th background-color="light-gray">我们 gfx936 / gfx938</th></tr></thead>
+  <tbody>
+    <tr><td><code>ds_read_m32x16_b16</code>（LDS 转置读）</td><td>4936</td><td>5056</td><td>当时 0 / 0（后在 gfx938 的 wu 中采用）</td></tr>
+    <tr><td>MMAC 的 <code>lit</code> 修饰符</td><td>0（共 34676 条 MMAC）</td><td>35156（共 35156 条 MMAC）</td><td>0 / 0</td></tr>
+    <tr><td><code>v_cvt_pk_bf16_f32</code>（硬件 bf16 转换）</td><td>0</td><td>22128</td><td>0 / 12126</td></tr>
+    <tr><td><code>matrix_load</code>（MLS）</td><td>0</td><td>0</td><td>0 / 32</td></tr>
+  </tbody>
+</table>
+<p>这张表纠正过我们的一个误判：<code>ds_read_m32x16_b16</code> 起初被以为是 gfx938 独有、是 FLA 在 gfx938 上变快的原因，统计后发现 FLA 在 gfx936 上也大量使用它，真正 gfx938 独有的是 MMAC 的 <code>lit</code> 修饰符和硬件 bf16 转换。</p>
+<p><b>我们自己的指令。</b>用 ISA 资源报告和指令统计，看地址计算、数据搬运类 VALU 指令和计算类指令的比例。gfx938 上的全链统计显示，只有 13% 到 15% 的周期在做计算，数据搬运类 VALU 指令比计算本身消耗的发射周期还多，这直接指向了"SGPR 地址""打包 fp32"等指令层手段。</p>
+<p>指令层对比有两个陷阱。第一，静态统计的是指令出现的次数，不是运行时的占比，Triton 缓存里还包含所有自动调优的候选版本；要用 SQTT 或删除上限确认它是否真的值钱。第二，统计脚本要核对：我们曾因为匹配规则只查指令名，漏掉了写在指令末尾的 <code>lit</code> 修饰符，第一次统计得出了"FLA 在 gfx938 上没用 lit"的错误结论。</p>
+<h1>7.7 输出：对标差距表</h1>
+<p>对标的产出不是一个总加速比，而是一张按阶段排列的差距表，每一行回答"差多少、为什么、怎么办"。建议的格式：</p>
+<table>
+  <colgroup><col width="120"/><col width="120"/><col width="150"/><col width="200"/><col width="200"/></colgroup>
+  <thead><tr><th background-color="light-gray">阶段</th><th background-color="light-gray">差距</th><th background-color="light-gray">归因</th><th background-color="light-gray">依据</th><th background-color="light-gray">下一步</th></tr></thead>
+  <tbody>
+    <tr><td>块内计算</td><td>我们快 1.45 倍</td><td>—</td><td>阶段计时</td><td>不再投入</td></tr>
+    <tr><td>反向收尾、dAv</td><td>我们只有 0.31 到 0.40</td><td>硬件（带宽）</td><td>字节优势 1.57，带宽之比 0.35</td><td>只能继续减字节，接受带宽差距</td></tr>
+    <tr><td>前向准备（gfx938）</td><td>0.61</td><td>硬件（VALU、SFU 吞吐）</td><td>算法同类；吞吐比 1.65 到 3.3</td><td>指令层小项；数值放宽需过 FP64 门禁</td></tr>
+  </tbody>
+</table>
+<p>归因一栏只有四种取值：<b>实现</b>（同卡上参考实现更快，必须追回）、<b>硬件</b>（归一化后差距与硬件参数之比相当）、<b>数据流</b>（拆分、保存、重算方式不同，回到第 9 章和第 11 章评估）、<b>数值</b>（对方用了更激进的数值方式，需要审批和 FP64 门禁）。这张表直接接到第 10 章的每轮流程和第 11 章的候选表里。</p>
+<h1>常见误区</h1>
+<p><b>只比总时间。</b>总比值说明不了差在哪个阶段，必须按阶段对齐。</p>
+<p><b>拿不同模式、不同显存的数字比。</b>和参考实现的不重算模式比，却不提它多保留了 3 倍以上的显存，结论会误导。</p>
+<p><b>照抄参考实现的分块参数。</b>wave64 与 warp32 不同，LDS 容量不同，NV 卡上调好的分块在我们卡上往往不是最优。</p>
+<p><b>把参考实现的指令直接平移。</b>NV 的异步拷贝不等于我们的 MLS，后者只有在所有 wave 都发出、该阶段没有全局写、每 CU 至少 4 个 CTA 时才有收益。</p>
+<p><b>跨会话的绝对比值当定论。</b>跨平台的比值有约 2% 到 3% 的会话漂移；同卡上的 A/B 要在同一会话内交替测。</p>
+<h1>小练习</h1>
+<ol>
+  <li seq="auto">我们读写 5 GB、耗时 4 ms、峰值带宽 1.34 TB/s；参考实现在另一张卡上读写 8 GB、耗时 3 ms、峰值带宽 4.0 TB/s。分解速度比。（答：<latex>u_{ours} = 5/(4 \times 1.34) \approx 93\%</latex>，<latex>u_{ref} = 8/(3 \times 4.0) \approx 67\%</latex>；字节优势 1.6，利用率之比 1.40，带宽之比 0.335，乘积约 0.75，与 <latex>3/4 = 0.75</latex> 一致。我们的利用率已经很高，差距来自硬件带宽。）</li>
+  <li seq="auto">参考实现在我们的卡上，某个阶段比我们快 1.3 倍，但在 NV 卡上和我们差不多。这个差距该怎么归类？（答：同一张卡上更快，属于确定能追回的实现差距，应优先处理。）</li>
+  <li seq="auto">统计发现参考实现大量使用某条指令，我们没用。下一步怎么做？（答：先确认它在运行时是否真的占时间（SQTT 或删除上限），再确认这条指令在我们卡上的语义和使用条件，然后在一个 kernel 上做原型、过门禁、交替计时。）</li>
+</ol>
+<h1>速查</h1>
+<table>
+  <colgroup><col width="200"/><col width="580"/></colgroup>
+  <thead><tr><th background-color="light-gray">项</th><th background-color="light-gray">内容</th></tr></thead>
+  <tbody>
+    <tr><td>公平对比五项</td><td>形状与调用、正确性门槛、模式与显存、计时口径、会话与机器</td></tr>
+    <tr><td>三方对比</td><td>我们@本卡、参考@本卡（实现差距）、参考@其卡（平台差距）</td></tr>
+    <tr><td>速度比分解</td><td><latex>T_{ref}/T_{ours} = (B_{ref}/B_{ours}) \times (u_{ours}/u_{ref}) \times (BW_{ours}/BW_{ref})</latex></td></tr>
+    <tr><td>四层对比</td><td>阶段计时 → 硬件归一化 → 算法与数据流 → 指令</td></tr>
+    <tr><td>归因四类</td><td>实现、硬件、数据流、数值</td></tr>
+    <tr><td>对标口径（实测）</td><td>HBM：BW1000 1.34、A800 1.77、H20 3.82 TB/s；fp32 lane 运算：H20 约 <latex>19.8 \times 10^{12}</latex>/s，BW1102 约 <latex>6.0 \times 10^{12}</latex>/s（打包翻倍）</td></tr>
+  </tbody>
+</table>

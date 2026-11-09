@@ -1,0 +1,46 @@
+<p>从图 4-3 能直接读出几条稳定的结论：wy_s4b 在所有形状下都是占比最高的 kernel（19% 到 27%），而且一直受 TA 限制（0.69 到 0.79）；bwd_tail 的 TA 忙碌率在 0.86 到 0.99 之间，已经接近饱和；fwd_prep_a 和 gate 始终受 VALU 限制；wu 和 l2n_apply 始终受 HBM 限制，其中 l2n_apply 在所有形状下都是 0.97。这些"跨形状都成立"的结论最值得优先投入，因为改一次就对所有形状生效；只在个别形状出现的瓶颈（比如 head 数少时递推 kernel 占不满 CU），则要结合实际训练中各形状的调用比例来决定是否值得做。</p>
+<h1>4.6 Roofline 上看不到的"隐形屋顶"</h1>
+<p>当一个 kernel 三层带宽都没有用满、算力也远没到顶时，它一定被别的资源卡住了。在 BW1000 上，最常见的有五种，下表给出了它们的测法和 KDA 中的实例。</p>
+<table>
+  <colgroup><col width="130"/><col width="250"/><col width="100"/><col width="310"/></colgroup>
+  <thead><tr><th background-color="light-gray">隐形屋顶</th><th background-color="light-gray">怎么测</th><th background-color="light-gray">BW1000 饱和值</th><th background-color="light-gray">KDA 中的例子</th></tr></thead>
+  <tbody>
+    <tr><td>访存指令发射（TA）</td><td><latex>\sum \text{TA\_TA\_BUSY} / (\text{GRBM\_GUI\_ACTIVE} \times N_{CU})</latex></td><td>约 0.92</td><td>bwd_tail 0.86 到 0.99、wy_s4b 0.69 到 0.79，而它们的 HBM 带宽只用了 55% 到 72%</td></tr>
+    <tr><td>VALU 指令发射</td><td><latex>\text{SQ\_ACTIVE\_INST\_VALU} / (\text{cycles} \times N_{CU})</latex></td><td>0.97 到 1.00</td><td>fwd_prep_a 0.74 到 0.90，gate 0.76 到 0.99</td></tr>
+    <tr><td>LDS bank 冲突</td><td>每条 LDS 指令的冲突周期 <latex>\text{SQ\_LDS\_BANK\_CONFLICT} / \text{SQ\_INSTS\_LDS}</latex>，以及 LDS 等待占比（<latex>\text{SQ\_WAIT\_INST\_LDS}</latex>）</td><td>—</td><td>dav 每条 LDS 指令约 4 个冲突周期；但在工作量不变的前提下消除全部冲突，dav 只快 0.9% 到 2.4%，说明冲突并不在关键路径上</td></tr>
+    <tr><td>串行依赖链</td><td><latex>T_{chain} = t_{step} \times N_{step}</latex>（建模，或用 SQTT 看等待点）</td><td>—</td><td>fwd_h 的 352 µs 里约有 159 µs 是链项：每个 chunk 的状态必须等上一个 chunk 算完</td></tr>
+    <tr><td>并行度</td><td><latex>N_{CU}^{active} / 80</latex></td><td>—</td><td>每卡 12 个 head 时，递推 kernel 只有 48 个 CTA，最多占用 48 个 CU（<latex>48/80 = 60\%</latex>）</td></tr>
+  </tbody>
+</table>
+<p>这五种限制各有对应的手段，而且彼此不能替代。<b>受 TA 限制</b>时，要减少的是 kernel 发出的访存请求，而不是 HBM 字节：把分散的访问改成合并的访问、去掉同一个 wave 里对同一地址的重复读取以及多个 CTA 对同一数据的重复读取（即使命中 L2，也要经过 TA）、把逐 lane 的细碎读写改成经 LDS 中转的成块读写。对已经合并的访问，TA 代价按字节计，这时只能减少请求的总字节。<b>受 VALU 发射限制</b>时，要减少的是指令条数：用打包 fp32 指令、把每个 lane 重复计算的 64 位地址换成 SGPR 基址加 32 位偏移、给常见数值范围加快速路径。<b>LDS 冲突</b>只有在 LDS 等待确实出现在关键路径上时才值得处理，先用消融实验确认收益。<b>串行链</b>只能缩短每一步的关键路径（提前发出下一步的读取、减少每步的同步），或者用更多独立的链来提高并行度。<b>并行度不足</b>时，要把每个 CTA 的工作切小，让更多 CTA 同时运行。这些手段的具体做法和 BW1000 上的实例，在第 8 章按资源逐一展开。</p>
+<p>需要特别提醒的是 TA。它是 HCU 上最容易被忽略、却最常见的瓶颈：KDA 在 BW1000 上有六成以上的时间花在受 TA 限制的 kernel 上，而这些 kernel 的 HBM 带宽利用率普遍只有 30% 到 70%。如果只看带宽，会误以为"还有很大空间、继续减 HBM 字节"，实际上通过提高 L2 命中来减少 HBM 字节几乎不会让它们变快，要减少的是经过 TA 的请求。</p>
+<h1>4.7 小结：从一个点到一张表</h1>
+<p>把第 3 章和本章连起来，就是拿到一个算子后的标准分析顺序。先画算子级 Roofline，判断访存受限还是算力受限、大致离上限多远。再用四次 hipprof 采集每个 kernel 的三层字节，画分层 Roofline，按规则一到三找出每个 kernel 的瓶颈层。三层都不满的 kernel，查五种隐形屋顶。最后把每个 kernel 的"受限资源、利用率、时间占比"整理成一张表，按 <latex>r_{time} \times (1 - u_{max})</latex> 排出优化顺序。</p>
+<p>这张表告诉你每个 kernel 卡在哪里，但还没有回答两个问题：它为什么离上限这么远（是驻留不够、延迟没藏住，还是同步太多），以及整个算子离真正的极限还有多远、什么时候可以停。前者是第 5 章的内容，后者是第 6 章的内容。</p>
+<h1>常见误区</h1>
+<p><b>把 LDS 的"占用字节"当成有效字节。</b>LDS 字节按 <latex>\text{SQ\_LDS\_IDX\_ACTIVE} \times 128\ \text{B}</latex> 计算，包含了 bank 冲突占用的周期。冲突多的 kernel，LDS 点会被画得偏左、利用率偏高。</p>
+<p><b>L2 点和 HBM 点重合，就认为 L2 没起作用。</b>流式 kernel 本来就没有复用，L2 挡不住流量是正常的；只有本该复用的数据没有命中时，才是问题。</p>
+<p><b>拿小 kernel 的计数下结论。</b>运行时间不到 10 µs 的 kernel，计数器读数不可靠。</p>
+<p><b>在被占用的机器上采计数。</b>HBM 和 L2 计数器统计的是整卡流量，邻居的任务会直接污染读数。采集前先确认卡是空闲的。</p>
+<p><b>只看谁离线最远，不看时间占比。</b>离线最远的往往是只占百分之几时间的小 kernel，优化它对总时间几乎没有影响。</p>
+<p><b>看到 LDS 冲突多就去改布局。</b>冲突是否值得处理，要看它是否在关键路径上；先做消融实验（保持工作量不变、消除冲突）量出能省多少。</p>
+<h1>小练习</h1>
+<ol>
+  <li seq="auto">某 kernel 运行 1 ms，计数器读数为 <latex>\text{RDREQ} = 1.0 \times 10^7</latex>、<latex>\text{RDREQ\_32B} = 2 \times 10^6</latex>、<latex>\text{WRREQ} = 4 \times 10^6</latex>、<latex>\text{WRREQ\_64B} = 3 \times 10^6</latex>。它的 HBM 带宽利用率是多少？（答：读 <latex>64 \times 8 \times 10^6 + 32 \times 2 \times 10^6 = 576\ \text{MB}</latex>，写 <latex>64 \times 3 \times 10^6 + 32 \times 1 \times 10^6 = 224\ \text{MB}</latex>，共 800 MB；<latex>u_{HBM} = 0.8 / 1.34 \approx 60\%</latex>。）</li>
+  <li seq="auto">fwd_h_v8o4 在 8K/H12 下：HBM 396 GB/s、L2 0.69 TB/s、LDS 3.15 TB/s、TA 0.70，只有 48 个 CTA。它受什么限制？应该先往哪个方向优化？（答：三层利用率约 <latex>u_{HBM} \approx 30\%</latex>、<latex>u_{L2} \approx 11\%</latex>、<latex>u_{LDS} \approx 21\%</latex>，都不满；TA 达到饱和值的 <latex>0.70/0.92 \approx 76\%</latex>，同时 48 个 CTA 只能占 <latex>48/80 = 60\%</latex> 的 CU，且它本身是递推 kernel。瓶颈是访存发射、串行链和并行度，而不是带宽；减少 HBM 字节无效，应减少每步发出的访存请求、缩短每步关键路径，或者把工作切得更细以占满 CU。）</li>
+  <li seq="auto">为什么 l2n_apply 在图 4-2 里没有 Roofline 点，应该怎么判断它？（答：它不用 MMAC、也不用 LDS，运算量几乎为零，画不出有意义的计算强度。这类纯搬运 kernel 直接看 HBM 带宽利用率：<latex>u_{HBM} \approx 97\%</latex>，已经贴线，只能靠融合省掉这次读写。）</li>
+</ol>
+<h1>速查</h1>
+<table>
+  <colgroup><col width="200"/><col width="580"/></colgroup>
+  <thead><tr><th background-color="light-gray">项</th><th background-color="light-gray">内容</th></tr></thead>
+  <tbody>
+    <tr><td>BW1000 三层可达带宽</td><td><latex>BW_{LDS} = 15.24</latex>，<latex>BW_{L2} = 6.10</latex>，<latex>BW_{HBM} = 1.34</latex>（TB/s）</td></tr>
+    <tr><td>bf16 MMAC 各层拐点</td><td><latex>I^{*}_{LDS} = 31.2</latex>，<latex>I^{*}_{L2} = 78.0</latex>，<latex>I^{*}_{HBM} = 355</latex>（FLOP/B）</td></tr>
+    <tr><td>字节换算</td><td><latex>B_{HBM}^{rd} = 64(\text{RDREQ} - \text{RDREQ\_32B}) + 32\,\text{RDREQ\_32B}</latex>；<latex>B_{HBM}^{wr} = 64\,\text{WRREQ\_64B} + 32(\text{WRREQ} - \text{WRREQ\_64B})</latex>；<latex>B_{L2} = 64\,\text{TCC\_REQ}</latex>；<latex>B_{LDS} = 128\,\text{SQ\_LDS\_IDX\_ACTIVE}</latex></td></tr>
+    <tr><td>读图规则</td><td><latex>u_{level} = (B_{level}/T)/BW_{level}</latex>；<latex>u \ge 80\%</latex> 为饱和；三层都 <latex>u &lt; 60\%</latex> 查隐形屋顶；点间距离 <latex>I_{HBM}/I_{L2}</latex>、<latex>I_{L2}/I_{LDS}</latex> 为复用倍数</td></tr>
+    <tr><td>隐形屋顶</td><td>TA（饱和约 0.92）、VALU 发射（0.97 到 1.00）、LDS 冲突（看是否在关键路径）、串行链 <latex>t_{step} \times N_{step}</latex>、并行度 <latex>N_{CU}^{active}/80</latex></td></tr>
+    <tr><td>优先级</td><td><latex>r_{time} \times (1 - u_{max})</latex>；跨形状都成立的瓶颈优先</td></tr>
+  </tbody>
+</table>
+<p>图源：图 4-1 来自 kernel-roofline-analysis-tools 仓库 <code>results/gfx936-hier-roofline-20261013/</code>，图 4-2、4-3 来自 <code>results/kda-ceiling-cards-20261013/</code>（KDA G2，2026-10-13，bw7）。这些图对应的是当时的版本，后续用 gfx936 当前最佳版本重测后会替换。</p>

@@ -1,0 +1,45 @@
+<p><b>GEMM（算力受限）。</b>bf16 矩阵乘 <latex>M = N = K = 8192</latex>，hipBLASLt 的最好结果是 331.6 TFLOPS（bw52，2026-10-30）。计算强度 <latex>I = 2731\ \text{FLOP/B} \gg I^{*} = 355</latex>，上方是 bf16 MMAC 的平顶 476 TFLOPS，<latex>\text{MFU} = 331.6 / 476 \approx 70\%</latex>。结论很明确：它和带宽无关，剩下 30% 的差距在 MMAC 本身的利用率上，比如指令调度、分块形状、寄存器与 LDS 的供数节奏。这时去减字节没有任何意义。</p>
+<p><b>l2n_apply（纯访存受限，已经贴线）。</b>这是 KDA 中做 L2 归一化缩放的一个小 kernel（8K 序列、12 个 head）。每个元素只做一次乘法，计算强度 <latex>I \approx 0.25\ \text{FLOP/B}</latex>（按每元素 1 次乘、读写各 2 B 估算），实测带宽 1297 GB/s，<latex>\text{MBU} = 1297 / 1339 \approx 97\%</latex>，已经压在斜线上。对这种 kernel，kernel 内部再怎么调都没用，唯一的办法是让它少搬字节，最直接的是把它融合进前后的 kernel，彻底省掉这次读写。</p>
+<p><b>KDA 前向+反向（访存受限，离线还有距离）。</b>以 16K 序列、TP8（每卡 12 个 head）为例：模型运算量 <latex>F = 99.1\ \text{GFLOP}</latex>，实测 DRAM 字节 <latex>B_{DRAM} = 4.722\ \text{GB}</latex>，时间 <latex>T = 5.32\ \text{ms}</latex>（2026-10 的 P-88 版本）。于是</p>
+<p align="center"><latex>I_{impl} = \frac{99.1}{4.722} \approx 21\ \text{FLOP/B}, \quad P = \frac{99.1\ \text{GFLOP}}{5.32\ \text{ms}} \approx 18.6\ \text{TFLOPS}, \quad \text{MBU} \approx 66\%, \quad \text{MFU} \approx 3.9\%</latex></p>
+<p>它在拐点左边很远，所以无论 MMAC 多快都帮不上忙，方向只有两个：提高带宽利用率（把 66% 往上推），或者提高计算强度（少搬字节）。</p>
+<p>图中虚线箭头给出了第二个方向的天花板。KDA 算法本身的强度是 <latex>I_{alg} = 122\ \text{FLOP/B}</latex>（完全融合时只需搬 <latex>B_{min} = 0.811\ \text{GB}</latex>），对应的上限是</p>
+<p align="center"><latex>P_{attainable}(I_{alg}) = BW_{HBM} \times I_{alg} = 1.34\ \text{TB/s} \times 122 \approx 163\ \text{TFLOPS}</latex></p>
+<p>这说明两件事。一是实现多搬了 <latex>B_{DRAM} / B_{min} = 4.722 / 0.811 \approx 5.8</latex> 倍的字节，减少 kernel 之间的交接是空间最大的方向。二是即使完全融合，<latex>I_{alg} = 122 &lt; I^{*} = 355</latex>，KDA 在 BW1000 上永远是访存受限的算子，MMAC 利用率最多 <latex>163 / 476 \approx 1/3</latex>，优化目标始终是少搬字节、把带宽用足。至于为什么做不到完全融合，第 6 章会给出答案：片上容量放不下，只能拆成多个 kernel。</p>
+<h1>3.7 Roofline 能回答什么，不能回答什么</h1>
+<p>Roofline 能快速回答四个问题：算子受访存还是受算力限制；在当前计算强度下，性能上限是多少；提高计算强度（融合、少搬字节）最多能带来多少；同一个算子的不同实现谁的字节更省、谁离线更近。这些判断只需要四个测量值，几分钟就能完成，所以拿到一个新算子，第一件事就是把它放到 Roofline 上。</p>
+<p>但它回答不了下面这些问题，而这些恰恰是真实优化中最花时间的部分：</p>
+<ul>
+  <li><b>是哪个 kernel 的问题。</b>KDA 由十几个 kernel 组成，算子级的一个点掩盖了每个 kernel 各自的瓶颈。要按 kernel 分别画。</li>
+  <li><b>是哪一级存储的问题。</b>单层 Roofline 只看 HBM，看不到 L2 和 LDS 的带宽是否用满。要画分层 Roofline。</li>
+  <li><b>屋顶之外的限制。</b>访存指令发射单元（TA）、LDS bank 冲突、VALU 指令发射、串行依赖链、并行度不足，都不在图上。例如 KDA 的递推 kernel 只用了约 30% 的 HBM 带宽，TA 却已经忙到 86% 以上。</li>
+  <li><b>为什么离线远。</b>是驻留不够、延迟没藏住，还是同步太多？要到 kernel 在 CU 上的执行层面去看（第 5 章）。</li>
+  <li><b>是否已经到顶、方向是否全局最优。</b>Roofline 的上限往往远远达不到（例如 KDA 的 163 TFLOPS），离它远不代表还有空间，离它近也不代表换一种拆法不会更快。判断"到顶没有"要用第 6 章的四个下限，判断"方向是否全局最优"要用第 11 章的方法。</li>
+</ul>
+<p>前三点由第 4 章的分层 Roofline 回答，后两点分别由第 5、6、11 章回答。</p>
+<h1>常见误区</h1>
+<p><b>屋顶和利用率用了不同口径。</b>图上画理论峰值，利用率却按实测可达值算（或者反过来），结论会差 30% 以上。全文统一用实测可达值，引用理论值时单独注明。</p>
+<p><b>用代码里的读写量代替 DRAM 字节。</b>命中 L2 的读不占 HBM 带宽，按代码估会高估字节、把点画到左边。字节量以 HBM 计数器为准。</p>
+<p><b>计算强度高于拐点，就认定是 MMAC 受限。</b>它也可能被 VALU 或 SFU 卡住，例如带大量 exp 的算子。要按 3.5 节对每种资源分别算耗时。</p>
+<p><b>只画算子总点，不拆 kernel。</b>总点落在访存区，不代表每个 kernel 都受带宽限制；KDA 里同时存在受 HBM、受 TA、受 VALU 限制的 kernel，手段完全不同。</p>
+<p><b>点离线远，就以为还有很大空间。</b>离线远往往说明瓶颈不在这张图上，而不是空间大。先用第 4 章找到真正的瓶颈，再谈空间。</p>
+<h1>小练习</h1>
+<ol>
+  <li seq="auto">算出 bf16 矩阵乘 <latex>M = N = K = 4096</latex> 的算法强度，判断它在 BW1000 上落在哪个区。如果能达到 70% MFU，大约需要多少时间？（答：<latex>F \approx 137.4\ \text{GFLOP}</latex>，<latex>B_{min} \approx 100.7\ \text{MB}</latex>，<latex>I \approx 1365 &gt; 355</latex>，算力受限；<latex>T \approx 137.4 \times 10^9 / (0.7 \times 476 \times 10^{12}) \approx 0.41\ \text{ms}</latex>。）</li>
+  <li seq="auto">bf16 逐元素加法 <latex>C = A + B</latex>，每个元素读 4 B、写 2 B、做 1 次加法。计算强度是多少？处理 <latex>10^9</latex> 个元素至少需要多少时间？（答：<latex>I = 1/6 \approx 0.17\ \text{FLOP/B}</latex>；<latex>T \ge 6\ \text{GB} / 1.339\ \text{TB/s} \approx 4.5\ \text{ms}</latex>，性能上限约 0.22 TFLOPS。）</li>
+  <li seq="auto">KDA（16K/TP8）如果完全融合、带宽用满，按 Roofline 最快能跑多少？和第 6 章给出的理论下限 0.83 ms 相比，哪个更小，为什么？（答：<latex>T = 99.1\ \text{GFLOP} / 163\ \text{TFLOPS} \approx 0.61\ \text{ms}</latex>，比理论下限 0.83 ms 还小，因为 Roofline 没有考虑递推的串行链：每个 chunk 的状态必须等上一个 chunk 算完，这段时间无法被带宽或算力缩短。）</li>
+</ol>
+<h1>速查</h1>
+<table>
+  <colgroup><col width="200"/><col width="580"/></colgroup>
+  <thead><tr><th background-color="light-gray">量</th><th background-color="light-gray">公式 / BW1000 取值</th></tr></thead>
+  <tbody>
+    <tr><td>计算强度</td><td><latex>I = F / B</latex>；<latex>I_{alg} = F / B_{min}</latex>，<latex>I_{impl} = F / B_{DRAM}</latex></td></tr>
+    <tr><td>可达性能</td><td><latex>P_{attainable}(I) = \min(P_{peak},\ BW \times I)</latex></td></tr>
+    <tr><td>拐点</td><td><latex>I^{*} = P_{peak} / BW</latex>；BW1000：bf16 355、tf32 178、fp32 MMAC 45.5、fp32 VALU 22.2</td></tr>
+    <tr><td>MFU / MBU</td><td><latex>\text{MFU} = (F/T) / P_{peak}</latex>；<latex>\text{MBU} = (B_{DRAM}/T) / BW_{HBM}</latex>（分母取实测可达值）</td></tr>
+    <tr><td>多资源</td><td><latex>T \ge \max\left(F_{MMAC}/P_{MMAC},\ F_{VALU}/P_{VALU},\ N_{exp}/P_{SFU},\ B_{HBM}/BW_{HBM}\right)</latex></td></tr>
+    <tr><td>BW1000 可达值</td><td>HBM 1.34 TB/s；bf16 MMAC 476、tf32 237.7、fp32 MMAC 61.0、fp32 VALU（打包）29.7 TFLOPS；exp2 约 <latex>1.92 \times 10^{12}</latex> 次/秒</td></tr>
+  </tbody>
+</table>
+<p>图源与脚本：图 3-1、3-2 由 kernel-roofline-analysis-tools 仓库 <code>docs/tutorial/figs/plot_ch3_roofline.py</code> 生成，标定数据为 <code>machines/gfx936-bw1000.json</code>。</p>

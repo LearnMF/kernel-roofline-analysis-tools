@@ -1,0 +1,20 @@
+<title>第 4 章　分层 Roofline：真实优化时怎么看</title>
+<p><b>本章目标。</b>第 3 章的 Roofline 只看 HBM 一层，适合拿到算子后的第一眼判断。真正动手优化时，要把算子拆到每个 kernel，再把每个 kernel 在 LDS、L2、HBM 三级存储上的流量都画出来，找出瓶颈在哪一层；如果三层都不满，还要去查 Roofline 图上画不出来的"隐形屋顶"。读完本章，你应该能用 hipprof 采到每层的字节数，画出 BW1000 的分层 Roofline，读懂一个 kernel 的三个点，并把一个多 kernel 算子的每个 kernel 归到正确的瓶颈类别。本章的示例全部来自 BW1000 上的 KDA（2026-10-13 采集，后续重测后会更新图）。</p>
+<h1>4.1 为什么要分层</h1>
+<p>数据从 HBM 到运算单元要经过好几级存储：HBM → L2（8 MB，全卡共享）→ 各 CU 的 LDS（每 CU 64 KB，由程序显式管理）或 VGPR。每一级都有自己的带宽，而且离运算单元越近，带宽越高。一个 kernel 完全可能在 HBM 只用了一半带宽的情况下，被 L2 或 LDS 的带宽卡住；只看 HBM 那张图，你只会看到"离斜线很远"，却不知道原因。</p>
+<p>分层的做法很直接：对同一个 kernel，分别数出它在每一级存储上搬运的字节数 <latex>B_{LDS}</latex>、<latex>B_{L2}</latex>、<latex>B_{HBM}</latex>，得到三个计算强度</p>
+<p align="center"><latex>I_{LDS} = F / B_{LDS},\quad I_{L2} = F / B_{L2},\quad I_{HBM} = F / B_{HBM}</latex></p>
+<p>再把它们放到同一张图上，每一级配自己的带宽斜线。因为 L2 的请求里包含了最终落到 HBM 的那部分，<latex>B_{L2} \ge B_{HBM}</latex> 通常成立，所以 <latex>I_{L2}</latex> 一般在 <latex>I_{HBM}</latex> 的左边；两个点分得越开，说明 L2 挡住的流量越多。LDS 的流量来自程序显式的暂存和复用，<latex>I_{LDS}</latex> 在最左边，它和 <latex>I_{L2}</latex> 的距离反映了数据在片上被复用了多少次。</p>
+<h1>4.2 BW1000 的分层屋顶</h1>
+<p>BW1000 三级存储的实测可达读带宽分别是：<latex>BW_{LDS} = 15.24\ \text{TB/s}</latex>，<latex>BW_{L2} = 6.10\ \text{TB/s}</latex>，<latex>BW_{HBM} = 1.34\ \text{TB/s}</latex>（标定微基准，bw7，2026-10-10；LDS 用 <code>ds_read_b128</code> 测得）。每一级都和各个算力平顶形成一组拐点 <latex>I^{*}_{level} = P_{peak} / BW_{level}</latex>：</p>
+<table>
+  <colgroup><col width="220"/><col width="160"/><col width="160"/><col width="160"/></colgroup>
+  <thead><tr><th background-color="light-gray">算力平顶（实测可达）</th><th background-color="light-gray"><latex>I^{*}_{LDS}</latex>（FLOP/B）</th><th background-color="light-gray"><latex>I^{*}_{L2}</latex>（FLOP/B）</th><th background-color="light-gray"><latex>I^{*}_{HBM}</latex>（FLOP/B）</th></tr></thead>
+  <tbody>
+    <tr><td>bf16 MMAC 476.0 TFLOPS</td><td>31.2</td><td>78.0</td><td>355</td></tr>
+    <tr><td>tf32 MMAC 237.7 TFLOPS</td><td>15.6</td><td>39.0</td><td>178</td></tr>
+    <tr><td>fp32 MMAC 61.0 TFLOPS</td><td>4.0</td><td>10.0</td><td>45.5</td></tr>
+    <tr><td>fp32 VALU 29.7 TFLOPS</td><td>1.9</td><td>4.9</td><td>22.2</td></tr>
+  </tbody>
+</table>
+<p>这张表本身就有判断价值。比如一个用 bf16 MMAC 的 kernel，如果它的 <latex>I_{LDS} &lt; 31.2</latex>，LDS 带宽就会先于 MMAC 成为上限；如果 <latex>I_{L2} &lt; 78</latex>，L2 会先于 MMAC 成为上限。图 4-1 左半边是 BW1000 的分层屋顶（三条斜线分别对应 LDS、L2、HBM），上面叠加了 KDA 在 8K 序列、48 个 head 时各 kernel 的三层落点；右半边是同一批 kernel 的 HBM 带宽、访存发射（TA）、VALU 三项利用率。</p>

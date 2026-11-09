@@ -1,0 +1,133 @@
+<title>附录</title>
+<p>本附录汇总全书用到的术语、公式、BW1000 参数与对标口径、规则与常见误区、参考文献，以及子文档索引，便于查阅。</p>
+<h1>附录 A　术语表</h1>
+<table>
+  <colgroup><col width="170"/><col width="200"/><col width="420"/></colgroup>
+  <thead><tr><th background-color="light-gray">术语</th><th background-color="light-gray">英文 / 缩写</th><th background-color="light-gray">含义</th></tr></thead>
+  <tbody>
+    <tr><td>计算单元</td><td>CU（Compute Unit）</td><td>HCU 的基本执行单元，BW1000 有 80 个；内含 4 个 SIMD 和 64 KB LDS</td></tr>
+    <tr><td>wave</td><td>wave64</td><td>64 个线程组成的执行组，同一条指令同时作用于 64 个 lane</td></tr>
+    <tr><td>线程块</td><td>CTA / block</td><td>一个 kernel 网格中的一个块，整个生命周期驻留在同一个 CU 上</td></tr>
+    <tr><td>驻留数</td><td>residency / occupancy</td><td>一个 CU 上同时驻留的 CTA（或每个 SIMD 上的 wave）数量</td></tr>
+    <tr><td>向量寄存器 / 标量寄存器</td><td>VGPR / SGPR</td><td>每个 lane 私有的寄存器 / 整个 wave 共用的寄存器；gfx936 每 wave 最多 256 个 VGPR</td></tr>
+    <tr><td>本地共享存储</td><td>LDS（Local Data Share）</td><td>每个 CU 64 KB 的片上共享内存，32 个 bank</td></tr>
+    <tr><td>矩阵乘加单元</td><td>MMAC</td><td>一条指令完成一个小矩阵块乘加，例如 bf16 <latex>16 \times 16 \times 16</latex></td></tr>
+    <tr><td>向量运算单元</td><td>VALU</td><td>逐元素运算、类型转换、地址计算</td></tr>
+    <tr><td>特殊函数单元</td><td>SFU</td><td>exp2、倒数、平方根倒数等，吞吐为 VALU 的四分之一</td></tr>
+    <tr><td>访存地址单元</td><td>TA（Texture Addresser）</td><td>处理向量访存指令的地址并生成缓存请求；"受 TA 限制"即访存发射受限</td></tr>
+    <tr><td>L1 / L2 缓存</td><td>TCP / TCC</td><td>硬件计数器中的命名；L2 全卡共享 8 MB</td></tr>
+    <tr><td>计算强度</td><td>arithmetic intensity</td><td><latex>I = F / B</latex>，每搬 1 字节做多少次运算</td></tr>
+    <tr><td>拐点</td><td>ridge point</td><td><latex>I^{*} = P_{peak} / BW</latex>，访存受限与算力受限的分界</td></tr>
+    <tr><td>算力利用率 / 带宽利用率</td><td>MFU / MBU</td><td>实际性能除以算力峰值 / 实际带宽除以带宽峰值</td></tr>
+    <tr><td>四个下限</td><td><latex>T_{theory}, T_{split}, T_{full}, T_{meas}</latex></td><td>理论下限、拆分下限、满载下限、实测</td></tr>
+    <tr><td>三项开销</td><td><latex>O_{handoff}, O_{redund}, O_{idle}</latex></td><td>kernel 间交接、kernel 内冗余、硬件空等</td></tr>
+    <tr><td>删除上限</td><td>deletion ceiling</td><td>在计时构建中删掉被怀疑的工作，测出任何优化的收益上限</td></tr>
+    <tr><td>消融</td><td>ablation</td><td>保持工作量不变、只去掉被怀疑的开销，测出它的真实代价</td></tr>
+    <tr><td>逐位门禁</td><td>bitwise gate</td><td>候选与基准的所有输出逐元素完全相同</td></tr>
+    <tr><td>B 类改动</td><td>—</td><td>有意改变数值的改动，需审批并通过 FP64 精度门禁</td></tr>
+    <tr><td>MLS</td><td>matrix_load</td><td>gfx938 上一条指令把整块数据从显存搬进 LDS 的指令</td></tr>
+    <tr><td>SQTT</td><td>—</td><td>逐指令的发射与停顿追踪，用于找等待点</td></tr>
+    <tr><td>PMC</td><td>—</td><td>硬件性能计数器，由 hipprof 采集</td></tr>
+  </tbody>
+</table>
+<h1>附录 B　公式速查</h1>
+<table>
+  <colgroup><col width="190"/><col width="600"/></colgroup>
+  <thead><tr><th background-color="light-gray">名称</th><th background-color="light-gray">公式</th></tr></thead>
+  <tbody>
+    <tr><td>计算强度</td><td><latex>I = F / B</latex>；<latex>I_{alg} = F / B_{min}</latex>；<latex>I_{impl} = F / B_{DRAM}</latex></td></tr>
+    <tr><td>Roofline</td><td><latex>P_{attainable}(I) = \min(P_{peak},\ BW \times I)</latex>；<latex>I^{*} = P_{peak} / BW</latex></td></tr>
+    <tr><td>利用率</td><td><latex>\text{MFU} = (F/T)/P_{peak}</latex>；<latex>\text{MBU} = (B_{DRAM}/T)/BW_{HBM}</latex>；<latex>u_{level} = (B_{level}/T)/BW_{level}</latex></td></tr>
+    <tr><td>多资源下限</td><td><latex>T \ge \max(F_{MMAC}/P_{MMAC},\ F_{VALU}/P_{VALU},\ N_{exp}/P_{SFU},\ B_{HBM}/BW_{HBM})</latex></td></tr>
+    <tr><td>四个下限</td><td><latex>T_{theory} \le T_{split} \le T_{full} \le T_{meas}</latex>；<latex>T_{split} = \sum_k B_k^{iface}/BW</latex>；<latex>T_{full} = \sum_k \max_r W_{k,r}/P_r</latex></td></tr>
+    <tr><td>三项开销</td><td><latex>T_{meas} = T_{theory} \times O_{handoff} \times O_{redund} \times O_{idle}</latex></td></tr>
+    <tr><td>Amdahl 定律</td><td><latex>S = 1/((1-f) + f/s)</latex>；<latex>S_{max} = 1/(1-f)</latex></td></tr>
+    <tr><td>Little 定律</td><td><latex>B_{inflight} = BW \times L</latex></td></tr>
+    <tr><td>驻留数</td><td><latex>N_{CTA/CU} = \min(\lfloor 64\text{KB}/LDS_{CTA} \rfloor,\ N_{VGPR},\ \lfloor 40/W_{CTA} \rfloor)</latex></td></tr>
+    <tr><td>MMAC 并发</td><td>每个 SIMD 独立累加链数 <latex>\ge \lceil t_{dep} / t_{issue} \rceil = \lceil 44/8 \rceil = 6</latex>（bf16）</td></tr>
+    <tr><td>分块强度</td><td><latex>I_{tile} \approx 2mn/((m+n)s)</latex>；网格轮数 <latex>\lceil N_{grid}/(N_{CU} N_{CTA/CU}) \rceil</latex></td></tr>
+    <tr><td>TA 忙碌率</td><td><latex>u_{TA} = \sum \text{TA\_TA\_BUSY}/(\text{GRBM\_GUI\_ACTIVE} \times N_{CU})</latex>，饱和约 0.92</td></tr>
+    <tr><td>HBM 字节</td><td><latex>B^{rd} = 64(\text{RDREQ} - \text{RDREQ\_32B}) + 32\,\text{RDREQ\_32B}</latex>；<latex>B^{wr} = 64\,\text{WRREQ\_64B} + 32(\text{WRREQ} - \text{WRREQ\_64B})</latex></td></tr>
+    <tr><td>速度比分解</td><td><latex>T_{ref}/T_{ours} = (B_{ref}/B_{ours}) \times (u_{ours}/u_{ref}) \times (BW_{ours}/BW_{ref})</latex></td></tr>
+    <tr><td>单卡形状</td><td><latex>H_{local} = H/TP</latex>；<latex>T_{local} = T/CP</latex>；优化目标 <latex>\sum_s w_s T_s</latex></td></tr>
+    <tr><td>优先级</td><td><latex>r_{time} \times (1 - u_{max})</latex></td></tr>
+  </tbody>
+</table>
+<h1>附录 C　BW1000 参数卡与对标口径表</h1>
+<table>
+  <colgroup><col width="220"/><col width="170"/><col width="170"/><col width="230"/></colgroup>
+  <thead><tr><th background-color="light-gray">BW1000（gfx936）</th><th background-color="light-gray">理论值</th><th background-color="light-gray">实测可达</th><th background-color="light-gray">备注</th></tr></thead>
+  <tbody>
+    <tr><td>结构</td><td colspan="2">80 CU × 4 SIMD × 16 lane，wave64，1500 MHz；L2 8 MB；每 CU LDS 64 KB；HBM 64 GB</td><td>—</td></tr>
+    <tr><td>HBM 读 / 写 / 拷贝</td><td>1.84 TB/s</td><td>1.34 / 1.10 / 1.15 TB/s</td><td>读约为理论的 73%</td></tr>
+    <tr><td>L2 读 / LDS 读</td><td>— / 15.36 TB/s</td><td>6.10 / 15.24 TB/s</td><td>—</td></tr>
+    <tr><td>bf16 / f16 MMAC</td><td>491.5 TFLOPS</td><td>476.0 / 480.3 TFLOPS</td><td>拐点 355 FLOP/B</td></tr>
+    <tr><td>tf32 / fp32 MMAC</td><td>245.8 / 61.4 TFLOPS</td><td>237.7 / 61.0 TFLOPS</td><td>拐点 178 / 45.5</td></tr>
+    <tr><td>i8 MMAC</td><td>983 TOPS</td><td>951 TOPS</td><td>拐点 710 OP/B</td></tr>
+    <tr><td>fp32 VALU（打包 FMA）</td><td>30.7 TFLOPS</td><td>29.7 TFLOPS</td><td>不打包减半；拐点 22.2</td></tr>
+    <tr><td>SFU exp2</td><td>—</td><td><latex>1.92 \times 10^{12}</latex> 次/秒</td><td>VALU 的四分之一</td></tr>
+    <tr><td>延迟</td><td colspan="2">LDS 43 ns，L1 101 ns，L2 246 ns，HBM 385 ns；依赖的 bf16 MMAC 44 周期</td><td>指针追逐</td></tr>
+    <tr><td>同步与启动</td><td colspan="2">barrier 52 周期（256 线程）；kernel 启动约 2.0 到 2.2 µs，graph 约 1.7 µs</td><td>—</td></tr>
+    <tr><td>TA</td><td colspan="2">忙碌率饱和约 0.92；写每 512 B 约 27 周期发射成本</td><td>—</td></tr>
+  </tbody>
+</table>
+<p>对标口径表只列做归一化所需的实测参数，不展开 NV 硬件架构：</p>
+<table>
+  <colgroup><col width="220"/><col width="570"/></colgroup>
+  <thead><tr><th background-color="light-gray">参数</th><th background-color="light-gray">取值（实测）</th></tr></thead>
+  <tbody>
+    <tr><td>HBM 带宽</td><td>BW1000 1.34 TB/s；A800 1.77 TB/s；H20 3.82 TB/s</td></tr>
+    <tr><td>fp32 lane 运算吞吐</td><td>H20 约 <latex>19.8 \times 10^{12}</latex>/s；BW1102（gfx938）约 <latex>6.0 \times 10^{12}</latex>/s，打包 fp32 翻倍</td></tr>
+    <tr><td>H20 矩阵算力</td><td>约 138 TFLOPS（被削减，导致其上部分 FLA 阶段跟不上带宽）</td></tr>
+    <tr><td>参考实现版本</td><td>FLA 0.5.2，默认模式与 <code>disable_recompute</code> 模式分别报告</td></tr>
+  </tbody>
+</table>
+<h1>附录 D　规则速查与常见误区</h1>
+<p>下表是从 KDA 优化实验中提炼的关键规则（编号沿用老文档与 gfx938 记录），按问题归类。</p>
+<table>
+  <colgroup><col width="160"/><col width="630"/></colgroup>
+  <thead><tr><th background-color="light-gray">问题</th><th background-color="light-gray">规则</th></tr></thead>
+  <tbody>
+    <tr><td>判断瓶颈</td><td>逐项检查每种资源，TA 不能漏（体检卡加入 TA 后才发现递推 kernel 受 TA 限制）；TA 忙碌含等待时间，下结论前做删除实验（R54）</td></tr>
+    <tr><td>访存</td><td>已合并的访问 TA 代价只按字节计，加宽无益（R54、R45）；递推 kernel 的 16 B 读保持 lane 顺序（R69，gfx938）；地址改写只对 VALU 或递推 kernel 有效（R68）</td></tr>
+    <tr><td>驻留</td><td>gfx936 每 wave 最多 256 VGPR、无 AGPR，降低驻留不增加寄存器（R34）；编译器占用率注释不可信（R38）；驻留靠布局换，不靠寄存器上限</td></tr>
+    <tr><td>融合</td><td>融合要看宿主 kernel 有没有余量（R37）；融合后每 SIMD 至少 2 个 wave（R62）；先做容量预算和降占用率代价测量</td></tr>
+    <tr><td>定位</td><td>SQTT 等待点要对到源代码行（R58）；编译器因别名不敢提前读（R59）；按 head 数折算耗时可发现局部性问题（R60）</td></tr>
+    <tr><td>定价</td><td>SQTT 占比不等于可省的时间，以删除上限为准（R67）；只计时的上限变体也要先过门禁（R71）；往递推 kernel 搬活不免费（R75）</td></tr>
+    <tr><td>模型</td><td>模型用于否决和排序；预测收益低于约 5% 必须实测；往寄存器已满、受延迟限制的宿主加工作时模型偏乐观（R46）</td></tr>
+    <tr><td>数值</td><td>默认逐位一致；改数值走 FP64 精度门禁，每个张量不得比生产版和参考实现差（R23b）；打包减法写成 <latex>\text{fma}(b, -1, a)</latex>（R72）</td></tr>
+    <tr><td>测量</td><td>样本是进程；同卡同会话交替；确认卡空闲；重新构建会改变显存位置，只看改动的 kernel（R41）</td></tr>
+    <tr><td>LDS</td><td>先用指令形式的微基准拟合 bank 模型，再设计布局，并用计数器核对（R74）；冲突是否值得改先做消融（R42）</td></tr>
+  </tbody>
+</table>
+<p>全书最常见的误区汇总：只说"到顶"不说相对哪一层；把局部最优当全局最优；用错开销对应的手段；用理论峰值算利用率；用代码逻辑字节代替 DRAM 字节；只看 HBM 字节不看访存请求；只画算子总点不拆 kernel；看到冲突就改布局；不做容量预算就融合；只算一边的账；在被占用的卡上计时；用 L2 热的微基准结论直接合入；让 agent 自己判断正确性和方向。</p>
+<h1>附录 E　参考文献</h1>
+<ol>
+  <li seq="auto">S. Williams, A. Waterman, D. Patterson. Roofline: An Insightful Visual Performance Model for Multicore Architectures. Communications of the ACM, 2009.</li>
+  <li seq="auto">C. Yang, T. Kurth, S. Williams. Hierarchical Roofline Analysis for GPUs: Accelerating Performance Optimization for the NERSC-9 Perlmutter System. Concurrency and Computation: Practice and Experience, 2020.</li>
+  <li seq="auto">N. Ding, S. Williams. An Instruction Roofline Model for GPUs. IEEE/ACM PMBS, 2019.</li>
+  <li seq="auto">J. D. C. Little. A Proof for the Queuing Formula L = λW. Operations Research, 1961.</li>
+  <li seq="auto">G. M. Amdahl. Validity of the Single Processor Approach to Achieving Large Scale Computing Capabilities. AFIPS, 1967.</li>
+  <li seq="auto">A. Chowdhery et al. PaLM: Scaling Language Modeling with Pathways. 2022（附录 B 给出 MFU 的定义）。</li>
+  <li seq="auto">T. Dao et al. FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness. NeurIPS, 2022；T. Dao. FlashAttention-2, 2023；J. Shah et al. FlashAttention-3, 2024。</li>
+  <li seq="auto">M. Shoeybi et al. Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism. 2019；V. Korthikanti et al. Reducing Activation Recomputation in Large Transformer Models. 2022（序列并行）；H. Liu et al. Ring Attention with Blockwise Transformers for Near-Infinite Context. 2023。</li>
+  <li seq="auto">李博杰. 深入理解 AI Infra：量化分析与系统设计. v1.0, 2026-10-01（第 4 章加速器架构、第 5 章算子与运行时、第 6 章超节点）。github.com/bojieli/ai-infra-book。</li>
+  <li seq="auto">AMD. AsmEvo: Agentic Assembly-Level Optimization of AMD GPU Kernels with Functional Equivalence Verification. 2026。</li>
+  <li seq="auto">Kimi Team. Kimi Linear: An Expressive, Efficient Attention Architecture. arXiv:2510.26692（KDA 算法来源）。</li>
+  <li seq="auto">fla-org/flash-linear-attention（FLA，0.5.2），KDA 的公开 Triton 实现；MoonshotAI/FlashKDA。</li>
+  <li seq="auto">BabelStream（UoB-HPC）、Empirical Roofline Toolkit（LBNL）、mixbench：实测可达峰值的标定方法。</li>
+  <li seq="auto">kernel-roofline-analysis-tools：github.com/LearnMF/kernel-roofline-analysis-tools（本教程的工具、标定数据、实验记录与插图脚本）。</li>
+  <li seq="auto">《算子kernel性能优化经验》（本教程的前身文档，KDA 在 BW1000 上的完整实验报告与规则库 R1–R62）。</li>
+</ol>
+<h1>附录 F　子文档索引</h1>
+<table>
+  <colgroup><col width="200"/><col width="420"/><col width="170"/></colgroup>
+  <thead><tr><th background-color="light-gray">类别</th><th background-color="light-gray">文档</th><th background-color="light-gray">状态</th></tr></thead>
+  <tbody>
+    <tr><td>平台分册</td><td>gfx936（BW1000）：卡特性、规则与路线</td><td>待写</td></tr>
+    <tr><td>平台分册</td><td>gfx938（BW1102、BW1300）：卡特性、驻留规则、bank 模型、MLS 使用条件</td><td>待写</td></tr>
+    <tr><td>算子案例</td><td>KDA@gfx936：优化过程、四个下限、判停证据、对 A800/H20 FLA 的对标</td><td>待写（可由前身文档第 2 章整理）</td></tr>
+    <tr><td>算子案例</td><td>KDA@gfx938：移植、逐周优化、全链账本、对 H20 的 24 形状对比</td><td>待写</td></tr>
+    <tr><td>算子案例</td><td>KDA 的并行与接口：TP、变长、保存状态、checkpoint；CP</td><td>待写（CP 尚未完成）</td></tr>
+  </tbody>
+</table>

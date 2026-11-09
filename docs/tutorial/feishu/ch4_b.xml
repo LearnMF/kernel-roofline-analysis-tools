@@ -1,0 +1,50 @@
+<p>图 4-1 里有两个细节值得先注意。左图中每个 kernel 有三个形状不同的点（菱形是 LDS、三角是 L2、圆点是 HBM），它们纵坐标相同、横坐标不同；没有一个 kernel 的点贴到任何一条斜线上，说明三级存储的带宽都没有被用满。右图里，不少 kernel 的 TA（访存指令发射）利用率比 HBM 带宽利用率高得多，这正是 4.6 节要讲的"隐形屋顶"。</p>
+<h1>4.3 每一层的字节怎么测</h1>
+<p>每一层的字节数都来自 hipprof 的硬件计数器（PMC）。下表是 BW1000（gfx936）上的口径，换算公式已经用"工作量精确已知"的标定 kernel 校验过。</p>
+<table>
+  <colgroup><col width="150"/><col width="380"/><col width="250"/></colgroup>
+  <thead><tr><th background-color="light-gray">量</th><th background-color="light-gray">换算公式</th><th background-color="light-gray">说明</th></tr></thead>
+  <tbody>
+    <tr><td>HBM 读字节</td><td><latex>64 \times (\text{TCC\_EA\_RDREQ} - \text{TCC\_EA\_RDREQ\_32B}) + 32 \times \text{TCC\_EA\_RDREQ\_32B}</latex></td><td>区分 64 B 和 32 B 两种读请求</td></tr>
+    <tr><td>HBM 写字节</td><td><latex>64 \times \text{TCC\_EA\_WRREQ\_64B} + 32 \times (\text{TCC\_EA\_WRREQ} - \text{TCC\_EA\_WRREQ\_64B})</latex></td><td>区分 64 B 和 32 B 两种写请求</td></tr>
+    <tr><td>L2 字节</td><td><latex>\text{TCC\_REQ} \times 64\ \text{B}</latex></td><td>L2 命中率另看 <latex>\text{TCC\_HIT} / \text{TCC\_REQ}</latex></td></tr>
+    <tr><td>LDS 字节</td><td><latex>\text{SQ\_LDS\_IDX\_ACTIVE} \times 128\ \text{B}</latex></td><td>包含 bank 冲突占用的周期，是"占用"口径，冲突多时偏大</td></tr>
+    <tr><td>实际执行的 MMAC 运算量</td><td><latex>F_{exec} = \text{SQ\_INSTS\_MMOP} \times n_{flop}</latex></td><td><latex>n_{flop} = 8192</latex>（bf16 <latex>16 \times 16 \times 16</latex>），<latex>4096</latex>（fp32 <latex>16 \times 16 \times 8</latex>）；混用两种 MMAC 时要按 ISA 拆分</td></tr>
+    <tr><td>时间</td><td><latex>T = \text{EndNs} - \text{BeginNs}</latex></td><td>每个 kernel 一行</td></tr>
+  </tbody>
+</table>
+<p>一次 hipprof 不能同时采所有计数器，而且 HBM 的读计数和写计数不能放在同一次里，所以要分四次跑同一个程序，再按 kernel 的序号把四份结果对齐。计数器写在一个文本文件里，用环境变量 HIPPROF_INPUT_FILE 指给 hipprof：</p>
+<pre lang="bash" caption="四次 hipprof 采集分层 Roofline 所需计数器（BW1000）"><code>echo 'pmc: SQ_INSTS_MMOP SQ_ACTIVE_INST_MMOP SQ_LDS_IDX_ACTIVE SQ_LDS_BANK_CONFLICT SQ_INSTS_LDS SQ_INSTS_VALU GRBM_GUI_ACTIVE' &gt; pmc_s.txt
+echo 'pmc: TCC_REQ_sum TCC_READ_sum TCC_WRITE_sum TCC_HIT_sum' &gt; pmc_req.txt
+echo 'pmc: TCC_EA_RDREQ_sum TCC_EA_RDREQ_32B_sum' &gt; pmc_rd.txt
+echo 'pmc: TCC_EA_WRREQ_sum TCC_EA_WRREQ_64B_sum' &gt; pmc_wr.txt
+for p in s req rd wr; do
+  HIPPROF_INPUT_FILE=$PWD/pmc_$p.txt hipprof --pmc --pmc-type 3 -o hr_$p python3 your_case.py
+done
+# 得到 hr_s / hr_req / hr_rd / hr_wr 四份 CSV，每个 kernel 一行，按序号对齐后套用上表公式</code></pre>
+<p>采集时有三点要注意。第一，被测程序只跑一次前向+反向，否则 CSV 太大且难以对齐。第二，运行时间不到 10 µs 的 kernel 计数不可靠，不要据此下结论。第三，计数器统计的是整张卡的流量，机器上有别人的任务时，HBM 和 L2 的读数会被污染（我们在一张被邻居占用的卡上测到 HBM 读带宽比独占时低了 16%），一定要先确认卡是空闲的。</p>
+<h1>4.4 怎么读一个 kernel 的三个点</h1>
+<p>同一个 kernel 的三个点纵坐标相同（都是 <latex>P = F / T</latex>），横坐标分别是 <latex>I_{LDS}</latex>、<latex>I_{L2}</latex>、<latex>I_{HBM}</latex>。读图只需要三条规则。</p>
+<p><b>规则一：每层的利用率等于点的高度除以该层斜线在这个横坐标处的高度。</b>化简后就是这一层的实际带宽除以可达带宽：</p><p align="center"><latex>u_{level} = \frac{F/T}{BW_{level} \times I_{level}} = \frac{B_{level}/T}{BW_{level}}</latex></p><p>利用率最高的那一层，是候选的瓶颈层。</p>
+<p><b>规则二：某一层 <latex>u_{level} \ge 80\%</latex>，就认为这一层饱和了。</b>这时只能减少落在这一层上的字节：HBM 饱和就融合、少交接；L2 饱和就改善访问局部性和分块；LDS 饱和就减少 LDS 读写次数、消除 bank 冲突。</p>
+<p><b>规则三：三层都 <latex>u_{level} &lt; 60\%</latex>，说明瓶颈不在带宽上。</b>要去查 4.6 节的隐形屋顶。此外，相邻两个点之间的距离就是复用倍数：<latex>I_{HBM} / I_{L2} = B_{L2} / B_{HBM}</latex> 反映 L2 挡住了多少流量，<latex>I_{L2} / I_{LDS} = B_{LDS} / B_{L2}</latex> 反映每个从 L2 取来的字节在 LDS 里被用了几次。</p>
+<p>用 KDA 里最耗时的 wy_s4b kernel（8K 序列、12 个 head）走一遍。它耗时 <latex>T = 660\ \mu s</latex>，执行了 <latex>F = 12.1\ \text{GFLOP}</latex>，性能 <latex>P \approx 18.3\ \text{TFLOPS}</latex>；三层带宽分别是 LDS 4.09 TB/s、L2 0.76 TB/s、HBM 734 GB/s，对应 <latex>I_{LDS} \approx 4.5</latex>、<latex>I_{L2} \approx 24.1</latex>、<latex>I_{HBM} \approx 25.0</latex> FLOP/B。按规则一，<latex>u_{LDS} = 4.09/15.24 \approx 27\%</latex>，<latex>u_{L2} = 0.76/6.10 \approx 12\%</latex>，<latex>u_{HBM} = 0.734/1.339 \approx 55\%</latex>：HBM 最高，但离 80% 还远，三层都没饱和。<latex>I_{HBM}</latex> 和 <latex>I_{L2}</latex> 几乎重合，说明 L2 基本没有挡住流量；<latex>I_{L2} / I_{LDS} \approx 5.4</latex>，说明每个从 L2 取来的字节在 LDS 里被用了 5 次左右。那它卡在哪里？它的 TA 忙碌率是 0.70，而 BW1000 上 TA 的饱和值约为 0.92，已经用到了 <latex>0.70 / 0.92 \approx 76\%</latex>，比任何一层带宽都高：wy_s4b 被访存指令的发射卡住了，而不是被字节量卡住。这时提高 L2 命中、减少 HBM 字节帮助不大，应该减少它发出的访存请求：把分散的访问改成合并的访问、去掉重复读取（包括命中 L2 的重复读取）、把逐 lane 的细碎读写改成经 LDS 中转的成块读写。</p>
+<p>下表把 8K/H12 下 KDA 的主要 kernel 都按同样的方法过了一遍。百分比是 <latex>u_{level} = (B_{level}/T) / BW_{level}</latex>；TA 和 VALU 是忙碌率（TA 饱和值约 0.92，VALU 约 0.97 到 1.00）。</p>
+<table>
+  <colgroup><col width="130"/><col width="70"/><col width="70"/><col width="70"/><col width="70"/><col width="70"/><col width="70"/><col width="230"/></colgroup>
+  <thead><tr><th background-color="light-gray">kernel</th><th background-color="light-gray">时间 µs</th><th background-color="light-gray">HBM</th><th background-color="light-gray">L2</th><th background-color="light-gray">LDS</th><th background-color="light-gray">TA</th><th background-color="light-gray">VALU</th><th background-color="light-gray">主要受限</th></tr></thead>
+  <tbody>
+    <tr><td>wy_s4b</td><td>660</td><td>55%</td><td>12%</td><td>27%</td><td>0.70</td><td>0.38</td><td>TA（访存发射）</td></tr>
+    <tr><td>dhu_v8b</td><td>360</td><td>42%</td><td>13%</td><td>18%</td><td>0.85</td><td>0.27</td><td>TA；只有 48 个 CTA，80 个 CU 没占满</td></tr>
+    <tr><td>fwd_h_v8o4</td><td>352</td><td>30%</td><td>11%</td><td>21%</td><td>0.70</td><td>0.27</td><td>TA + 串行递推链</td></tr>
+    <tr><td>wu</td><td>332</td><td>72%</td><td>20%</td><td>24%</td><td>0.42</td><td>0.40</td><td>HBM</td></tr>
+    <tr><td>bwd_tail</td><td>331</td><td>72%</td><td>16%</td><td>17%</td><td>0.86</td><td>0.55</td><td>TA</td></tr>
+    <tr><td>fwd_prep_a</td><td>323</td><td>45%</td><td>10%</td><td>14%</td><td>0.38</td><td>0.74</td><td>VALU（指令发射）</td></tr>
+    <tr><td>wy_s4a</td><td>280</td><td>62%</td><td>14%</td><td>25%</td><td>0.53</td><td>0.24</td><td>HBM</td></tr>
+    <tr><td>fwd_prep_b</td><td>185</td><td>70%</td><td>19%</td><td>22%</td><td>0.79</td><td>0.22</td><td>TA</td></tr>
+    <tr><td>dav</td><td>142</td><td>74%</td><td>19%</td><td>36%</td><td>0.62</td><td>0.24</td><td>HBM（LDS 冲突多，但不在关键路径上）</td></tr>
+    <tr><td>gate</td><td>92</td><td>61%</td><td>11%</td><td>1%</td><td>0.29</td><td>0.76</td><td>VALU</td></tr>
+    <tr><td>l2n_apply</td><td>78</td><td>97%</td><td>21%</td><td>—</td><td>0.78</td><td>0.26</td><td>HBM（已贴线）</td></tr>
+  </tbody>
+</table>
+<p>可以看到，同一个算子里三类瓶颈同时存在：受 TA 限制的（wy_s4b、dhu、fwd_h 的两个实例、bwd_tail、fwd_prep_b）合计约占总时间的 63%，受 HBM 带宽限制的（wu、wy_s4a、dav、l2n_apply）约占 24%，受 VALU 限制的（fwd_prep_a、gate）约占 12%。如果只看第 3 章那个算子级的点，你只会得出"访存受限、MBU 66%"的结论，然后把力气都花在减 HBM 字节上，而占时间六成以上的 kernel 根本不是被 HBM 带宽卡住的。图 4-2 是这一形态的完整分层 Roofline：左边每个 kernel 编号 K1 到 K9 的三个点和算子整体的方块，右边是每个 kernel 在 HBM、L2、LDS、TA、VALU、MMAC 六个通道上的利用率。</p>

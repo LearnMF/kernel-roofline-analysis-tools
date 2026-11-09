@@ -106,9 +106,18 @@ python -m kra.model.fusion --optrace /tmp/wl/g2.optrace.json --machine machines/
 # L3：逐指令分析（.perf 由 examples/kda/sqtt_capture.sh 采集；ISA 用 -gline-tables-only 编译）
 python -m kra.sqtt.pcmap --perf X.perf --dispatch 91 --asm kernel_dbg.s --symbol <mangled kernel>
 
+# 通用工具（与具体算子无关，见 kra/tools/，测试 tests/test_tools.py）
+python -m kra.tools.gate bitwise base.npz cand.npz                 # 逐位门禁；ref64 模式做 FP64 误差比
+python -m kra.tools.abba --key fwd_ms --a "<命令A>" --b "<命令B>"  # 新进程 ABBA 交替计时
+python -m kra.tools.roofline --machine machines/gfx936-bw1000.json --points pts.csv --out roof.png
+python -m kra.tools.isa k.s --count v_mmac                        # 资源预检：VGPR/SGPR/LDS/scratch
+
 # 测试
 python -m unittest discover -s tests
 ```
+
+`examples/kda/` 下的脚本（bitwise_gate.py、ab_fast.sh、ceiling/collect.sh、sqtt_capture.sh 等）是为 KDA 写的示例，
+带有 KDA 的路径与容器名；其他算子请使用上面的通用工具，或参考这些示例按自己的环境重新实现。
 
 ## 目录
 

@@ -1,0 +1,23 @@
+<title>HCU 算子性能优化教程（总论）</title>
+<p>这是一套面向 HCU/DCU 的算子性能优化教程，写给刚开始做算子优化的同事。目标是：从头到尾一章一章读下来，读完就能动手做优化；以后遇到问题，第一反应是"这套文档里好像讲过"，然后翻到对应章节照着做，在实践中积累自己的经验。</p>
+<p>全文围绕 HCU 自己的卡展开，贯穿示例统一使用 BW1000（gfx936，80 CU，1500 MHz），所有硬件数字都来自实测标定。其他卡（例如 gfx938）的特性和结论放在平台分册里，具体算子的完整优化过程放在算子案例里；主文档不依赖它们也能读完，它们只作为每章末尾的延伸阅读。</p>
+<h1>两条主线</h1>
+<p>除了一般的优化方法，这套教程重点回答两个问题，它们贯穿每一章。</p>
+<p><b>主线一：是否已经到达优化上限。</b>"上限"不是一个数，而是一组从宽到严的下限：硬件上限（Roofline）、理论下限、拆分下限、满载下限，最后是实测时间。说"到顶了"必须说清相对哪一层：当前指令流到顶、当前拆法到顶，还是算法与硬件到顶，三者对应的后续动作完全不同。第 1 章引入，第 3、4 章给出硬件上限并定位瓶颈，第 6 章量出四个下限。</p>
+<p><b>主线二：当前方向是不是全局最优。</b>把一份指令流抠到满载下限只是局部最优。全局最优要在所有可行的数据流（拆法、融合、重算、算法形式、数值格式）里找下限最低的那一种。教程反复使用三个做法：先测上限再动手、分层列出方案空间、保留并定期复核慢的候选。第 7 章用对标区分硬件差距与实现差距，第 11 章给出判停准则和确认全局最优方向的完整方法。</p>
+<h1>怎么读</h1>
+<p>建议按章节顺序阅读。第 1、2 章建立问题意识和硬件模型；第 3、4 章用 Roofline 和分层 Roofline 判断算子落在哪个区、瓶颈在哪一层；第 5、6 章解释为什么离上限远、离真正的极限还有多远；第 7 章讲怎么借助参考实现（例如 NV 卡上的 FLA）找方向；第 8、9 章是按瓶颈组织的优化手段；第 10、11 章是每一轮实验的流程和判停；第 12 章是可以直接执行的工具命令；第 13 章讨论 AI 辅助优化。每章都按"本章目标 → 正文 → 常见误区 → 小练习 → 速查"组织。</p>
+<p>前置知识：会写和读 HIP kernel，知道 grid、block（CTA）、wave 的基本概念，会用 Python 跑 PyTorch。不需要事先了解性能分析工具，第 4 章和第 12 章会从命令开始讲。</p>
+<h1>目录</h1>
+<table>
+<colgroup><col width="90"/><col width="360"/><col width="260"/><col width="80"/></colgroup>
+<thead><tr><th background-color="light-gray">章节</th><th background-color="light-gray">标题</th><th background-color="light-gray">页面</th><th background-color="light-gray">状态</th></tr></thead>
+<tbody><tr><td>首页</td><td>导读（本页）</td><td>—</td><td>已写</td></tr><tr><td>第 1 章</td><td>算子优化要回答什么</td><td><cite type="doc" doc-id="SBJUd5gXAogVlCxUmhycOIRpnhU"></cite></td><td>初稿</td></tr><tr><td>第 2 章</td><td>认识 BW1000：HCU 硬件模型</td><td><cite type="doc" doc-id="YrlXdmVeXokDpLxDNGYcLAMUnRf"></cite></td><td>初稿</td></tr><tr><td>第 3 章</td><td>Roofline：判断算子落在哪个区</td><td><cite type="doc" doc-id="Wco9dUY4foHcafxT1sZcjzQwnLk"></cite></td><td>初稿</td></tr><tr><td>第 4 章</td><td>分层 Roofline：真实优化时怎么看</td><td><cite type="doc" doc-id="Ba02dzqProaDg3xkKbdc9olynqd"></cite></td><td>初稿</td></tr><tr><td>第 5 章</td><td>kernel 在 CU 上如何执行</td><td><cite type="doc" doc-id="Neb8dw5r5ohQIGxr3UCcCjALnhe"></cite></td><td>初稿</td></tr><tr><td>第 6 章</td><td>四个下限：离极限还有多远</td><td><cite type="doc" doc-id="F7Pgdvhy2oKph3x6O3pcguspnjg"></cite></td><td>初稿</td></tr><tr><td>第 7 章</td><td>对标：从参考实现找优化方向</td><td><cite type="doc" doc-id="MjSyd2ZpjoXgTKx5ERYckWvwnkg"></cite></td><td>初稿</td></tr><tr><td>第 8 章</td><td>单 kernel 优化手段（按瓶颈资源组织）</td><td><cite type="doc" doc-id="BsIDdLm1xoOR80xkfEJcBN0snHc"></cite></td><td>初稿</td></tr><tr><td>第 9 章</td><td>多 kernel：融合、交接与运行时</td><td><cite type="doc" doc-id="YP90dzt2XoDeY6xMhS7cF7n3nb0"></cite></td><td>初稿</td></tr><tr><td>第 10 章</td><td>每一轮怎么做</td><td><cite type="doc" doc-id="G7WSdGNPqoTlTkx35XAcj97inAe"></cite></td><td>初稿</td></tr><tr><td>第 11 章</td><td>到顶了吗：判停与全局最优方向</td><td><cite type="doc" doc-id="EzfAdO2Pno2LWpxb7QScJFl3ngb"></cite></td><td>初稿</td></tr><tr><td>第 12 章</td><td>工具链（喂饭级命令）</td><td><cite type="doc" doc-id="BrDVdXzuooYBUtxvhqccZCCEnRh"></cite></td><td>初稿</td></tr><tr><td>第 13 章</td><td>AI 辅助的算子优化</td><td><cite type="doc" doc-id="M7bhd08kTo1JpVxdpmNcG75UnMe"></cite></td><td>初稿</td></tr><tr><td>附录</td><td>术语表、公式速查、参数卡、规则速查、参考文献、子文档索引</td><td><cite type="doc" doc-id="CoJSdjsPMohZRYxXQHJcs8ULnce"></cite></td><td>初稿</td></tr></tbody>
+</table>
+<h1>约定</h1>
+<p><b>单位与公式。</b>所有公式和数学符号使用 LaTeX 书写。运算量用 FLOP（一次乘加记 2 FLOP），字节用 B，带宽用 TB/s 或 GB/s（按 10 的幂换算），算力用 TFLOPS，计算强度用 FLOP/B。</p>
+<p><b>峰值口径。</b>屋顶和利用率的分母一律取实测可达值（标定微基准的最好配置），引用理论值时单独注明。</p>
+<p><b>数据时效。</b>文中的 KDA 数据会注明采集日期和版本；部分插图来自 2026-10-13 的采集，后续用 gfx936 当前最佳版本重测后会替换。</p>
+<h1>子文档（另外成篇，后续补充）</h1>
+<p><b>平台分册：</b>gfx936（BW1000）；gfx938（BW1102 与 BW1300）。H20、A800 只作为对标口径出现。</p>
+<p><b>算子案例：</b>KDA@gfx936；KDA@gfx938；KDA 的并行与接口（TP、varlen、keep-state，CP 待补）。</p>

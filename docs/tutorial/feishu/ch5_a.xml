@@ -1,0 +1,22 @@
+<title>第 5 章　kernel 在 CU 上如何执行</title>
+<p><b>本章目标。</b>第 3、4 章告诉你一个 kernel 卡在哪个资源上，第 6 章告诉你它离各层下限有多远。本章解释中间缺的那一环：为什么一个 kernel 会离屋顶这么远，也就是硬件空等开销 <latex>O_{idle}</latex> 和一部分 kernel 内冗余开销 <latex>O_{redund}</latex> 是怎么产生的。读完本章，你应该能算出一个 kernel 在 BW1000 上的驻留数，判断它的在途请求够不够隐藏延迟，理解 MMAC、barrier、分块、LDS bank、全局访存和归约方式各自如何影响执行时间，并知道每一项该用什么手段改。</p>
+<h1>5.1 驻留与占用率</h1>
+<p>一个 CU 上同时驻留的 CTA 越多，硬件就有越多的 wave 可以轮流发射，一个 wave 等数据时另一个 wave 可以干活。驻留数由各类资源中最紧的那一项决定（第 2.2 节）：</p>
+<p align="center"><latex>N_{CTA/CU} = \min\left(\left\lfloor \frac{64\ \text{KB}}{LDS_{CTA}} \right\rfloor,\ N_{VGPR},\ \left\lfloor \frac{40}{W_{CTA}} \right\rfloor\right)</latex></p>
+<p>在 BW1000 上有三条实测规则要记住。第一，每个 wave 最多 256 个 VGPR，没有 AGPR，降低驻留数并不会给单个 wave 增加寄存器。第二，编译器的 <code>; Occupancy:</code> 注释不可信，实测 VGPR 在 200 到 256 之间时每个 SIMD 仍能驻留 3 个 wave。第三，KDA 的 kernel 实际上几乎都是被 LDS 限制驻留数的，所以想多放一个 CTA，先看能不能压 LDS。</p>
+<p>驻留数到底值多少？最直接的办法是实测：在不改代码逻辑的前提下，让 kernel 多申请一些 LDS，人为把驻留数压低，看时间涨多少。下表和图 5-1 是 KDA 各 kernel 在 BW1000 上的实测结果（16K 序列，每卡 48 个和 12 个 head，5 个进程的配对中位数）。</p>
+<table>
+  <colgroup><col width="150"/><col width="160"/><col width="170"/><col width="170"/><col width="140"/></colgroup>
+  <thead><tr><th background-color="light-gray">kernel</th><th background-color="light-gray">驻留数变化</th><th background-color="light-gray">16K/H48 变慢</th><th background-color="light-gray">16K/H12 变慢</th><th background-color="light-gray">类型</th></tr></thead>
+  <tbody>
+    <tr><td>wu</td><td>2 → 1</td><td>+33%</td><td>+41%</td><td>吞吐受限</td></tr>
+    <tr><td>wy_s4a</td><td>2 → 1</td><td>+23%</td><td>+34%</td><td>吞吐受限</td></tr>
+    <tr><td>wy_s4b</td><td>2 → 1</td><td>+24%</td><td>+35%</td><td>吞吐受限</td></tr>
+    <tr><td>dav</td><td>3 → 2 / 3 → 1</td><td>+14% / +60%</td><td>+17% / +69%</td><td>吞吐受限</td></tr>
+    <tr><td>fwd_prep_a</td><td>3 → 2 / 3 → 1</td><td>+47% / +66%</td><td>+30% / +61%</td><td>吞吐受限</td></tr>
+    <tr><td>fwd_prep_b</td><td>3 → 2 / 3 → 1</td><td>+6% / +46%</td><td>+10% / +56%</td><td>吞吐受限</td></tr>
+    <tr><td>bwd_tail</td><td>3 → 2 / 3 → 1</td><td>+1% / +48%</td><td>+8% / +60%</td><td>吞吐受限</td></tr>
+    <tr><td>fwd_h（递推）</td><td>3 → 2 / 3 → 1</td><td>约 <latex>\pm 5\%</latex></td><td>约 <latex>\pm 5\%</latex></td><td>串行链主导</td></tr>
+  </tbody>
+</table>
+<p>从这组数据可以读出两条规律。吞吐受限的 kernel 对驻留数非常敏感，少一个 CTA 就可能慢 15% 到 70%；而递推这类串行链主导的 kernel 几乎不受影响，因为它的时间由一步接一步的依赖决定，与同时驻留多少 CTA 无关。这也解释了为什么在 BW1000 上"大 kernel、低驻留"的融合几乎总是不划算：融合省下的交接流量，抵不过驻留数下降带来的损失；要融合，至少要保证每个 SIMD 上还有 2 个 wave。</p>

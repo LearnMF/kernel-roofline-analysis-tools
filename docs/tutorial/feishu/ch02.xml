@@ -1,0 +1,126 @@
+<title>第 2 章　认识 BW1000：HCU 硬件模型</title>
+<p><b>本章目标。</b>优化之前先要知道硬件"有什么、各有多快、各有多大"。读完本章，你应该能说出 BW1000（gfx936）整卡和单个 CU 的结构，知道 MMAC、VALU、SFU 三类运算单元各自适合什么工作、峰值是多少，记住各级存储的容量、带宽和延迟，理解一条访存指令要经过哪些部件、为什么"访存指令发射"会成为瓶颈，并且会用标定微基准把一张新卡变成一组可用的数字。本章给出的是全书所有上限分析的"原材料"：第 3 章的屋顶、第 4 章的分层斜线、第 6 章的下限，都直接用这里的数。</p>
+<h1>2.1 整卡结构</h1>
+<p>BW1000 是一张 gfx936 架构的 HCU 卡。从程序员的角度看，它由 80 个计算单元（CU）组成，所有 CU 共享一块 8 MB 的 L2 缓存，L2 背后是 64 GB 的 HBM 显存。主机通过运行时把 kernel 提交给设备，kernel 的每个线程块（CTA，HIP 里叫 block）被分配到某一个 CU 上执行，一个 CTA 从开始到结束都留在同一个 CU 上；一个 CU 上可以同时驻留多个 CTA。我们使用的机器把 shader 时钟固定在 1500 MHz（性能模式设为 manual），这样测量才可重复。</p>
+<table>
+  <colgroup><col width="220"/><col width="560"/></colgroup>
+  <thead><tr><th background-color="light-gray">项</th><th background-color="light-gray">BW1000（gfx936）</th></tr></thead>
+  <tbody>
+    <tr><td>CU 数</td><td><latex>N_{CU} = 80</latex></td></tr>
+    <tr><td>shader 时钟</td><td><latex>f = 1500\ \text{MHz}</latex>（固定档，实测 1500.0 到 1500.1 MHz）</td></tr>
+    <tr><td>L2</td><td>8 MB，全卡共享</td></tr>
+    <tr><td>HBM</td><td>64 GB，位宽 4096 bit，显存时钟 1.8 GHz</td></tr>
+    <tr><td>每 CU 的 LDS</td><td>64 KB</td></tr>
+    <tr><td>每 CU 最多线程数</td><td>2560（即 40 个 wave）</td></tr>
+  </tbody>
+</table>
+<h1>2.2 CU 内部：SIMD、wave、寄存器与 LDS</h1>
+<p>每个 CU 内有 4 个 SIMD，每个 SIMD 有 16 条运算通道（lane）。HCU 的线程以 64 个为一组执行，称为一个 <b>wave</b>（wave64）：同一个 wave 的 64 个线程执行同一条指令，处理各自的数据。由于一个 SIMD 只有 16 条 lane，一条 VALU 指令要分 4 个周期才能对整个 wave 做完，这是估算 VALU 耗时的基本单位：</p>
+<p align="center"><latex>t_{VALU} \approx N_{inst} \times 4\ \text{cycles}</latex></p><p>其中 <latex>N_{inst}</latex> 是一个 wave 执行的 VALU 指令条数，时间按这个 wave 所在的 SIMD 计。</p>
+<p>一个 256 线程的 CTA 包含 4 个 wave，通常每个 SIMD 分到一个。每个 SIMD 上可以同时驻留多个 wave，硬件在它们之间切换来隐藏延迟：一个 wave 在等数据时，另一个 wave 可以发射指令。同时驻留的 wave 越多，可以隐藏的延迟越多，这就是"占用率"的意义。</p>
+<p><b>寄存器。</b>每个线程有私有的向量寄存器（VGPR），gfx936 上每个 wave 最多 256 个 VGPR，没有额外的累加寄存器（AGPR）；所有线程取值相同的量（例如数组基址、循环次数）放在标量寄存器（SGPR）里，由标量单元处理，不占 VGPR 也不占 VALU。需要特别记住一条实测结论：编译器在汇编里给出的 <code>; Occupancy:</code> 注释在 gfx936 上不准，它按"VGPR 超过 128 就只能驻留 1 个 wave"计算，但实测 VGPR 在 200 到 256 之间时，每个 SIMD 仍能同时驻留 3 个 wave。所以驻留数要实测，不能看编译器的注释。</p>
+<p><b>LDS。</b>每个 CU 有 64 KB 的 LDS（Local Data Share，相当于程序员管理的片上共享内存），由驻留在这个 CU 上的所有 CTA 分用。一个 CTA 申请多少 LDS，直接决定一个 CU 能放下几个 CTA。LDS 由 32 个 bank 组成，每个 bank 每周期服务 4 字节；同一周期内多个 lane 访问同一个 bank 的不同地址，就会发生 bank 冲突，访问被拆成多次（第 5 章详细讲）。</p>
+<p><b>驻留数怎么算。</b>一个 CU 能同时放几个 CTA，取各类资源允许数量中的最小值：</p>
+<p align="center"><latex>N_{CTA/CU} = \min\left(\left\lfloor \frac{64\ \text{KB}}{LDS_{CTA}} \right\rfloor,\ N_{VGPR},\ \left\lfloor \frac{40}{W_{CTA}} \right\rfloor,\ \ldots\right)</latex></p>
+<p>其中 <latex>LDS_{CTA}</latex> 是每个 CTA 申请的 LDS，<latex>W_{CTA}</latex> 是每个 CTA 的 wave 数，<latex>N_{VGPR}</latex> 是寄存器允许的 CTA 数（按上面的实测规则确定）。在我们做过的 KDA kernel 里，真正卡住驻留数的通常是 LDS，而不是寄存器。</p>
+<h1>2.3 计算单元：MMAC、VALU 与 SFU</h1>
+<p>CU 里有三类运算单元，适合的工作和峰值相差很大。</p>
+<p><b>MMAC（矩阵乘加单元）</b>一条指令完成一个小矩阵块的乘加，是算力最强的单元。gfx936 上常用的指令和每条的运算量如下：</p>
+<table>
+  <colgroup><col width="290"/><col width="170"/><col width="160"/><col width="160"/></colgroup>
+  <thead><tr><th background-color="light-gray">指令</th><th background-color="light-gray">形状 <latex>M \times N \times K</latex></th><th background-color="light-gray">每条运算量</th><th background-color="light-gray">实测可达峰值</th></tr></thead>
+  <tbody>
+    <tr><td><code>v_mmac_f32_16x16x16_bf16</code></td><td><latex>16 \times 16 \times 16</latex></td><td><latex>8192</latex> FLOP</td><td>476.0 TFLOPS</td></tr>
+    <tr><td><code>v_mmac_f32_16x16x16_f16</code></td><td><latex>16 \times 16 \times 16</latex></td><td><latex>8192</latex> FLOP</td><td>480.3 TFLOPS</td></tr>
+    <tr><td><code>v_mmac_f32_16x16x8_tf32</code></td><td><latex>16 \times 16 \times 8</latex></td><td><latex>4096</latex> FLOP</td><td>237.7 TFLOPS</td></tr>
+    <tr><td><code>v_mmac_16x16x8_f32</code></td><td><latex>16 \times 16 \times 8</latex></td><td><latex>4096</latex> FLOP</td><td>61.0 TFLOPS</td></tr>
+    <tr><td><code>v_mmac_i32_16x16x32_i8</code></td><td><latex>16 \times 16 \times 32</latex></td><td><latex>16384</latex> OP</td><td>951 TOPS</td></tr>
+  </tbody>
+</table>
+<p>bf16 MMAC 的理论吞吐是每 CU 每周期 4096 FLOP，也就是每个 SIMD 每周期 1024 FLOP，所以一条 bf16 MMAC 在 SIMD 上占用 <latex>8192 / 1024 = 8</latex> 个周期；而相互依赖的两条 MMAC 之间要等约 44 个周期（结果才能被下一条使用）。这意味着要喂满 MMAC，每个 SIMD 上至少要有 <latex>\lceil 44 / 8 \rceil = 6</latex> 条彼此独立的累加链在交替发射。实测也印证了这一点：每个 CU 只放 1 个 CTA、8 条累加链时只有 327.6 TFLOPS，放到 8 个 CTA 才达到 470 TFLOPS。</p>
+<p><b>VALU（向量运算单元）</b>做逐元素的算术、比较、类型转换和地址计算。fp32 FMA 的实测峰值是 29.7 TFLOPS，但这个数要用打包指令 <code>v_pk_fma_f32</code>（一条指令处理两个 fp32）才能达到；普通的 <code>v_fma_f32</code> 只有一半，约 15 TFLOPS。VALU 比 MMAC 慢一个数量级以上，所以一个以 MMAC 为主的 kernel，只要夹带的逐元素工作稍多，就可能被 VALU 卡住。</p>
+<p><b>SFU（特殊函数单元）</b>计算 exp2、倒数、平方根倒数等超越函数，吞吐是 VALU 的四分之一：每 CU 每周期 16 次，整卡实测约 <latex>1.92 \times 10^{12}</latex> 次每秒。带大量 exp 的算子（softmax、门控类）要单独估算这一项。</p>
+<h1>2.4 存储层次：容量、带宽与延迟</h1>
+<p>下表是 BW1000 各级存储的容量、实测可达带宽和单次访问延迟（延迟用单个 lane 指针追逐测得，即每次读取的地址来自上一次读到的值）。</p>
+<table>
+  <colgroup><col width="140"/><col width="170"/><col width="230"/><col width="240"/></colgroup>
+  <thead><tr><th background-color="light-gray">层级</th><th background-color="light-gray">容量</th><th background-color="light-gray">实测可达带宽</th><th background-color="light-gray">延迟</th></tr></thead>
+  <tbody>
+    <tr><td>VGPR</td><td>每 wave 最多 256 个</td><td>—</td><td>—</td></tr>
+    <tr><td>LDS</td><td>每 CU 64 KB</td><td>15.24 TB/s（每 CU 每周期约 127 B，理论 128 B）</td><td>64 周期（约 43 ns）</td></tr>
+    <tr><td>L1（向量缓存）</td><td>小工作集（16 KB）</td><td>—</td><td>约 152 周期（约 101 ns）</td></tr>
+    <tr><td>L2</td><td>8 MB，全卡共享</td><td>6.10 TB/s（每 CU 每周期约 49 B）</td><td>约 369 周期（约 246 ns）</td></tr>
+    <tr><td>HBM</td><td>64 GB</td><td>读 1.34 TB/s，写 1.10 TB/s，拷贝 1.15 TB/s</td><td>约 577 周期（约 385 ns）</td></tr>
+  </tbody>
+</table>
+<p>这张表有三层用法。</p>
+<p><b>容量决定数据能不能留在片上。</b>L2 只有 8 MB，而一个大算子在 kernel 之间交接的中间张量动辄上百 MB，所以这些张量不可能在两个 kernel 之间留在 L2 里，只能经过 HBM；想省掉这部分流量，只能在同一个 kernel 内部完成生产和消费。同理，一个 CTA 的工作集超过 LDS 能给它的份额，就只能拆成多个 kernel。KDA 达不到算法本身计算强度的根本原因就在这里（第 6 章）。</p>
+<p><b>带宽决定每一层的屋顶。</b>第 4 章的分层 Roofline 用的就是这三条带宽。离运算单元越近，带宽越高：LDS 是 HBM 的约 11 倍，L2 是 HBM 的约 4.5 倍。</p>
+<p><b>延迟决定需要多少并发。</b>要让一级存储持续跑满带宽，必须有足够多的请求同时在途，这就是 Little 定律：</p>
+<p align="center"><latex>B_{inflight} = BW \times L</latex></p>
+<p>以 HBM 为例，<latex>B_{inflight} = 1.34\ \text{TB/s} \times 385\ \text{ns} \approx 516\ \text{KB}</latex>，平均到 80 个 CU，每个 CU 要保持约 6.4 KB 的读请求在途。一个 wave 的一条 16 字节宽的读指令带回 <latex>64 \times 16 = 1\ \text{KB}</latex>，也就是说每个 CU 任何时刻都要有 6 到 7 条这样的读指令在等数据。驻留的 wave 太少、或者每个 wave 发出一条读就立刻等它回来，在途请求就不够，带宽就跑不满。这解释了为什么占用率、预取（提前发出下一步的读取）对访存受限的 kernel 如此重要。</p>
+<h1>2.5 访存路径：TA、合并访存与 L2</h1>
+<p><b>TA 是什么。</b>每个 CU 里有一个专门处理向量访存指令的地址单元，叫 TA。HCU 的硬件计数器命名沿用 AMD GCN 体系：TA 是 Texture Addresser（纹理寻址单元），TCP 是 L1 缓存，TCC 是 L2 缓存。名字里的"纹理"是图形时代留下的叫法，在计算 kernel 里，所有向量访存指令（<code>global_load</code>、<code>global_store</code>、<code>buffer_load</code> 等）都要经过它。一条向量读指令的路径是：wave 发出指令 → TA 处理 64 个 lane 的地址，把它们整理、合并成对缓存的请求 → L1（TCP）→ L2（TCC）→ 未命中时访问 HBM。</p>
+<p><b>为什么 TA 会成为瓶颈。</b>TA 每个周期能处理的请求是有限的，它的工作量取决于访存指令最终拆成了多少个对缓存的请求。这里有两点要分清。第一，对于已经合并的访问（相邻 lane 访问相邻地址），请求数基本正比于字节数：实测 4 条"每 lane 4 B"的合并读与 1 条"每 lane 16 B"的读耗时相同（10.72 µs 对 10.56 µs），所以合并的窄访问并不比宽访问更费 TA。第二，TA 处理的是 kernel 发出的<b>全部</b>访存请求，包括命中 L2、根本没有到达 HBM 的那部分。可以把 TA 想成高速公路入口的收费站，HBM 是后面的长途路段：去近处出口（命中 L2）的车也要过收费站，于是长途路段还很空（HBM 带宽没用满），收费站前却排起了长队。这种情况称为<b>受 TA 限制</b>，也叫访存发射受限。它的特点是：HBM 带宽利用率不高；通过提高 L2 命中来减少 HBM 字节几乎不会变快；真正有效的是减少 kernel 发出的请求，也就是减少请求的总字节（包括命中 L2 的重复读取），或者把分散的访问改成合并的访问。</p>
+<p><b>它有多常见。</b>在 BW1000 上，这是 KDA 最主要的瓶颈。KDA 的递推 kernel 只用了约 30% 的 HBM 带宽，TA 忙碌率却已经到 0.86 到 0.88；最耗时的 wy_s4b 用了 55% 的 HBM 带宽，TA 忙碌率 0.70，约为饱和值的 76%；按 8K 序列、12 个 head 统计，KDA 约 63% 的时间花在受 TA 限制的 kernel 上（第 4 章）。</p>
+<p><b>怎么测、怎么判断。</b>TA 忙碌率由计数器算出，BW1000 上的饱和值约为 0.92：</p>
+<p align="center"><latex>u_{TA} = \frac{\sum \text{TA\_TA\_BUSY}}{\text{GRBM\_GUI\_ACTIVE} \times N_{CU}}, \qquad u_{TA}^{sat} \approx 0.92</latex></p>
+<p>判断受 TA 限制的典型症状有三个：<latex>u_{TA}</latex> 达到饱和值的约 80% 以上，同时三层带宽利用率明显偏低；SQTT 里访存等待（<code>s_waitcnt vmcnt</code>）占比高；提高 L2 命中、减少 HBM 字节后时间基本不变。需要注意，TA 的忙碌时间里包含了等待数据返回的时间，延迟高时读数会偏大，所以下结论之前最好做一次删除实验（例如去掉某一组访存，看时间降多少）来确认。</p>
+<p><b>什么样的访问最费 TA。</b>在 BW1000 上反复验证过的有四类。<b>分散的窄访问</b>：相邻 lane 的地址不连续、每个 lane 又只读写 2 B 或 4 B，一条指令会拆成很多个请求，每字节消耗的 TA 工作远高于合并访问；例如 KDA 的 s4a 逐个 lane 写 2 B 的转置输出，SQTT 中单这一项就占了 9.3% 的周期。<b>不合并的访问</b>：即使每个 lane 读 16 B，只要相邻 lane 的地址不连续，请求数也会成倍增加；相邻的 lane 访问相邻的地址，64 个 lane 的请求才能合并成少量缓存行请求。<b>重复的访问</b>：同一个 wave 里多个 lane 读同一个地址（广播式读取），或者多个 CTA 反复读取同一块数据（即使命中 L2），都要经过 TA，却没有带来新数据。<b>写入</b>：写同样有发射成本，实测每 512 B 约占 27 个周期。</p>
+<p><b>对应的优化手段。</b>核心是减少 kernel 发出的请求数：把分散的访问改成合并的访问；去掉重复读取，改成读一次后在 wave 内交换，或经过 LDS 分发；把输出先在 LDS 里攒成大块再成块写出。要注意，如果访问本来就已经合并，TA 代价已经只按字节计，单纯加宽不会更快，我们在 KDA 上试过把已合并的访问加宽，反而慢了 1% 到 2.7%。另外，gfx938 提供了 MLS（<code>matrix_load</code>，一条指令把一整块数据搬进 LDS），同样字节数下只消耗逐 lane 读取约 0.29 倍的 TA 工作，但它有使用条件，详见 gfx938 平台分册。</p>
+<p><b>地址计算也会消耗 VALU。</b>如果每个 lane 都用 64 位整数从头计算地址，一条访存可能要配好几条 64 位的加法和移位指令。更好的做法是把所有 lane 共同的基址放在 SGPR 里，每个 lane 只保留 32 位的偏移，编译器就能生成带标量基址的访存指令，省掉大量逐 lane 的地址运算。这对已经受 VALU 限制的 kernel 很有效。</p>
+<p><b>L2 命中决定是否消耗 HBM 带宽。</b>读请求命中 L2 就不占 HBM 带宽。分析时，HBM 字节一定要用计数器测（第 4.3 节），不能按代码里的读写量估算：多个 CTA 重复读取同一块数据时，后面的读取可能都命中 L2。</p>
+<h1>2.6 BW1000 参数卡</h1>
+<p>下表汇总了全书用到的 BW1000 数字，建议打印出来放在手边。所有"实测可达"都是标定微基准在最好配置下的结果（bw7，2026-10-10；MMAC 于 2026-10-30 在 bw52 复测一致）。</p>
+<table>
+  <colgroup><col width="230"/><col width="170"/><col width="170"/><col width="210"/></colgroup>
+  <thead><tr><th background-color="light-gray">项</th><th background-color="light-gray">理论值</th><th background-color="light-gray">实测可达</th><th background-color="light-gray">备注</th></tr></thead>
+  <tbody>
+    <tr><td>HBM 读</td><td>1.84 TB/s</td><td>1.34 TB/s</td><td>理论值的约 73%；写 1.10，拷贝 1.15</td></tr>
+    <tr><td>L2 读</td><td>—</td><td>6.10 TB/s</td><td>工作集不超过 L2 的一半</td></tr>
+    <tr><td>LDS 读</td><td>15.36 TB/s</td><td>15.24 TB/s</td><td>无冲突的 <code>ds_read_b128</code></td></tr>
+    <tr><td>bf16 / f16 MMAC</td><td>491.5 TFLOPS</td><td>476.0 / 480.3 TFLOPS</td><td>每 CU 每周期 4096 FLOP</td></tr>
+    <tr><td>tf32 MMAC</td><td>245.8 TFLOPS</td><td>237.7 TFLOPS</td><td>每 CU 每周期 2048 FLOP</td></tr>
+    <tr><td>fp32 MMAC</td><td>61.4 TFLOPS</td><td>61.0 TFLOPS</td><td><latex>16 \times 16 \times 8</latex></td></tr>
+    <tr><td>i8 MMAC</td><td>983 TOPS</td><td>951 TOPS</td><td>每 CU 每周期 8192 OP</td></tr>
+    <tr><td>fp32 VALU FMA</td><td>30.7 TFLOPS</td><td>29.7 TFLOPS</td><td>需要 <code>v_pk_fma_f32</code>，不打包减半</td></tr>
+    <tr><td>SFU exp2</td><td>—</td><td><latex>1.92 \times 10^{12}</latex> 次/秒</td><td>VALU 的四分之一速率</td></tr>
+    <tr><td>拐点（对 HBM）</td><td colspan="2">bf16 MMAC 355，tf32 178，fp32 MMAC 45.5，fp32 VALU 22.2（FLOP/B）</td><td>见第 3 章</td></tr>
+    <tr><td>延迟</td><td colspan="2">LDS 43 ns，L1 101 ns，L2 246 ns，HBM 385 ns；相互依赖的 bf16 MMAC 29 ns（44 周期）</td><td>单 lane 指针追逐</td></tr>
+    <tr><td>同步</td><td colspan="2">CTA 内 barrier：256 线程 52 周期，1024 线程 68 到 76 周期</td><td>—</td></tr>
+    <tr><td>kernel 启动</td><td colspan="2">同一 stream 连续空 kernel 约 2.0 到 2.2 µs；HIP graph 回放约 1.7 µs；单次启动加同步 6 到 8 µs</td><td>小形状要计入</td></tr>
+    <tr><td>PCIe（锁页内存）</td><td colspan="2">主机到设备约 28 GB/s，设备到主机约 35 到 38 GB/s</td><td>—</td></tr>
+    <tr><td>访存地址单元 TA</td><td colspan="2">忙碌率 <latex>u_{TA}</latex> 饱和值约 0.92；写入每 512 B 约 27 周期发射成本</td><td>隐形屋顶，见 2.5 节</td></tr>
+  </tbody>
+</table>
+<h1>2.7 怎么给一张新卡做标定</h1>
+<p>拿到一张新卡（或者换了驱动、DTK 版本），第一件事是重新标定，而不是沿用旧数字或厂商标称值。标定用 kernel-roofline-analysis-tools 仓库里的微基准，在目标机器的容器里运行：</p>
+<pre lang="bash" caption="在目标卡上运行标定（结果写成 machine JSON）"><code>HIP_VISIBLE_DEVICES=0 python -m kra calibrate --id gfx936-bw1000 --out machines/gfx936-bw1000.json</code></pre>
+<p>标定要遵守五条原则。<b>取可达峰值</b>：每一项在多组配置（grid、block、展开次数、独立累加链数）下测量，取最好的一组作为峰值，同时记录中位数和获胜配置。<b>核对指令</b>：保存编译出的汇编，逐个确认使用了预期的指令（例如 <code>v_mmac_f32_16x16x16_bf16</code>、<code>v_pk_fma_f32</code>、<code>global_load_dwordx4</code>），核对不通过的峰值不能引用。<b>固定时钟、独占卡</b>：确认 shader 时钟固定、卡上没有别人的任务；我们在一张被邻居占用的卡上测到的 HBM 带宽比独占时低了 16%。<b>计时要够长</b>：每个配置预热后多次计时，单次 kernel 持续数百微秒以上，让启动和尾部效应低于 1%。<b>可重复</b>：同一节点的两张卡结果应相差很小（BW1000 上不超过 0.4%，L2 不超过 3%）。</p>
+<p>标定覆盖的项目包括：HBM 读、写、拷贝带宽及其随 CTA 数的变化，L2 和 LDS 带宽，各数据类型的 MMAC 峰值，VALU 与 SFU 峰值，访存读写的发射成本，各级存储和 MMAC 依赖的延迟，barrier 与 kernel 启动开销，以及 PCIe 带宽。输出的 JSON 就是第 3、4、6 章所有上限计算的输入；换一张卡，只要换这一个文件。</p>
+<h1>常见误区</h1>
+<p><b>用厂商标称值当上限。</b>HBM 实测只能到理论值的约 73%，按理论值算利用率，永远达不到"满载"。</p>
+<p><b>相信编译器的占用率注释。</b>gfx936 上它按每 lane 256 个 VGPR 推算，与实测不符；驻留数要实测。</p>
+<p><b>以为 fp32 VALU 有 30 TFLOPS。</b>那是打包指令的峰值；ISA 里没有 <code>v_pk_fma_f32</code> 时，上限只有一半。</p>
+<p><b>只看 HBM 字节，不看访存请求。</b>分散的、重复的访问会先把 TA（访存地址单元）压满，HBM 带宽再空也用不上；这时提高 L2 命中无效，要减少 kernel 发出的请求。</p>
+<p><b>沿用别的卡的数字。</b>同一个改法在不同的卡上结论可能相反（例如 gfx938 的 VALU 更弱、驻留规则不同），每张卡都要单独标定，结论放在各自的平台分册里。</p>
+<h1>小练习</h1>
+<ol>
+  <li seq="auto">一个 kernel 每个 CTA 用 256 个线程、申请 20 KB LDS，VGPR 为 180。它在 BW1000 上每个 CU 最多能驻留几个 CTA？（答：LDS 允许 <latex>\lfloor 64/20 \rfloor = 3</latex> 个；VGPR 180 时每个 SIMD 可驻留 3 个 wave，即 3 个 CTA；wave 槽允许 <latex>\lfloor 40/4 \rfloor = 10</latex> 个；取最小值为 3。）</li>
+  <li seq="auto">要让 L2 持续跑满 6.10 TB/s，每个 CU 大约需要多少字节的请求在途？（答：<latex>6.10\ \text{TB/s} \times 246\ \text{ns} \approx 1.5\ \text{MB}</latex>，每个 CU 约 <latex>1.5\ \text{MB} / 80 \approx 19\ \text{KB}</latex>。）</li>
+  <li seq="auto">一个 kernel 对每个元素做一次 exp2，共 <latex>2 \times 10^9</latex> 个元素，读写各 2 B。它更可能受 SFU 还是 HBM 限制？（答：SFU 至少需要 <latex>2 \times 10^9 / 1.92 \times 10^{12} \approx 1.04\ \text{ms}</latex>；HBM 需要搬 8 GB，至少 <latex>8 / 1.34 \approx 6.0\ \text{ms}</latex>。仍是 HBM 受限，但 SFU 已占到约六分之一，不能忽略。）</li>
+</ol>
+<h1>速查</h1>
+<table>
+  <colgroup><col width="220"/><col width="560"/></colgroup>
+  <thead><tr><th background-color="light-gray">项</th><th background-color="light-gray">内容</th></tr></thead>
+  <tbody>
+    <tr><td>结构</td><td>80 CU × 4 SIMD × 16 lane，wave64，1500 MHz；L2 8 MB；每 CU LDS 64 KB</td></tr>
+    <tr><td>VALU 耗时</td><td><latex>t_{VALU} \approx N_{inst} \times 4</latex> 周期（每 wave）</td></tr>
+    <tr><td>驻留</td><td><latex>N_{CTA/CU} = \min(\lfloor 64\text{KB}/LDS_{CTA} \rfloor,\ N_{VGPR},\ \lfloor 40/W_{CTA} \rfloor)</latex>；VGPR 200 到 256 仍可每 SIMD 3 个 wave</td></tr>
+    <tr><td>TA</td><td>向量访存的地址单元；<latex>u_{TA} = \sum \text{TA\_TA\_BUSY} / (\text{GRBM\_GUI\_ACTIVE} \times N_{CU})</latex>，饱和约 0.92；受限时减少 kernel 发出的请求（合并、去重复读），提高 L2 命中无效</td></tr><tr><td>Little 定律</td><td><latex>B_{inflight} = BW \times L</latex>；HBM 每 CU 约 6.4 KB 在途</td></tr>
+    <tr><td>带宽</td><td>LDS 15.24，L2 6.10，HBM 1.34（TB/s）</td></tr>
+    <tr><td>算力</td><td>bf16 MMAC 476，tf32 237.7，fp32 MMAC 61.0，fp32 VALU（打包）29.7 TFLOPS；exp2 <latex>1.92 \times 10^{12}</latex> 次/秒</td></tr>
+    <tr><td>标定</td><td><code>python -m kra calibrate --id &lt;卡&gt; --out machines/&lt;卡&gt;.json</code></td></tr>
+  </tbody>
+</table>
