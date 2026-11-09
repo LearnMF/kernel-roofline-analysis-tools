@@ -1,5 +1,21 @@
 <title>第 12 章　工具链（喂饭级命令）</title>
-<p><b>本章目标。</b>把前面各章用到的工具整理成可以直接执行的命令。每一节按"做什么 → 命令 → 产出 → 注意事项"写。命令以 BW1000（gfx936）和 DTK 为准，工具脚本来自 kernel-roofline-analysis-tools 仓库（下文简称 kra 仓库）。路径中的容器名、目录请换成你自己的环境。</p>
+<p><b>本章目标。</b>把前面各章用到的工具整理成可以直接执行的命令。每一节按"做什么 → 命令 → 产出 → 注意事项"写。命令以 BW1000（gfx936）和 DTK 为准，工具来自 kra 仓库（见 12.0 节）。路径中的容器名、目录请换成你自己的环境。</p>
+<h1>12.0 工具仓库：kernel-roofline-analysis-tools</h1>
+<p>本教程用到的工具、标定数据和插图脚本都放在仓库 kernel-roofline-analysis-tools（<a href="https://github.com/LearnMF/kernel-roofline-analysis-tools">github.com/LearnMF/kernel-roofline-analysis-tools</a>），下文简称 kra 仓库。它是我们在 KDA 优化过程中沉淀下来的分析工具集，只依赖 Python 标准库（画图需要 matplotlib，门禁需要 numpy）。获取方式：</p>
+<pre lang="bash" caption="获取工具仓库"><code>git clone https://github.com/LearnMF/kernel-roofline-analysis-tools.git
+cd kernel-roofline-analysis-tools
+python -m unittest discover -s tests      # 自检：不需要 HCU</code></pre>
+<p>仓库里的内容分三类，使用前要分清：</p>
+<table>
+  <colgroup><col width="190"/><col width="330"/><col width="270"/></colgroup>
+  <thead><tr><th background-color="light-gray">类别</th><th background-color="light-gray">内容</th><th background-color="light-gray">能否直接用于其他算子</th></tr></thead>
+  <tbody>
+    <tr><td>通用分析命令</td><td><code>python -m kra calibrate / timeline / pmc / analyze</code>：标定、时间线、计数器采集与上限评估</td><td>可以，已在 BW1000 上使用</td></tr>
+    <tr><td>通用工具 <code>kra/tools/</code></td><td><code>gate</code>（逐位与 FP64 门禁）、<code>abba</code>（交替计时）、<code>roofline</code>（单层与分层 Roofline）、<code>isa</code>（资源预检）</td><td>可以；逻辑由 <code>tests/test_tools.py</code> 验证</td></tr>
+    <tr><td>KDA 示例脚本 <code>examples/kda/</code></td><td><code>bitwise_gate.py</code>、<code>gfx938/ab_fast.sh</code>、<code>ceiling/collect.sh</code>、<code>sqtt_capture.sh</code> 等</td><td>不能直接用：带有 KDA 的接口、路径和容器名，只作参考，按自己的算子重新实现</td></tr>
+  </tbody>
+</table>
+<p>另外，<code>machines/</code> 目录存放各卡的标定文件（例如 <code>gfx936-bw1000.json</code>），<code>results/</code> 存放实验数据，<code>docs/tutorial/</code> 存放本教程各章的源文件、插图和画图脚本。</p>
 <h1>12.1 准备：环境与卡的状态</h1>
 <p>所有采集都在目标机器的容器里进行，容器需要能调用 <code>hipcc</code> 和 <code>hipprof</code>（DTK 位于 <code>/opt/dtk</code>）。开始任何测量之前，先确认要用的卡是空闲的：</p>
 <pre lang="bash" caption="确认卡空闲"><code>hy-smi --showuse        # 看 HCU 利用率；--showmemuse 只看显存，不能说明卡是否在忙
@@ -37,7 +53,9 @@ python -m kra analyze --machine machines/gfx936-bw1000.json --pmc /tmp/wl/case.p
 python3 examples/kda/ceiling/parse_raw.py ...  # 解析原始数据
 python3 examples/kda/ceiling/cards.py ...      # 生成 cards.json（利用率、下限、判定）
 python3 examples/kda/ceiling/plot_cards.py ... # 画分层 Roofline（图 A）与热力图（图 D）</code></pre>
-<p>单层 Roofline 的画法见第 3 章配套脚本 <code>docs/tutorial/figs/plot_ch3_roofline.py</code>：读入标定文件，画斜线和各算力平顶，再按第 3.3 节的四步把算子放上去。具体参数以各脚本开头的说明为准，换算子时需要提供该算子的运算量定义（op_spec）。</p>
+<p>上面的体检卡流水线是 KDA 专用的示例。对任意算子，可以用通用工具 <code>kra.tools.roofline</code> 直接画单层或分层 Roofline：准备一个落点 CSV，每行一个 kernel（或整个算子），列为 <code>name, flops, time_us, hbm_bytes</code>，需要分层时再加 <code>l2_bytes, lds_bytes</code>（按第 4.3 节由计数器换算），可选 <code>roof</code> 指定算力平顶。</p>
+<pre lang="bash" caption="通用 Roofline 画图"><code>python -m kra.tools.roofline --machine machines/gfx936-bw1000.json --points pts.csv --out roof.png
+# 标准输出：每个点的计算强度、TFLOPS、MFU、各层利用率、到上方屋顶的比例</code></pre>
 <h1>12.6 SQTT：逐指令找等待点</h1>
 <p><b>做什么。</b>当一个 kernel 的所有资源都不满（延迟受限）时，用 SQTT 采集逐指令的发射和停顿，找出等待点并对应到源代码行。</p>
 <pre lang="bash" caption="SQTT 采集与按源码行归因"><code># DTK 自带 hipprof 的 SQTT（输出 json）
@@ -52,21 +70,30 @@ python -m kra.sqtt.pcmap --perf X.perf --dispatch 91 --asm kernel_dbg.s --symbol
 <pre lang="bash" caption="只编译设备代码并统计"><code>/opt/dtk/bin/hipcc -O3 -std=c++17 --offload-arch=gfx936 --cuda-device-only -S your_kernels.hip -o /tmp/k.s
 grep -E '\.vgpr_count|\.sgpr_count|\.group_segment_fixed_size|\.private_segment_fixed_size' /tmp/k.s
 grep -cE 'v_mmac|v_pk_fma_f32|global_load_dwordx4' /tmp/k.s</code></pre>
-<p><b>产出。</b>每个 kernel 的 VGPR（<code>.vgpr_count</code>）、SGPR、LDS（<code>.group_segment_fixed_size</code>）和 scratch（<code>.private_segment_fixed_size</code>，必须为 0），以及关键指令的出现次数。kra 仓库的 <code>examples/kda/gfx938/isa_k.sh</code> 给出了按 kernel 名统计指令直方图的完整示例。</p>
+<p>也可以用通用工具一次列出所有 kernel，scratch 非 0 时以失败退出，适合放进资源预检：</p>
+<pre lang="bash" caption="通用资源预检"><code>python -m kra.tools.isa /tmp/k.s --count v_mmac --count v_pk_fma_f32 --count global_load_dwordx4 [--kernel 名字子串]</code></pre>
+<p><b>产出。</b>每个 kernel 的 VGPR（<code>.vgpr_count</code>）、SGPR、LDS（<code>.group_segment_fixed_size</code>）和 scratch（<code>.private_segment_fixed_size</code>，必须为 0），以及关键指令的出现次数。</p>
 <p><b>注意事项。</b>不要相信汇编里的 <code>; Occupancy:</code> 注释，驻留数按第 5.1 节的规则算或实测；静态指令条数不等于运行时占比。</p>
 <h1>12.8 正确性门禁</h1>
 <p><b>做什么。</b>对候选与基准各跑一次前向加反向，保存所有输出和梯度，逐元素比较。</p>
-<pre lang="bash" caption="逐位门禁（KDA 示例脚本）"><code>python3 examples/kda/bitwise_gate.py dump --tree BASE --T 8192 --H 12 --out base.pt
-python3 examples/kda/bitwise_gate.py dump --tree CAND --T 8192 --H 12 --out cand.pt
-python3 examples/kda/bitwise_gate.py cmp base.pt cand.pt     # torch.equal，不允许任何容差</code></pre>
+<p>通用做法分两步。第一步，在你自己的测试脚本里，用固定种子生成输入，跑一次前向加反向，把所有输出和梯度存成 .npz：</p>
+<pre lang="python" caption="在被测脚本里转储输出"><code>from kra.tools.gate import save
+save("cand.npz", {"o": o, "dq": q.grad, "dk": k.grad, "dv": v.grad})   # 接受 numpy 数组或 torch 张量</code></pre>
+<p>第二步，用通用工具比较：</p>
+<pre lang="bash" caption="通用门禁"><code>python -m kra.tools.gate bitwise base.npz cand.npz                       # 逐位一致，任何一位不同即失败
+python -m kra.tools.gate ref64 ref64.npz base.npz cand.npz --max-ratio 1.0 \
+       [--ref-impl fla.npz --max-ratio-ref 1.0]                          # 对 FP64 参考的误差比，不得比基准（和参考实现）差</code></pre>
+<p>KDA 的完整门禁脚本见 <code>examples/kda/bitwise_gate.py</code>，可作为编写自己门禁的参考。</p>
 <p><b>注意事项。</b>用例要覆盖所有执行路径（变长、保存状态、重算、极端输入值）；输入由固定种子生成；会改变数值的改动改用 FP64 精度门禁，对每个张量比较与 FP64 参考的误差。</p>
 <h1>12.9 A/B 计时</h1>
 <p><b>做什么。</b>在同一张卡上交替测量两个版本，得到可信的比值。</p>
-<pre lang="bash" caption="交替计时（kra 仓库示例脚本）"><code># 单 kernel 级：两个构建各跑两轮，交替进行
-bash examples/kda/gfx938/ab_fast.sh KEY "8192x64,16384x8" 0 "base=/path/to/base_site" "cand=/path/to/cand_site"
-# 算子级（前向、反向分开）：每个形状 8 个独立进程，ABBA 顺序重复两轮，进程启动前等待卡空闲
-IMPL=ft python3 results/kda-benchmark-table-20261025/mk3_fb.py T H   # 输出 fwd_ms、bwd_ms、峰值显存的 json
-# ABBA 加空闲等待的封装见 results/kda-gfx938-24shape-bw1300-20261104/fb_guard.sh</code></pre>
+<p>通用工具 <code>kra.tools.abba</code> 把每个样本作为一个新进程，按 A、B、B、A 的顺序重复多轮。被测命令只需在标准输出打印一行 JSON，包含要比较的计时字段：</p>
+<pre lang="bash" caption="通用交替计时"><code>python -m kra.tools.abba --key fwd_ms --key bwd_ms --rounds 2 \
+    --a "env PYTHONPATH=/path/base python3 my_bench.py 8192 12" \
+    --b "env PYTHONPATH=/path/cand python3 my_bench.py 8192 12" \
+    --idle-cmd "&lt;输出当前卡 HCU 利用率数字的命令&gt;" --out ab.jsonl
+# 输出每个字段的 A、B 中位数、比值 A/B（大于 1 表示 B 更快）、离散度，差异小于离散度一半时提示不显著</code></pre>
+<p><code>--idle-cmd</code> 要根据你机器上 <code>hy-smi</code> 的输出格式自己写，让它只打印当前卡的 HCU 利用率数字。KDA 的计时脚本（<code>results/kda-benchmark-table-20261025/mk3_fb.py</code>，前向反向分开计时）和带空闲等待的封装（<code>results/kda-gfx938-24shape-bw1300-20261104/fb_guard.sh</code>）可作为写 <code>my_bench.py</code> 的参考。</p>
 <p><b>注意事项。</b>样本是独立进程，每边至少 5 个；只比较同卡、同会话的数据；L2 热的单 kernel 基准会高估去重复读一类改动，最终以算子级测量为准。</p>
 <h1>12.10 对标采集</h1>
 <p><b>做什么。</b>为第 7 章的三方对比采集数据：参考实现在 NV 卡和本卡上的分阶段时间、字节数和指令。</p>
@@ -92,7 +119,7 @@ IMPL=ft python3 results/kda-benchmark-table-20261025/mk3_fb.py T H   # 输出 fw
     <tr><td>体检卡与分层 Roofline</td><td><code>examples/kda/ceiling/</code>：collect、parse_raw、cards、plot_cards</td></tr>
     <tr><td>SQTT</td><td><code>hipprof --sqtt --sqtt-type 1 --output-type 0</code>；<code>python -m kra.sqtt.pcmap</code></td></tr>
     <tr><td>ISA 与资源</td><td><code>hipcc --cuda-device-only -S</code>，查 vgpr、lds、scratch 与关键指令</td></tr>
-    <tr><td>正确性</td><td><code>bitwise_gate.py dump / cmp</code>；FP64 精度门禁</td></tr>
-    <tr><td>A/B</td><td><code>ab_fast.sh</code>（kernel 级）、<code>mk3_fb.py</code>（算子级，ABBA）</td></tr>
+    <tr><td>正确性</td><td><code>python -m kra.tools.gate bitwise / ref64</code></td></tr>
+    <tr><td>A/B</td><td><code>python -m kra.tools.abba</code></td></tr><tr><td>Roofline</td><td><code>python -m kra.tools.roofline</code></td></tr><tr><td>资源预检</td><td><code>python -m kra.tools.isa</code></td></tr>
   </tbody>
 </table>

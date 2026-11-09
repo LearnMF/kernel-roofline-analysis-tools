@@ -94,7 +94,7 @@
   </tbody>
 </table>
 <h1>2.7 怎么给一张新卡做标定</h1>
-<p>拿到一张新卡（或者换了驱动、DTK 版本），第一件事是重新标定，而不是沿用旧数字或厂商标称值。标定用 kernel-roofline-analysis-tools 仓库里的微基准，在目标机器的容器里运行：</p>
+<p>拿到一张新卡（或者换了驱动、DTK 版本），第一件事是重新标定，而不是沿用旧数字或厂商标称值。标定用工具仓库 kernel-roofline-analysis-tools（<a href="https://github.com/LearnMF/kernel-roofline-analysis-tools">github.com/LearnMF/kernel-roofline-analysis-tools</a>，获取方式和目录说明见第 12.0 节）里的微基准，在目标机器的容器里运行：</p>
 <pre lang="bash" caption="在目标卡上运行标定（结果写成 machine JSON）"><code>HIP_VISIBLE_DEVICES=0 python -m kra calibrate --id gfx936-bw1000 --out machines/gfx936-bw1000.json</code></pre>
 <p>标定要遵守五条原则。<b>取可达峰值</b>：每一项在多组配置（grid、block、展开次数、独立累加链数）下测量，取最好的一组作为峰值，同时记录中位数和获胜配置。<b>核对指令</b>：保存编译出的汇编，逐个确认使用了预期的指令（例如 <code>v_mmac_f32_16x16x16_bf16</code>、<code>v_pk_fma_f32</code>、<code>global_load_dwordx4</code>），核对不通过的峰值不能引用。<b>固定时钟、独占卡</b>：确认 shader 时钟固定、卡上没有别人的任务；我们在一张被邻居占用的卡上测到的 HBM 带宽比独占时低了 16%。<b>计时要够长</b>：每个配置预热后多次计时，单次 kernel 持续数百微秒以上，让启动和尾部效应低于 1%。<b>可重复</b>：同一节点的两张卡结果应相差很小（BW1000 上不超过 0.4%，L2 不超过 3%）。</p>
 <p>标定覆盖的项目包括：HBM 读、写、拷贝带宽及其随 CTA 数的变化，L2 和 LDS 带宽，各数据类型的 MMAC 峰值，VALU 与 SFU 峰值，访存读写的发射成本，各级存储和 MMAC 依赖的延迟，barrier 与 kernel 启动开销，以及 PCIe 带宽。输出的 JSON 就是第 3、4、6 章所有上限计算的输入；换一张卡，只要换这一个文件。</p>
