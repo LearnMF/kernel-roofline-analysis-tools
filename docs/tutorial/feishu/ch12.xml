@@ -60,11 +60,22 @@ python3 examples/kda/ceiling/plot_cards.py ... # 画分层 Roofline（图 A）�
 <p><b>做什么。</b>当一个 kernel 的所有资源都不满（延迟受限）时，用 SQTT 采集逐指令的发射和停顿，找出等待点并对应到源代码行。</p>
 <pre lang="bash" caption="SQTT 采集与按源码行归因"><code># DTK 自带 hipprof 的 SQTT（输出 json）
 hipprof --sqtt --sqtt-type 1 --output-type 0 -o /tmp/sq/run python3 your_case.py --iters 1
-# 或者在 XProf 容器中采集生产 kernel（kra 仓库脚本）
-bash examples/kda/sqtt_capture.sh TREE TAG T H "kernel1,kernel2" [GPU]
+# 或者在 XProf 容器中采集生产 kernel（kra 仓库脚本，在宿主机上运行，容器用下面的镜像启动）
+XPROF_CONTAINER=${USER}_xprof bash examples/kda/sqtt_capture.sh TREE TAG T H "kernel1,kernel2" [GPU]
 # 逐指令归因到源代码行（ISA 用 -gline-tables-only 编译）
 python -m kra.sqtt.pcmap --perf X.perf --dispatch 91 --asm kernel_dbg.s --symbol &lt;mangled kernel&gt;</code></pre>
 <p><b>注意事项。</b>SQTT 给某段指令记的占比，不等于删掉它能省的时间，最终以删除上限为准（第 11.3 节）；hipprof 新版本默认输出 <code>.pftrace.gz</code>，加 <code>--output-type 0</code> 才得到 json。</p>
+<p><b>XProf 采集镜像。</b>XProf 需要另外安装 xprofiler 和 hsa-aqlprofile，配置比较麻烦，我们已经把这套环境做成镜像，放在郑州集群的内网 Harbor 上（项目 <code>roofline-huc-tools</code>，外网无法访问）。镜像只保存容器的文件系统，设备、权限和宿主机的 <code>/usr/local/hyhal</code> 都要在 <code>docker run</code> 时给出：</p>
+<pre lang="bash" caption="拉取镜像并启动 XProf 容器（宿主机上运行）"><code>docker login 42.228.13.241:5000
+docker pull 42.228.13.241:5000/roofline-huc-tools/kra-sqtt:dtk26.04-xprof3.16.0-20261110
+docker run -d --name ${USER}_xprof \
+  --device /dev/kfd --device /dev/dri --device /dev/mem \
+  --group-add video --cap-add SYS_RAWIO --cap-add SYS_PTRACE \
+  --security-opt seccomp=unconfined --security-opt label=disable \
+  --shm-size 64g -v /usr/local/hyhal:/opt/hyhal:ro \
+  42.228.13.241:5000/roofline-huc-tools/kra-sqtt:dtk26.04-xprof3.16.0-20261110 sleep infinity
+docker exec ${USER}_xprof bash -lc 'command -v xprof &amp;&amp; /opt/hyhal/bin/hy-smi'   # 自检</code></pre>
+<p>这个镜像已在 bw61 上验证，其他节点第一次使用时先跑一次采集，确认能得到 <code>.perf</code>。<code>sqtt_capture.sh</code> 的输出目录和 <code>KRA</code> 路径写的是作者的目录，使用前改成自己的。宿主机要求和重建方法见 kra 仓库的 <code>docker/sqtt/README.md</code>。</p>
 <h1>12.7 ISA 与资源检查</h1>
 <p><b>做什么。</b>在不运行的情况下，检查每个 kernel 实例的寄存器、LDS、scratch 和指令分布，用于第 10.4 节的资源预检。</p>
 <pre lang="bash" caption="只编译设备代码并统计"><code>/opt/dtk/bin/hipcc -O3 -std=c++17 --offload-arch=gfx936 --cuda-device-only -S your_kernels.hip -o /tmp/k.s

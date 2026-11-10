@@ -6,6 +6,8 @@
 # Produces /public/home/tanbo/kra_sqtt/TAG/<...>.perf (one perf per captured dispatch set).
 # The bench (examples/kda/bn_sqtt.hip) launches every production kernel per repetition;
 # rep 1 is warm-up, the dispatch filter selects rep 2.
+# XPROF_CONTAINER names a running container started from the kra-sqtt image
+# (42.228.13.241:5000/roofline-huc-tools/kra-sqtt; docker run command in docker/sqtt/README.md).
 set -euo pipefail
 TREE=$1; TAG=$2; T=$3; H=$4; KERNELS=$5; GPU=${6:-0}
 C=${XPROF_CONTAINER:-glm_bw7_xprof2}

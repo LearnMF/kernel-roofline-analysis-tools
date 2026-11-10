@@ -26,7 +26,7 @@
 | GPU | 海光 HCU **gfx936**（`gfx936:sramecc+:xnack-`），驱动报告的名称为 **BW200 / UBB BW1000** |
 | 节点 | bw7（经 bw-zz 跳板访问），容器 `tanbo_mega_k3` |
 | 规格 | 80 CU，wave64，主频 1.5 GHz，HBM 4096 bit @ 1.8 GHz，L2 8 MiB，每 CU 64 KiB LDS |
-| 软件 | DTK（`/opt/dtk`：hipcc、hipprof）；SQTT 采集用 XProf（ROCm 6.3.3 容器 `glm_bw7_xprof2`），分析用 XCompute 4.6.3 CLI |
+| 软件 | DTK（`/opt/dtk`：hipcc、hipprof）；SQTT 采集用 XProf（ROCm 6.3.3 容器 `glm_bw7_xprof2`，现已固化为镜像 `kra-sqtt`，见下文），分析用 XCompute 4.6.3 CLI |
 | 标定结果 | [`machines/gfx936-bw1000.json`](machines/gfx936-bw1000.json)，原始输出在 `.raw.jsonl` |
 | 实践样本 | Kimi K3 KDA 算子（hip_kda G2 实现），fwd+bwd，8K×12/48 heads 等 shape，见 `results/` |
 
@@ -103,7 +103,8 @@ python -m kra analyze --machine machines/gfx936-bw1000.json --pmc /tmp/wl/g2.pmc
        --opspec examples/kda/op_spec.json --optrace /tmp/wl/g2.optrace.json --shape T=8192,H=12 --out /tmp/wl/g2
 python -m kra.model.fusion --optrace /tmp/wl/g2.optrace.json --machine machines/gfx936-bw1000.json
 
-# L3：逐指令分析（.perf 由 examples/kda/sqtt_capture.sh 采集；ISA 用 -gline-tables-only 编译）
+# L3：逐指令分析（.perf 由 examples/kda/sqtt_capture.sh 在 kra-sqtt 容器中采集，见下文；ISA 用 -gline-tables-only 编译）
+XPROF_CONTAINER=${USER}_xprof bash examples/kda/sqtt_capture.sh TREE TAG T H "kernel1,kernel2" [GPU]
 python -m kra.sqtt.pcmap --perf X.perf --dispatch 91 --asm kernel_dbg.s --symbol <mangled kernel>
 
 # 通用工具（与具体算子无关，见 kra/tools/，测试 tests/test_tools.py）
@@ -115,6 +116,18 @@ python -m kra.tools.isa k.s --count v_mmac                        # 资源预检
 # 测试
 python -m unittest discover -s tests
 ```
+
+### SQTT 采集镜像
+
+XProf 的 SQTT 采集环境已经做成镜像，放在郑州集群的内网 Harbor 上，不必再手动配置：
+
+```
+42.228.13.241:5000/roofline-huc-tools/kra-sqtt:dtk26.04-xprof3.16.0-20261110
+```
+
+它在 DTK 26.04 基础镜像上加装了 xprofiler 3.16.0 和 hsa-aqlprofile 3.6.2，已在 bw61 上验证可以完成 SQTT 采集。
+镜像不包含启动参数：设备（`/dev/kfd`、`/dev/dri`、`/dev/mem`）、权限和宿主机的 `/usr/local/hyhal` 都要在 `docker run` 时给出。
+完整的启动命令、宿主机要求、采集示例和重建方法见 [`docker/sqtt/README.md`](docker/sqtt/README.md)。
 
 `examples/kda/` 下的脚本（bitwise_gate.py、ab_fast.sh、ceiling/collect.sh、sqtt_capture.sh 等）是为 KDA 写的示例，
 带有 KDA 的路径与容器名；其他算子请使用上面的通用工具，或参考这些示例按自己的环境重新实现。
@@ -131,6 +144,7 @@ kra/opspec/      L4 输入：launcher 接口捕获（PyTorch 包装的任意算�
 kra/model/       L2 分类 + L4 下限模型、MFU/HFU、四层分解、融合候选、报告
 machines/        各机器的标定结果（machine.json + 原始输出）
 examples/kda/    KDA 算子的采集驱动、门禁、A/B 和实验补丁脚本
+docker/sqtt/     SQTT 采集镜像（kra-sqtt）的 Dockerfile 与使用说明
 results/         分析结果、预先登记的预测与验证记录、上限评估
 docs/            操作流程、测量口径、设计
 tests/           单元测试（不需要 GPU）
