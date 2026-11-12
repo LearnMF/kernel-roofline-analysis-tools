@@ -20,22 +20,25 @@ from parse_raw import parse_shape                                  # noqa: E402
 ROOT = Path(__file__).resolve().parents[3]
 RES = Path(__import__("os").environ.get("KRA_CARDS_RES", ROOT / "results" / "kda-ceiling-cards-20261013"))
 RAW = RES / "raw"
-MACH = json.load(open(ROOT / "machines" / "gfx936-bw1000.json"))
+MACH = json.load(open(ROOT / "machines" / __import__("os").environ.get("KRA_MACHINE", "gfx936-bw1000.json")))
 ISA = json.load(open(RAW / "isa_mix.json")) if (RAW / "isa_mix.json").exists() else {}
-CLK = 1.5e9
+CLK = MACH["device"]["clock_khz"] * 1e3
+NCU = MACH["device"]["cu_count"]
 P = MACH["peaks"]
 HBW_R, HBW_W = P["hbm_read"]["value"] * 1e9, P["hbm_write"]["value"] * 1e9
 L2_BW, LDS_BW = P["l2_read"]["value"] * 1e9, P["lds_read"]["value"] * 1e9
 MMAC_PK = P["mmac_bf16"]["value"] * 1e12 * 0.92          # attainable (GEMM1-style) 0.92
-VALU_PK = 80 * 1 * CLK                                  # 1 wave64 valu inst / CU / cycle
-TA_PK = 80 * CLK                                        # 1 issue slot / CU / cycle (upper)
+VALU_PK = NCU * 1 * CLK                                 # 1 wave64 valu inst / CU / cycle
+TA_PK = NCU * CLK                                       # 1 issue slot / CU / cycle (upper)
 # ideal-TA cost per 1 KB beat (16 B/lane, contiguous): kda-bound TA table
 TA_RD_CYC, TA_WR_CYC, TA_EFF = 21.0, 56.0, 0.92
 
 # measured bound_microbench.hip k_step (us/step): {with-o, state-only} at 48 and 192 CTAs.
-# Idle-GPU numbers from results/kda-bound-20261012; a rerun under shared-GPU pressure
+# gfx936: idle-GPU numbers from results/kda-bound-20261012; a rerun under shared-GPU pressure
 # (HCU5, other tenants) read 1.26/1.26 @48 and 3.29/1.74 @192 -- ~25% high, treat as upper.
-LSTEP = {"1cu": (1.241e-6, 1.015e-6), "2cu": (2.557e-6, 1.729e-6)}
+# gfx938 (nmz5, idle, 2026-10-25): 1.432/1.170 @48, 2.951/1.993 @192 (192 CTAs = 2.67 per CU).
+LSTEP = ({"1cu": (1.432e-6, 1.170e-6), "2cu": (2.951e-6, 1.993e-6)} if NCU == 72 else
+         {"1cu": (1.241e-6, 1.015e-6), "2cu": (2.557e-6, 1.729e-6)})
 MMAC_FLOPS = {"v_mmac_f32_16x16x16_bf16": 8192, "v_mmac_16x16x8_f32": 4096,
               "v_mmac_f32_16x16x16_f16": 8192, "v_mmac_f32_16x16x8_tf32": 4096,
               "v_mmac_i32_16x16x32_i8": 16384}
@@ -110,9 +113,9 @@ def card(shape: str) -> dict:
         lds = v["lds_idx"] * 128
         t_s = t * 1e-6
         # ---- floors (per-CU resources normalized by concurrently active CUs)
-        act = min(80, v["ctas"])
+        act = min(NCU, v["ctas"])
         f_mem = v["hbm_rd"] / HBW_R + v["hbm_wr"] / HBW_W
-        f_cmp = fl / (MMAC_PK * act / 80) if fl else 0.0
+        f_cmp = fl / (MMAC_PK * act / NCU) if fl else 0.0
         f_ta = v["ta_busy"] / (act * CLK)                       # measured TA-busy time
         f_val = v["valu_slots"] / (act * CLK)                   # 1 valu slot / CU / cycle
         f_lds = v["lds_idx"] / (act * CLK)                      # IDX busy incl. replays
@@ -142,16 +145,16 @@ def card(shape: str) -> dict:
         if req is not None:
             f_bw = req_rd / HBW_R + req_wr / HBW_W
             f_ta_ideal = (req_rd / 1024 * TA_RD_CYC + req_wr / 1024 * TA_WR_CYC) \
-                         / (80 * CLK * TA_EFF)
+                         / (NCU * CLK * TA_EFF)
             f_iface = max(f_bw, f_ta_ideal, f_cmp, f_chain)
         ta_amp = f_ta / ((req_rd / 1024 * TA_RD_CYC + req_wr / 1024 * TA_WR_CYC)
-                         / (80 * CLK * TA_EFF)) if req else None
+                         / (NCU * CLK * TA_EFF)) if req else None
         # ---- occupancy (LDS cap, wave-slot cap, measured 3-waves/SIMD rule R38)
         lds_c, block = v["lds_c"], v["block"]
         waves = block // 64
         res = min(64 * 1024 // max(1, lds_c), 12 // max(1, waves), 40 // max(1, waves))
         resident = max(1, res)
-        rounds = -(-v["ctas"] // (80 * resident))
+        rounds = -(-v["ctas"] // (NCU * resident))
         act_n = v["grbm"] * act if v["grbm"] else 1
         gap = t_s / floor if floor else None
         cards[key] = dict(
@@ -165,10 +168,10 @@ def card(shape: str) -> dict:
             mmop_active=v["mmop_active"],
             ta_busy=v["ta_busy"], grbm=v["grbm"],
             hbm_gbs=hbm / t_s / 1e9, l2_gbs=l2 / t_s / 1e9, lds_gbs=lds / t_s / 1e9,
-            u_ta=v["ta_busy"] / (v["grbm"] * 80) if v["grbm"] else 0,
-            u_valu=v["valu_slots"] / (v["grbm"] * 80) if v["grbm"] else 0,
-            u_mmop=v["mmop_active"] / (v["grbm"] * 80) if v["grbm"] else 0,
-            u_lds=v["lds_idx"] / (v["grbm"] * 80) if v["grbm"] else 0,
+            u_ta=v["ta_busy"] / (v["grbm"] * NCU) if v["grbm"] else 0,
+            u_valu=v["valu_slots"] / (v["grbm"] * NCU) if v["grbm"] else 0,
+            u_mmop=v["mmop_active"] / (v["grbm"] * NCU) if v["grbm"] else 0,
+            u_lds=v["lds_idx"] / (v["grbm"] * NCU) if v["grbm"] else 0,
             u_ta_act=v["ta_busy"] / act_n, u_valu_act=v["valu_slots"] / act_n,
             u_mmop_act=v["mmop_active"] / act_n, u_lds_act=v["lds_idx"] / act_n,
             conf_i=v["lds_conf"] / v["lds_insts"] if v["lds_insts"] else 0,
@@ -208,7 +211,7 @@ def main(shapes=None):
 def classify(c: dict) -> None:
     """Add per-kernel: primary/secondary constraint, at_ceiling flag, gap types U/W/C/S."""
     for key, v in c["cards"].items():
-        act = min(80, v["ctas"])
+        act = min(NCU, v["ctas"])
         utils = {
             "HBM": (v["hbm_rd"] + v["hbm_wr"]) / max(1e-9, v["t_us"] * 1e-6) / HBW_R,
             "L2": v["tcc_req"] * 64 / max(1e-9, v["t_us"] * 1e-6) / 6100e9 if v["tcc_req"] else 0,
@@ -240,7 +243,7 @@ def classify(c: dict) -> None:
             wr = 1 + v["conf_i"]                            # replay amplification proxy
         # gap type classification
         gaps = []
-        if chain_u and (chain_u < 0.999 or v["ctas"] < 80):
+        if chain_u and (chain_u < 0.999 or v["ctas"] < NCU):
             gaps.append("C")
         if wr and wr > 1.2:
             gaps.append("W")
@@ -253,7 +256,7 @@ def classify(c: dict) -> None:
             gaps.append("S")
         at = (primary[1] >= 0.85) and (wr is None or wr <= 1.2)
         if key in RECURRENCE:
-            at = chain_u >= 0.87 and v["ctas"] >= 80      # per-step within 15% of t_step_min
+            at = chain_u >= 0.87 and v["ctas"] >= NCU      # per-step within 15% of t_step_min
         v.update(dict(primary=primary[0], u_primary=primary[1],
                       secondary=secondary[0], u_secondary=secondary[1],
                       work_ratio=wr, at_ceiling=at, gap_types="".join(gaps) or "-"))

@@ -1,0 +1,82 @@
+Dispatch id,Kernel,Group,Opcode,Hits,Latency,Latency %
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Execution & Sync,s_waitcnt,395094,102055412,47.45
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Global Store,global_store_dwordx2,52352,20378224,9.47
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Global Load,global_load_dwordx2,91616,13387512,6.22
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Global Store,global_store_dwordx4,65440,9517224,4.42
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Execution & Sync,s_endpgm,3272,5752620,2.67
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Bitwise,v_or_b32_e32,922704,5250884,2.44
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Global Load,global_load_dwordx4,26994,5021812,2.33
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,LDS Write,ds_write_b16_d16_hi,389368,4841072,2.25
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Special,v_bfe_u32,765648,4030164,1.87
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Bitwise,v_and_b32_e32,703480,3988992,1.85
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Arithmetic,v_add3_u32,746834,3673952,1.71
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Bitwise,v_lshlrev_b32_e32,643766,2997676,1.39
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Bitwise,v_xor_b32_e32,552968,2745820,1.28
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,LDS Read,ds_read_b64,287936,2635440,1.23
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Arithmetic,v_mul_f32_e32,418816,2043104,0.95
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Special,v_exp_f32_e32,209408,1853496,0.86
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,LDS Write,ds_write_b16,134152,1771940,0.82
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Convert & Move,v_mov_b32_e32,269940,1684564,0.78
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Arithmetic,v_addc_co_u32_e32,305932,1514192,0.70
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Arithmetic,v_add_co_u32_e32,305932,1496268,0.70
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Bitwise,v_lshlrev_b64,184050,1486564,0.69
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Arithmetic,v_add_lshl_u32,261760,1465660,0.68
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Arithmetic,v_add_u32_e32,209408,1308112,0.61
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Bitwise,v_lshrrev_b32_e32,229040,1180100,0.55
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,MMOP,v_mmac_f32_16x16x16_bf16,209408,1081968,0.50
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Special,v_perm_b32,209408,1039352,0.48
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Bitwise,s_or_b64,52352,988332,0.46
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Bitwise,s_andn2_b64,39264,785444,0.37
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Arithmetic,v_sub_f32_e32,104704,637828,0.30
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Convert & Move,v_mov_b64_e32,112066,619500,0.29
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Arithmetic,v_pk_mul_f32,104704,606624,0.28
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Bitwise,v_or3_b32,75256,586316,0.27
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Bitwise,v_and_or_b32,52352,504540,0.23
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Arithmetic,v_mad_u64_u32,69530,459632,0.21
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Move & Convert,s_movk_i32,55624,377972,0.18
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,LDS Read,ds_read_b32,52352,330000,0.15
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Global Load,global_load_dword,818,320884,0.15
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Control Flow,s_cbranch_execnz,39264,314484,0.15
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Move & Convert,s_mov_b64,22904,276796,0.13
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Global Load,s_load_dwordx2,10634,270720,0.13
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Control Flow,s_cbranch_scc1,39264,249280,0.12
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Arithmetic,v_mul_u32_u24_e32,26176,241672,0.11
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,LDS Read,ds_read_b128,26176,237016,0.11
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Move & Convert,s_mov_b32,42536,224780,0.10
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Arithmetic,v_mad_u32_u24,29448,215488,0.10
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Bitwise,s_lshl_b64,33538,209820,0.10
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Compare,v_cmp_lt_u32_e32,42536,196788,0.09
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Arithmetic,s_addc_u32,24540,193796,0.09
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Bitwise,v_lshl_or_b32,22904,184104,0.09
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Compare,s_cmp_eq_u64,19632,152756,0.07
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,LDS Read,ds_read2_b64,13088,149664,0.07
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Arithmetic,v_mul_lo_u32,24540,134720,0.06
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Execution & Sync,s_barrier,32720,131496,0.06
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Execution & Sync,s_nop,19632,117792,0.05
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Bitwise,s_and_saveexec_b64,6544,115140,0.05
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Arithmetic,s_add_u32,24540,98584,0.05
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Global Load,s_load_dwordx4,9816,92592,0.04
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Compare,s_cmp_eq_u32,16360,92248,0.04
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Arithmetic,s_mul_i32,17178,89760,0.04
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Arithmetic,v_lshl_add_u32,16360,84340,0.04
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,LDS Write,ds_write_b64,13088,82644,0.04
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Control Flow,s_cbranch_execz,6544,68440,0.03
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Bitwise,s_ashr_i32,13088,53196,0.02
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Arithmetic,s_add_i32,13088,52924,0.02
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Control Flow,s_cbranch_vccz,6544,52352,0.02
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Compare,v_cmp_gt_u32_e32,3272,45460,0.02
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Bitwise,s_xor_b64,6544,26448,0.01
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Bitwise,s_and_b32,6544,26376,0.01
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Control Flow,s_branch,6544,26288,0.01
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Bitwise,s_and_b64,6544,26176,0.01
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Global Load,s_load_dwordx16,3272,18232,0.01
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Special,v_alignbit_b32,3272,17408,0.01
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Arithmetic,s_mul_hi_i32,4090,16448,0.01
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Vector Arithmetic,v_mad_i32_i24,3272,14032,0.01
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Arithmetic,s_mul_hi_u32,3272,13332,0.01
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Bitwise,s_or_saveexec_b64,3272,13204,0.01
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Compare,s_cmp_lg_u32,3272,13112,0.01
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Scalar Compare,s_cmp_lt_u32,3272,13092,0.01
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,Control Flow,s_cbranch_scc0,3272,13088,0.01
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,LDS Write,ds_write_b128,818,5116,0.00
+139,_ZN2g212g2_wu_kernelILb0ELb1ELb1EEEvNS_8WuParamsE,LDS Write,ds_write_b32,818,3448,0.00

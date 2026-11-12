@@ -171,6 +171,19 @@ __global__ void __launch_bounds__(256) k_lds_read(int iters, float* sink) {
 }
 
 // ------------------------------------------------------------------ compute peaks
+// gfx938 lowers the generic amdgcn MMAC builtins with lit / lts set; its native builtins with
+// lit = lts = false issue the plain v_mmac that production kernels (flash-train KDA) use.
+#if defined(__gfx938__) && __has_builtin(__builtin_hcu_mmac_f32_16x16x16_bf16_lit_lts)
+#define KRA_MMAC_BF16(a, b, c) __builtin_hcu_mmac_f32_16x16x16_bf16_lit_lts(a, b, c, false, false)
+#define KRA_MMAC_F16(a, b, c) __builtin_hcu_mmac_f32_16x16x16_f16_lit_lts(a, b, c, false, false)
+#define KRA_MMAC_F32X8(a, b, c) __builtin_hcu_mmac_16x16x8_f32_lit_lts(a, b, c, false, false)
+#define KRA_MMAC_TF32(a, b, c) __builtin_hcu_mmac_f32_16x16x8_tf32_lit_lts(a, b, c, false, false)
+#else
+#define KRA_MMAC_BF16 __builtin_amdgcn_mmac_f32_16x16x16bf16
+#define KRA_MMAC_F16 __builtin_amdgcn_mmac_f32_16x16x16f16
+#define KRA_MMAC_F32X8 __builtin_amdgcn_mmac_f32_16x16x8f32
+#define KRA_MMAC_TF32 __builtin_amdgcn_mmac_f32_16x16x8tf32
+#endif
 // NCH independent accumulator chains per wave hide the instruction latency.
 #define MMAC_BODY(BUILTIN, AT, BT, CT, INIT_A, INIT_B)                                   \
     AT a = INIT_A;                                                                       \
@@ -187,24 +200,24 @@ __global__ void __launch_bounds__(256) k_lds_read(int iters, float* sink) {
 template <int NCH>
 __global__ void LB512 k_mmac_bf16(int iters, float* sink) {
     const short v = (short)(0x3f80 + (threadIdx.x & 7));
-    MMAC_BODY(__builtin_amdgcn_mmac_f32_16x16x16bf16, v4s, v4s, v4f, (v4s{v, v, v, v}),
+    MMAC_BODY(KRA_MMAC_BF16, v4s, v4s, v4f, (v4s{v, v, v, v}),
               (v4s{v, v, v, v}))
 }
 template <int NCH>
 __global__ void LB512 k_mmac_f16(int iters, float* sink) {
     const _Float16 v = (_Float16)(1.0f + (threadIdx.x & 7) * 0.001f);
-    MMAC_BODY(__builtin_amdgcn_mmac_f32_16x16x16f16, v4h, v4h, v4f, (v4h{v, v, v, v}),
+    MMAC_BODY(KRA_MMAC_F16, v4h, v4h, v4f, (v4h{v, v, v, v}),
               (v4h{v, v, v, v}))
 }
 template <int NCH>
 __global__ void LB512 k_mmac_f32x8(int iters, float* sink) {
     const float v = 1.0f + (threadIdx.x & 7) * 0.001f;
-    MMAC_BODY(__builtin_amdgcn_mmac_f32_16x16x8f32, v2f, v2f, v4f, (v2f{v, v}), (v2f{v, v}))
+    MMAC_BODY(KRA_MMAC_F32X8, v2f, v2f, v4f, (v2f{v, v}), (v2f{v, v}))
 }
 template <int NCH>
 __global__ void LB512 k_mmac_tf32(int iters, float* sink) {
     const float v = 1.0f + (threadIdx.x & 7) * 0.001f;
-    MMAC_BODY(__builtin_amdgcn_mmac_f32_16x16x8tf32, v2f, v2f, v4f, (v2f{v, v}), (v2f{v, v}))
+    MMAC_BODY(KRA_MMAC_TF32, v2f, v2f, v4f, (v2f{v, v}), (v2f{v, v}))
 }
 template <int NCH>
 __global__ void LB512 k_mmac_i8(int iters, float* sink) {

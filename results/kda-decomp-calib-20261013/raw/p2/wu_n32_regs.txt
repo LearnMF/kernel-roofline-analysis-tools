@@ -1,0 +1,2 @@
+KERNEL _ZN2g212g2_wu_kernelILb1EEEvNS_8WuParamsE
+KERNEL _ZN2g212g2_wu_kernelILb0EEEvNS_8WuParamsE

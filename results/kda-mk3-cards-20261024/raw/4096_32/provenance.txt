@@ -1,0 +1,1 @@
+flash_train /usr/local/lib/python3.12/site-packages/flash_train
