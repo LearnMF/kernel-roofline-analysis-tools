@@ -8,6 +8,8 @@ COMMANDS = {
     "timeline": "kra.timeline.cli",
     "pmc": "kra.pmc.cli",
     "analyze": "kra.model.cli",
+    "predict": "kra.model.pcli",
+    "validate": "kra.model.validate",
 }
 
 

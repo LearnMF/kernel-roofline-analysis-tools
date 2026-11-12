@@ -103,9 +103,9 @@ T_theory    = max(T_mem_min, T_cp_min, T_serial_min)   # 假设各资源完全�
 | M | 内容 | 产出 |
 |---|---|---|
 | M0 | 文档 + 调研（**当前**） | 13 章教程上传知识库；本调研与设计草案；开专项会对齐 7 个问题 |
-| M1 | `kra predict` 骨架 + GEMM/elementwise 两个插件 + 理论档机器文件 | 只给 shape 就能出「计算强度 + 瓶颈类型 + 理论上限」 |
+| M1 | `kra predict` 骨架 + GEMM/elementwise 两个插件 + `kra validate` | 只给 shape 出「计算强度 + 瓶颈类型 + 理论上限」；BW1000 实测 profile 上下限零违例，留一法 MAPE 优于分档系数（见 `m1-bw1000-validation.md`） |
 | M2 | KDA 插件（含递推串行项）+ 容量约束切分 → `T_split` | 复现 KDA 四层下限，回归测试通过 |
-| M3 | PV 推理算子验证 + 误差台账 + 对外使用文档 | 组内其他人可自助使用 |
+| M3 | PV（S4000/S2000 SOC 仿真）跨硬件外推验证 + 误差台账 + 对外使用文档 | 组内其他人可自助使用 |
 | M4 | 与余辉端到端 perf model 对接（输出 JSON 契约）；新硬件特性（TMA/co-issue）扩展位 | 可做硬件设计探索 |
 
 ## 7. 明确不做（第一版）
