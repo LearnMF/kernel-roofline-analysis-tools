@@ -128,6 +128,9 @@ of "the fully fused operator would be compute-bound if the traffic stayed on chi
 
 ## Known gaps
 
+> Superseded in part by `m2c-handoff-and-vgpr.md`: the over-charge was an unversioned-dataflow bug (fixed),
+> VGPR now counts operands and addressing, and oversized handoffs spill inside the kernel.
+
 * layouts / materialisations are not modelled, so split traffic is charged at full tensor bytes (above);
 * VGPR is underestimated (above), making the VGPR feasibility verdict optimistic;
 * occupancy is reported (`tiles/CU`) but not priced: a 1-tile-per-CU kernel is not slowed down in the bound;

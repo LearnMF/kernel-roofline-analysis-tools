@@ -41,13 +41,15 @@ def main(argv=None) -> int:
                    help="solve the capacity-constrained kernel split (needs a plugin capacity graph)")
     p.add_argument("--residency", default="shape", choices=("shape", "lds"),
                    help="how an on-chip handoff is charged: by tensor shape, or everything to LDS")
+    p.add_argument("--vgpr", default="full", choices=("full", "acc"),
+                   help="register estimate: accumulators + operands + addressing, or accumulators only")
     p.add_argument("--list-ops", action="store_true", help="list operator plugins and exit")
     a = p.parse_args(argv)
 
     mach = TheoryMachine.load(a.machine, a.peaks)
     if a.split_search:
         from . import capacity
-        rs = capacity.solve(mach, a.op, _shape(a.shape), a.dtype, a.phase, a.residency)
+        rs = capacity.solve(mach, a.op, _shape(a.shape), a.dtype, a.phase, a.residency, vgpr_mode=a.vgpr)
         md = capacity.markdown(rs)
         if a.out:
             open(a.out + ".split.json", "w", encoding="utf-8").write(json.dumps(rs, indent=1) + "\n")

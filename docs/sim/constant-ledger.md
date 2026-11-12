@@ -37,6 +37,12 @@ which tensor), the chunk size, the parallel structure of each op, and the on-chi
 * the analytic working set is compared against the measured production footprints in
   `docs/sim/m2b-split-search.md` and the deviations are reported, not corrected.
 
+### Heuristic constants (assumptions, not measured, not fitted)
+
+| constant | value | scope | why it is there |
+|---|---|---|---|
+| `REG_BASE_VGPR` (`kra/ops/kda.py`) | 16 VGPR / thread / kernel | KDA capacity graph; any plugin must set its own (`CapGraph.reg_base_vgpr`, default 0) | addressing, loop counters, lane / chunk indices that every kernel holds regardless of dataflow. Chosen as a round compiler assumption **before** comparing with measured footprints; `--vgpr acc` reports without it so its effect is visible |
+
 ## Explicitly NOT used as prediction inputs
 
 | thing | why not |

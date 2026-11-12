@@ -135,24 +135,37 @@ def test_capacity_barriers_cannot_be_grouped():
 
 
 def test_capacity_search_prunes_on_lds_and_prices_the_rest():
+    import copy
     from kra.model.capacity import search
     from kra.ops.kda import capacity_graph
     m = _m936()
-    r = search(capacity_graph({"T": 16384, "H": 12}), m, "mmac_bf16", m.peaks["mmac_bf16"])
-    assert 0 < r["feasible"] < r["candidates"]          # capacity actually binds
+    g = capacity_graph({"T": 16384, "H": 12})
+    r = search(g, m, "mmac_bf16", m.peaks["mmac_bf16"])
     ts = [x["T_split_us"] for x in r["ranked"]]
     assert ts == sorted(ts) and ts[0] < ts[-1]
     assert all(x["lds_peak_kb"] <= 64.0 for x in r["ranked"])
     assert all(x["vgpr_peak"] <= 256 for x in r["ranked"])
+    assert any(x["spilled"] for x in r["ranked"])            # 64 KB binds: some fusions need a spill
+    small = copy.deepcopy(m)
+    small.device["lds_per_cu"] = 24 * 1024                  # an op's own staging no longer fits
+    rs = search(capacity_graph({"T": 16384, "H": 12}), small, "mmac_bf16", m.peaks["mmac_bf16"])
+    assert rs["feasible"] < rs["candidates"]
 
 
-def test_fusing_s4a_s4b_is_infeasible_as_production_found():
-    from kra.model.capacity import footprint
+def test_fusing_s4a_s4b_cannot_stay_on_chip_and_spills_a_handoff():
+    # production found the same: s4a and s4b share one launch but pass dA / dwT through global memory
+    from kra.model.capacity import footprint, kernel_work
     from kra.ops.kda import capacity_graph
     g = capacity_graph({"T": 16384, "H": 12})
     byn = {o.name: o for o in g.ops}
-    fp = footprint(g, [byn["wy_bwd_a"], byn["wy_bwd_b"]])
-    assert fp["lds_bytes"] > 65536
+    k = [byn["wy_bwd_a"], byn["wy_bwd_b"]]
+    assert footprint(g, k)["lds_bytes"] > 65536
+    fp = footprint(g, k, lds_cap=65536)
+    assert fp["lds_bytes"] <= 65536 and fp["handoffs_spilled"]
+    on, sp = kernel_work(g, k), kernel_work(g, k, spilled=fp["handoffs_spilled"])
+    assert sp.bytes_rd > on.bytes_rd and sp.bytes_wr > on.bytes_wr
+    a, b = kernel_work(g, k[:1]), kernel_work(g, k[1:])
+    assert sp.bytes_rd < a.bytes_rd + b.bytes_rd               # the shared inputs are still read once
 
 
 def test_split_search_is_bounded_below_by_t_theory():
@@ -205,3 +218,50 @@ def test_measured_production_footprints_are_not_an_input_of_the_search():
     src = open("kra/model/capacity.py", encoding="utf-8").read() + \
         open("kra/ops/kda.py", encoding="utf-8").read()
     assert "kda_partition" not in src        # the measured CORE table stays out of the predictor
+
+
+def test_split_search_handoff_bytes_match_the_optrace_validated_ir():
+    # versioned dataflow: a recomputed tensor is a new value, so the forward kernel does not read back what
+    # it produced itself.  With that, the search's bytes per production kernel never exceed the
+    # optrace-validated hand-written decomposition (which also pays extra layout copies).
+    from kra.model import capacity as cap
+    from kra.ops.kda import capacity_graph
+    import kra.ops.kda_ir as ir
+    T, H = 16384, 12
+    g = capacity_graph({"T": T, "H": H}, formulation={"state": "recompute"})
+    byn = {o.name: o for o in g.ops}
+    for k in ir.PRODUCTION:
+        w = cap.kernel_work(g, [byn[n] for n in k.ops if n in byn])
+        rd, wr, rdh, wrh = k.io_bytes(64, H)
+        assert w.bytes_rd <= (rd * T * H + rdh * H) * 1.001
+        assert w.bytes_wr <= (wr * T * H + wrh * H) * 1.001 + 2e6   # head_gate: g in fp32 vs Gn copies
+
+
+def test_operands_spill_to_lds_when_registers_run_out():
+    from kra.model import capacity as cap
+    from kra.ops.kda import capacity_graph
+    g = capacity_graph({"T": 16384, "H": 12})
+    op = next(o for o in g.ops if o.name == "wy_bwd_b")
+    roomy = cap.footprint(g, [op], vgpr_max=1024)
+    tight = cap.footprint(g, [op], vgpr_max=128)
+    assert roomy["operands_moved_to_lds"] == 0
+    assert tight["operands_moved_to_lds"] > 0 and tight["lds_bytes"] > roomy["lds_bytes"]
+    assert tight["vgpr"] <= 128 + 1e-9 or tight["vgpr"] < roomy["vgpr"]
+
+
+def test_production_grouping_t_split_matches_the_hand_written_decomposition():
+    # hold-out: the generic search prices the production p54a grouping within a few % of the IR's
+    # optrace-validated decomposition (which also pays the layout copies the search does not need)
+    from kra.model.capacity import search, rank_of
+    from kra.model.predict import predict
+    from kra.ops.kda import capacity_graph
+    m = _m936()
+    shape = {"T": 16384, "H": 12}
+    r = search(capacity_graph(shape, formulation={"state": "recompute"}), m, "mmac_bf16", m.peaks["mmac_bf16"])
+    prod = ["l2norm_q+l2norm_k+beta_sig+gate_cumsum+kkt_qkt+tri_inverse+wy_wu", "scan_fwd_o", "re_l2norm",
+            "re_gate", "re_wy", "re_scan", "dav", "scan_dh", "wy_bwd_a+wy_bwd_b", "tail", "param_reduce"]
+    k = rank_of(r, prod)
+    assert k is not None
+    hand = predict(m, "kda", shape, "bf16", "fwd+bwd")["T_split"]["p54a"]["T_split_us"]
+    t = r["ranked"][k - 1]["T_split_us"]
+    assert t <= hand and t > 0.95 * hand
