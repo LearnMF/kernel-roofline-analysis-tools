@@ -1,0 +1,86 @@
+Current Python version 3.10 is below the recommended 3.11 version. It is recommended to upgrade to Python 3.11 or higher for the best experience.
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+Traceback (most recent call last):
+  File "/public/home/tanbo/hier_pmc/kda_run.py", line 4, in <module>
+    runpy.run_path("/public/home/tanbo/kra/examples/kda/kda_iter.py", run_name="__main__")
+  File "/usr/lib/python3.10/runpy.py", line 289, in run_path
+    return _run_module_code(code, init_globals, run_name,
+  File "/usr/lib/python3.10/runpy.py", line 96, in _run_module_code
+    _run_code(code, mod_globals, init_globals,
+  File "/usr/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/public/home/tanbo/kra/examples/kda/kda_iter.py", line 84, in <module>
+    o = g["fwd"](a.arm)
+  File "kda_op_bench_tp", line 70, in fwd
+  File "/opt/kda_env/g2_calib/hip_kda/fla/chunk_kda.py", line 342, in chunk_kda
+    o = k3_rawgate.g2_varlen(
+  File "/opt/kda_env/g2_calib/hip_kda/ops/k3_rawgate.py", line 136, in g2_varlen
+    return k3_g2.k3_g2_kda(q, k, v, g, beta, a_log, dt_bias, lower_bound, 1,
+  File "/opt/kda_env/g2_calib/hip_kda/ops/k3_g2.py", line 598, in k3_g2_kda
+    o = _K3G2Function.apply(x.contiguous(), xk.contiguous(), xv.contiguous(),
+  File "/usr/local/lib/python3.10/dist-packages/torch/autograd/function.py", line 583, in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+  File "/opt/kda_env/g2_calib/hip_kda/ops/k3_g2.py", line 221, in forward
+    outs = g2_ops.fwd_h_o(Wn, Kn, Un, Gn, QgA, AqkA, scale, emit_bn=keep, o_bf16=obf,
+  File "/opt/kda_env/g2_calib/hip_kda/ops/g2_ops.py", line 242, in fwd_h_o
+    return _ext().fwd_h_o(wn, kn, un, gn_t, qga, aqka, float(scale), bool(emit_bn),
+RuntimeError: g2_fwd_h_v8o failed: 2
+[31mHIP_PROF [2026-10-14 01:10:49.218825] [290980] [ERROR]: exited with status: 1
+[m
+HIP_PROF:on Wed Oct 14 01:10:21 2026
+HIP_PROF:process id '290979'
+HIP_PROF:db file '/public/home/tanbo/kra_cards/p1_16384_48/FWH_65_trace_1.db'
+HIP_PROF:out put file '/public/home/tanbo/kra_cards/p1_16384_48/FWH_65_trace_1'
+HIP_PROF:profiling ' python3 /public/home/tanbo/hier_pmc/kda_run.py --tree /opt/kda_env/g2_calib --arm g2 --T 16384 --H 48 --iters 4'
+HIP_PROF:process begin
+HIP_PROF:process end run total cost:28(s)
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HIP_PROF:IP:[31m10.16.1.47[0m HIP API statistics
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Name                                                          |Calls          |TotalDurationNs            |AverageNs                  |Percentage                 |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|hipLaunchKernel                                               |25             |43224700                   |1728988                    |51.6482452516831           |
+|hipMalloc                                                     |12             |38807705                   |3233975                    |46.3704748788301           |
+|hipMemcpyWithStream                                           |2              |1465835                    |732917                     |1.75149406655225           |
+|hipGetDevice                                                  |350            |64039                      |182                        |0.0765187954496511         |
+|hipGetDeviceProperties_v2                                     |8              |25270                      |3158                       |0.0301945683257497         |
+|__hipPopCallConfiguration                                     |25             |19390                      |775                        |0.0231686853912262         |
+|hipFuncGetAttributes                                          |1              |17980                      |17980                      |0.0214839073406007         |
+|hipSetDevice                                                  |89             |16900                      |189                        |0.0201934390465045         |
+|hipDevicePrimaryCtxGetState                                   |21             |15030                      |715                        |0.017959017092838          |
+|hipStreamIsCapturing                                          |30             |12670                      |422                        |0.0151391048946279         |
+|__hipPushCallConfiguration                                    |25             |9980                       |399                        |0.0119248829398885         |
+|hipGetLastError                                               |42             |6850                       |163                        |0.00818491464310982        |
+|hipGetDeviceCount                                             |4              |1440                       |360                        |0.0017206243921282         |
+|hipGetDeviceProperties                                        |1              |1280                       |1280                       |0.00152944390411395        |
+|hipStreamGetCaptureInfo                                       |2              |950                        |475                        |0.00113513414758457        |
+|hipDeviceGetStreamPriorityRange                               |1              |530                        |530                        |0.000633285366547183       |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Total                                                         |638            |83690549                   |131176                     |100.0                      |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HIP_PROF:IP:[31m10.16.1.47[0m HIPOPS API statistics
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Name                                                          |Calls          |TotalDurationNs            |AverageNs                  |Percentage                 |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|void at::native::(anonymous namespace)::distribution_elemen...|7              |4865919                    |695131                     |36.676                     |
+|void at::native::vectorized_elementwise_kernel<4, at::nativ...|6              |2398720                    |399786                     |18.08                      |
+|void g2::r4::g2_fwd_prep_a_kernel<1, false>(g2::r4::PrepAPa...|1              |2276319                    |2276319                    |17.158                     |
+|void at::native::vectorized_elementwise_kernel<4, at::nativ...|5              |2266238                    |453247                     |17.082                     |
+|void g2::r4::g2_fwd_prep_b_kernel<false>(g2::r4::PrepBParam...|1              |1436319                    |1436319                    |10.826                     |
+|void at::native::vectorized_elementwise_kernel<4, at::nativ...|1              |8480                       |8480                       |0.064                      |
+|void at::native::(anonymous namespace)::distribution_elemen...|1              |7040                       |7040                       |0.053                      |
+|void at::native::vectorized_elementwise_kernel<4, at::nativ...|1              |4480                       |4480                       |0.034                      |
+|void at::native::vectorized_elementwise_kernel<4, at::nativ...|1              |3680                       |3680                       |0.028                      |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Total                                                         |24             |13267195                   |552799                     |100.0                      |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HIP_PROF:dump json trace (0/676)HIP_PROF:dump json trace (0/676)HIP_PROF:dump json trace (0/676)HIP_PROF:dump json trace (638/676)HIP_PROF:dump json trace (652/676)HIP_PROF:dump json trace (676/676)
+HIP_PROF:finish
