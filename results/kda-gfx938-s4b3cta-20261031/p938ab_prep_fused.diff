@@ -1,0 +1,77 @@
+diff --git a/src/primitive/hygon/kda/g2/g2_fwd_prep.cuh b/src/primitive/hygon/kda/g2/g2_fwd_prep.cuh
+index cbfea43..55ed6f7 100644
+--- a/src/primitive/hygon/kda/g2/g2_fwd_prep.cuh
++++ b/src/primitive/hygon/kda/g2/g2_fwd_prep.cuh
+@@ -247,8 +247,13 @@ __device__ __forceinline__ float exp2_inrange(float x) { return __builtin_amdgcn
+ // L2N = false (kra P-94): q / k arrive already normalized (Megatron-LM-k3 runs FLA's l2norm before
+ // the call, use_qk_l2norm_in_kernel=False): qn = q, kn = k bit for bit, so skipping the l2norm block
+ // leaves every output equal to the X1 chain's (gate -> fwd_intra2_split -> to_gn) on the raw q / k.
+-template <int GATE, bool VL, bool L2N = true>
+-__global__ void __launch_bounds__(256) g2_fwd_prep_a_kernel(PrepAParams p) {
++template <int I, int M>
++__device__ __forceinline__ void b_post(const PrepBParams& p, float* smem, const float* Rg, int i, int hh, int l, long t0,
++                                       int cl);
++// FUSE (kra P-938ab, gfx938): prep_b's work runs in the same CTA after prep_a (both in the 16 KB arena, <= 192 VGPRs:
++// 4 CTAs per CU kept); R and Kb are re-read from L2 right after this CTA wrote them (CTA barrier = release / acquire).
++template <int GATE, bool VL, bool L2N = true, bool FUSE = false>
++__global__ void __launch_bounds__(256) g2_fwd_prep_a_kernel(PrepAParams p, PrepBParams pb) {
+     using namespace fi2;
+     // One 21 KB arena (3 CTAs/CU), phases alias it (floats):
+     //   l2n exchange X      [0, 512)                           before the gate
+@@ -622,6 +627,16 @@ __global__ void __launch_bounds__(256) g2_fwd_prep_a_kernel(PrepAParams p) {
+         #pragma unroll
+         for (int j = threadIdx.x; j < 1280; j += 256) Rg4[j] = s4[j];
+     }
++    if constexpr (FUSE) {
++        __syncthreads();                              // R / Kb stores of the whole CTA visible to its reads below
++        const float* Rg = p.R + g2_nat_blk(i, hh, p.H, p.NT, false, 5120);
++        switch (wv) {
++            case 0: b_post<0, M>(pb, smem, Rg, i, hh, l, tok0, cl); break;
++            case 1: b_post<1, M>(pb, smem, Rg, i, hh, l, tok0, cl); break;
++            case 2: b_post<2, M>(pb, smem, Rg, i, hh, l, tok0, cl); break;
++            default: b_post<3, M>(pb, smem, Rg, i, hh, l, tok0, cl); break;
++        }
++    }
+     });   // g2_vl_dispatch
+ }
+ 
+@@ -904,7 +919,21 @@ extern "C" int g2_fwd_prep_l2n(const void* q, const void* k, const void* v, cons
+     pa.order_m = (int)g2::g2_env_long("KDA_G2_PREPA_ORDER_M", 4);
+     if (pa.order == 3 && (pa.order_m < 1 || H % pa.order_m)) pa.order = 0;
+     const dim3 grid(NT, H), blk(256);
+-#define G2_PREP_A(GT, VLT, L2) hipLaunchKernelGGL((g2::r4::g2_fwd_prep_a_kernel<GT, VLT, L2>), grid, blk, 0, s, pa)
++    g2::r4::PrepBParams pb{(const short*)Kb, (const short*)v, (const float*)beta, (const float*)R,
++                           (short*)Wn, (short*)Un, (short*)AqkA, (short*)Aqk, (short*)Akk,
++                           ctok, clen, (float)scale, H, NT};
++    pb.kp = pa.kp;   // kra P-62
++    if (const char* e = g2::g2_getenv("G2_PREPB_STOP")) pb.stop = atoi(e);
++    pb.order = (int)g2::g2_env_long("KDA_G2_PREPB_ORDER", o938 && H % 64 == 0 ? 2 : 0);   // kra P-938o2
++    pb.order_m = (int)g2::g2_env_long("KDA_G2_PREPB_ORDER_M", 4);
++    if (pb.order == 3 && (pb.order_m < 1 || H % pb.order_m)) pb.order = 0;
++    // kra P-938ab: one fused prep kernel on gfx938 (KDA_G2_PREP_FUSE=0 under FTRAIN_KDA_DEV restores the pair)
++    const bool fuse = o938 && pa.stop == 0 && pb.stop == 0 && g2::g2_env_long("KDA_G2_PREP_FUSE", 1) != 0;
++    auto launch_pa = [&](void (*kfu)(g2::r4::PrepAParams, g2::r4::PrepBParams),
++                         void (*kpl)(g2::r4::PrepAParams, g2::r4::PrepBParams)) {
++        hipLaunchKernelGGL(fuse ? kfu : kpl, grid, blk, 0, s, pa, pb);
++    };
++#define G2_PREP_A(GT, VLT, L2) launch_pa(g2::r4::g2_fwd_prep_a_kernel<GT, VLT, L2, true>, g2::r4::g2_fwd_prep_a_kernel<GT, VLT, L2, false>)
+     if (l2n) {
+         if (gate) { if (ctok) G2_PREP_A(1, true, true); else G2_PREP_A(1, false, true); }
+         else      { if (ctok) G2_PREP_A(0, true, true); else G2_PREP_A(0, false, true); }
+@@ -915,15 +944,7 @@ extern "C" int g2_fwd_prep_l2n(const void* q, const void* k, const void* v, cons
+     }
+ #undef G2_PREP_A
+     int rc = (int)hipGetLastError();
+-    if (rc) return rc;
+-    g2::r4::PrepBParams pb{(const short*)Kb, (const short*)v, (const float*)beta, (const float*)R,
+-                           (short*)Wn, (short*)Un, (short*)AqkA, (short*)Aqk, (short*)Akk,
+-                           ctok, clen, (float)scale, H, NT};
+-    pb.kp = pa.kp;   // kra P-62
+-    if (const char* e = g2::g2_getenv("G2_PREPB_STOP")) pb.stop = atoi(e);
+-    pb.order = (int)g2::g2_env_long("KDA_G2_PREPB_ORDER", o938 && H % 64 == 0 ? 2 : 0);   // kra P-938o2
+-    pb.order_m = (int)g2::g2_env_long("KDA_G2_PREPB_ORDER_M", 4);
+-    if (pb.order == 3 && (pb.order_m < 1 || H % pb.order_m)) pb.order = 0;
++    if (rc || fuse) return rc;
+     if (ctok) hipLaunchKernelGGL(g2::r4::g2_fwd_prep_b_kernel<true>, grid, blk, 0, s, pb);
+     else hipLaunchKernelGGL(g2::r4::g2_fwd_prep_b_kernel<false>, grid, blk, 0, s, pb);
+     return (int)hipGetLastError();

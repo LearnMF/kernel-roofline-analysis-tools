@@ -1,0 +1,119 @@
+diff --git a/src/primitive/hygon/kda/g2/g2_engine.cuh b/src/primitive/hygon/kda/g2/g2_engine.cuh
+index fa7e7e8..387d586 100644
+--- a/src/primitive/hygon/kda/g2/g2_engine.cuh
++++ b/src/primitive/hygon/kda/g2/g2_engine.cuh
+@@ -299,26 +299,47 @@ __global__ void __launch_bounds__(512) g2_dhu_v8b_kernel(BwdNParams p) {
+     const float* Gnc = p.Gn + chunk * 128;
+     bf16* dv2c = p.dv2 + chunk * 8192;
+     const int r1 = wv & 3, v1 = wv >> 2;                 // GEMM-A tile: t-tile r1, v-tile v1
++    // kra P-938lt (gfx938, production MODE 1): the dh state's GEMM-B runs as MMAC lit1 lts1, whose C fragment holds
++    // (row 4q + e, column m) -- bit-identical to lit0 lts0 up to that permutation (mmac_lit_exact: 256 / 256, chained).
++    // With Qg / Wb read from lane (q, pi16(m)) the B columns are pi16-permuted, so lane (q, m) holds
++    // dh^T[v = 16vt + 4q + e][k = 16wv + pi16(m)]: exactly the bN(dh) slot of the lane -> the HbN emit is one 8 B store
++    // per vt straight from registers (no u16 gathers from dhB, off the barrier-1 path).  The decay is per lane
++    // (one k column), write_dh scatters with the new (v, k) mapping.  Same values everywhere.
++#if defined(__gfx938__)
++    constexpr bool LT = MODE == 1;
++#else
++    constexpr bool LT = false;
++#endif
++    const int lq = LT ? ((l & 48) | pi16(l & 15)) : l;  // lane whose Qg / Wb fragment this lane loads
+     f4 st[2];                                            // DH^T C-frags [vt]: v=16vt+c_row, k=16wv+c_col
+     st[0] = f4{0.f, 0.f, 0.f, 0.f}; st[1] = st[0];
+-    v4bh ka[8], qb[4], wb[4], dof, dvf; f4 gl;       // dof: this wave's 1/8 of dO^T
++    v4bh ka[8], qb[4], wb[4], dof, dvf; f4 gl; float gls = 0.f;   // dof: this wave's 1/8 of dO^T
+     auto loadKA = [&](int i) {
+         const bf16* src = dga(KgAc, ((i * 4 + r1) * 8) * 256 + l * 8);      // kra L16: paired
+         #pragma unroll
+         for (int j = 0; j < 4; ++j) ld16x2(src + j * 512, ka[2 * j], ka[2 * j + 1]);
+     };
+     auto loadDV = [&](int i) { dvf = ld8(dga(dvc, ((i * 4 + r1) * 8 + 2 * vs + v1) * 256 + l * 4)); };
+-    auto loadG = [&](int i) { gl = *reinterpret_cast<const f4*>(dga(Gnc, (i * 8 + wv) * 16 + (l >> 4) * 4)); };
++    auto loadG = [&](int i) {
++        if constexpr (LT) gls = *dga(Gnc, (i * 8 + wv) * 16 + (l & 15));   // Gn [kt][q][e] = column q + 4e: slot m = pi16(m)
++        else gl = *reinterpret_cast<const f4*>(dga(Gnc, (i * 8 + wv) * 16 + (l >> 4) * 4));
++    };
+     auto loadQW = [&](int i) {
+         #pragma unroll
+         for (int j = 0; j < 2; ++j) {                    // kra L16: paired
+-            ld16x2(dga(Qgc, ((i * 8 + wv) * 4) * 256 + j * 512 + l * 8), qb[2 * j], qb[2 * j + 1]);
+-            ld16x2(dga(Wbc, ((i * 8 + wv) * 4) * 256 + j * 512 + l * 8), wb[2 * j], wb[2 * j + 1]);
++            ld16x2(dga(Qgc, ((i * 8 + wv) * 4) * 256 + j * 512 + lq * 8), qb[2 * j], qb[2 * j + 1]);
++            ld16x2(dga(Wbc, ((i * 8 + wv) * 4) * 256 + j * 512 + lq * 8), wb[2 * j], wb[2 * j + 1]);
+         }
+     };
+     auto loadDO = [&](int i) {
+         dof = ld8(dga(dOTc, ((i * 8 + 2 * vs + (wv >> 2)) * 4 + (wv & 3)) * 256 + l * 4));
+     };
++    auto mmB = [&](v4bh a, v4bh b, f4 c) -> f4 {
++#if defined(__gfx938__)
++        if constexpr (LT) return __builtin_hcu_mmac_f32_16x16x16_bf16_lit_lts(a, b, c, true, true);
++#endif
++        return mmac(a, b, c);
++    };
+     v4bh hx[2];
+     auto write_dh = [&]() {
+         #pragma unroll
+@@ -326,12 +347,23 @@ __global__ void __launch_bounds__(512) g2_dhu_v8b_kernel(BwdNParams p) {
+             #pragma unroll
+             for (int e = 0; e < 4; ++e) {
+                 hx[vt][e] = bf_rne_int(st[vt][e]);
+-                reinterpret_cast<short*>(dhB)[(16 * vt + c_row(l)) * kPadK + 16 * wv + c_col(l, e)] = hx[vt][e];
++                if constexpr (LT)
++                    reinterpret_cast<short*>(dhB)[(16 * vt + 4 * (l >> 4) + e) * kPadK + 16 * wv + pi16(l & 15)] = hx[vt][e];
++                else
++                    reinterpret_cast<short*>(dhB)[(16 * vt + c_row(l)) * kPadK + 16 * wv + c_col(l, e)] = hx[vt][e];
+             }
+     };
++    auto emit_lt = [&](int i) {                          // P-938lt: bN(dh) of chunk i's entry state from registers
++        #pragma unroll
++        for (int vt = 0; vt < 2; ++vt) {
++            const size_t off = ((((size_t)i * p.H + bh) * 8 + wv) * 8 + (2 * vs + vt)) * 256 + l * 4;
++            *const_cast<v4bh*>(reinterpret_cast<const v4bh*>(p.HbN + off)) = hx[vt];
++        }
++    };
+     const int last = c1 - 1;                             // dh = 0 at the segment end
+     loadKA(last); loadDV(last); loadG(last); loadQW(last); loadDO(last);
+     write_dh();
++    if constexpr (LT) emit_lt(last); else
+     {
+         const int i = last;
+         lds_barrier();
+@@ -361,7 +393,7 @@ __global__ void __launch_bounds__(512) g2_dhu_v8b_kernel(BwdNParams p) {
+         loadDO(nxt);                                     // a full step ahead of its publish
+         lds_barrier();                                   // dhB (entry state of chunk i) + dOs ready
+         // bN(dh) emit: slot (kt=wv, vt, l, e) = dh[16*wv + pi(m)][16*(2*vs+vt) + 4*(l>>4) + e]
+-        if (hasBN) {
++        if (hasBN && !LT) {
+             const int q4_ = l >> 4, m_ = l & 15;
+             #pragma unroll
+             for (int vt = 0; vt < 2; ++vt) {
+@@ -395,7 +427,10 @@ __global__ void __launch_bounds__(512) g2_dhu_v8b_kernel(BwdNParams p) {
+                            + (l >> 4) + 4 * (l & 15) + 64 * e] = x[e];
+         }
+         loadDV(nxt);
+-        {
++        if constexpr (LT) {
++            const float d = g2_vcopy(gls);               // kra P-52: Gn = exp2f(G); one k column per lane (P-938lt)
++            st[0] *= d; st[1] *= d;
++        } else {
+             f4 d;
+             #pragma unroll
+             for (int e = 0; e < 4; ++e) d[e] = g2_vcopy(gl[e]);   // kra P-52: Gn = exp2f(G)
+@@ -418,13 +453,14 @@ __global__ void __launch_bounds__(512) g2_dhu_v8b_kernel(BwdNParams p) {
+             f4 qd = f4{0.f, 0.f, 0.f, 0.f}, wd = f4{0.f, 0.f, 0.f, 0.f};
+             #pragma unroll
+             for (int rt = 0; rt < 4; ++rt) {
+-                qd = mmac(dOs[s & 1][(vt * 4 + rt) * 64 + l], qb[rt], qd);
+-                wd = mmac(ld8(vB + (16 * vt + (l & 15)) * kPadT + 16 * rt + (l >> 4) * 4), wb[rt], wd);
++                qd = mmB(dOs[s & 1][(vt * 4 + rt) * 64 + l], qb[rt], qd);
++                wd = mmB(ld8(vB + (16 * vt + (l & 15)) * kPadT + 16 * rt + (l >> 4) * 4), wb[rt], wd);
+             }
+             st[vt] += qd * p.scale - wd;
+         }
+         loadQW(nxt);
+         write_dh();
++        if constexpr (LT) { if (i > c0) emit_lt(i - 1); }   // the entry state of the next chunk
+     }
+ }
+ 

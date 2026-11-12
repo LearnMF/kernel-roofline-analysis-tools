@@ -1,0 +1,7 @@
+mmac tile, 2 CTA/CU: regs 248.7 TF | A regs + B LDS 253.9 TF | A,B LDS 128.8 TF
+C=64 vs C=32,  48 CTAs, same T (NT=256 vs 512): state 1.170 vs 0.810 us/step (0.69x per step, pass 0.300 -> 0.415 ms) | with o 1.431 vs 1.080 us/step (0.75x, pass 0.366 -> 0.553 ms)
+C=64 vs C=32, 192 CTAs, same T (NT=256 vs 512): state 1.993 vs 1.443 us/step (0.72x per step, pass 0.510 -> 0.739 ms) | with o 2.948 vs 1.675 us/step (0.57x, pass 0.755 -> 0.858 ms)
+C=64 vs C=128,  48 CTAs, same T (NT=256 vs 128): state 1.170 vs 1.861 us/step (1.59x per step, pass 0.300 -> 0.238 ms) | with o 1.431 vs 2.403 us/step (1.68x, pass 0.366 -> 0.308 ms)
+C=64 vs C=128, 192 CTAs, same T (NT=256 vs 128): state 1.993 vs 3.820 us/step (1.92x per step, pass 0.510 -> 0.489 ms) | with o 2.949 vs 5.128 us/step (1.74x, pass 0.755 -> 0.656 ms)
+recurrence step, NT=256,  48 CTAs: state-only 1.170 us/step | with o 1.432 us/step
+recurrence step, NT=256, 192 CTAs: state-only 1.993 us/step | with o 2.951 us/step

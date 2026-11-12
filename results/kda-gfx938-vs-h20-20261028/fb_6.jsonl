@@ -1,0 +1,9 @@
+{"impl": "fla", "arch": "NVIDIA H20-3e", "T": 2048, "H": 16, "fwd_ms": 0.2028, "bwd_ms": 0.6857, "fwd_peak_mb": 83.886, "bwd_peak_mb": 218.89}
+{"impl": "fla", "arch": "NVIDIA H20-3e", "T": 2048, "H": 16, "fwd_ms": 0.203, "bwd_ms": 0.6859, "fwd_peak_mb": 83.886, "bwd_peak_mb": 218.89}
+{"impl": "fla", "arch": "NVIDIA H20-3e", "T": 2048, "H": 16, "fwd_ms": 0.2029, "bwd_ms": 0.6855, "fwd_peak_mb": 83.886, "bwd_peak_mb": 218.89}
+{"impl": "fla", "arch": "NVIDIA H20-3e", "T": 8192, "H": 16, "fwd_ms": 1.235, "bwd_ms": 4.9296, "fwd_peak_mb": 335.544, "bwd_peak_mb": 875.561}
+{"impl": "fla", "arch": "NVIDIA H20-3e", "T": 8192, "H": 16, "fwd_ms": 1.2387, "bwd_ms": 5.4164, "fwd_peak_mb": 335.544, "bwd_peak_mb": 875.561}
+{"impl": "fla", "arch": "NVIDIA H20-3e", "T": 8192, "H": 16, "fwd_ms": 1.243, "bwd_ms": 5.4243, "fwd_peak_mb": 335.544, "bwd_peak_mb": 875.561}
+{"impl": "fla", "arch": "NVIDIA H20-3e", "T": 32768, "H": 16, "fwd_ms": 5.7783, "bwd_ms": 16.2369, "fwd_peak_mb": 1342.177, "bwd_peak_mb": 3502.244}
+{"impl": "fla", "arch": "NVIDIA H20-3e", "T": 32768, "H": 16, "fwd_ms": 5.7887, "bwd_ms": 20.8483, "fwd_peak_mb": 1342.177, "bwd_peak_mb": 3502.244}
+{"impl": "fla", "arch": "NVIDIA H20-3e", "T": 32768, "H": 16, "fwd_ms": 2.8514, "bwd_ms": 9.5853, "fwd_peak_mb": 1342.177, "bwd_peak_mb": 3502.244}

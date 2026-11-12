@@ -1,0 +1,51 @@
+kernel                 waves  cyc/wave | instr/wave:   compute valu_move       lds      vmem      sync      salu | VALU split: fp trans | cvt int logic sel | move/(fp+trans)
+g2_bwd_tail_kernel        96    550112 |      9433      6176       274       826       832       737 |   8997   436 |  1273  2975   707  1218 |  0.65
+                       cycles %: compute 11.6  valu_move 11.4  lds  0.6  vmem 12.7  sync 61.0  salu  2.6  | wait_vm 56.2 barrier  3.7
+g2_dav_kernel             64    448388 |      1135     12442      1802       780      1078      1887 |    227     0 |  1192  2908  6696  1646 | 54.81
+                       cycles %: compute  2.2  valu_move 18.9  lds  9.7  vmem 24.3  sync 38.1  salu  6.7  | wait_vm 27.7 barrier  7.4
+g2_dhu_v8b                32    874985 |      8068     23165      7420      3840      4270      5287 |   2690     2 |  3832 10246  4314  4772 |  8.61
+                       cycles %: compute  7.5  valu_move 13.6  lds 10.8  vmem 34.4  sync 29.4  salu  4.3  | wait_vm  3.2 barrier 20.0
+g2_fwd_h_v8o4             28    653361 |     10242     19872      8464      2961      3459      3780 |   3073     1 |  5255  8651  1705  4260 |  6.46
+                       cycles %: compute 11.3  valu_move 16.7  lds 13.5  vmem 31.2  sync 22.3  salu  5.0  | wait_vm  2.1 barrier  6.8
+g2_fwd_prep_a_kernel      48    597080 |     19629     13019      1536       728      1318      4677 |  15233  3382 |  2368  3499  3346  3756 |  0.70
+                       cycles %: compute 34.3  valu_move 21.3  lds  4.1  vmem  9.1  sync 23.3  salu  8.0  | wait_vm  9.2 barrier  8.5
+g2_fwd_prep_b_kernel      64    558049 |      1832      9357      2437       759      1582      1020 |   1145     0 |  2773   819  3052  2684 |  8.17
+                       cycles %: compute  2.6  valu_move  9.5  lds  5.6  vmem 49.7  sync 28.6  salu  4.0  | wait_vm 12.3 barrier 12.7
+g2_gate_kernel           128    290497 |      5916      2775        18       262       167       442 |   5455   461 |   255   977   374  1163 |  0.47
+                       cycles %: compute 15.2  valu_move 67.1  lds  0.1  vmem  7.8  sync  6.4  salu  3.4  | wait_vm  3.4 barrier  2.7
+g2_wu_kernel              32    714341 |      8714     35244      6335      1783      3550      4431 |   4975  1279 |  7941  9011 15829  2463 |  5.64
+                       cycles %: compute  8.1  valu_move 26.7  lds 10.9  vmem 12.9  sync 33.2  salu  8.2  | wait_vm 20.6 barrier  6.6
+kda_gn_all_kernel        129     19691 |        21       177         0        57        21       198 |     14     7 |    14    57    35    71 |  8.33
+                       cycles %: compute  0.5  valu_move  4.5  lds  0.0  vmem 39.5  sync 33.4  salu 22.1  | wait_vm 26.7 barrier  0.0
+p3_wy_s4a_kernel          32    883069 |     10317     19993      6847      2259      5330      5728 |   4845     0 |  4332  4995  4047  6619 |  4.13
+                       cycles %: compute  7.3  valu_move 11.4  lds 10.0  vmem 43.1  sync 21.6  salu  6.6  | wait_vm  4.7 barrier  6.0
+p3_wy_s4b_kernel          32   1077263 |     24082     17819      8529      1597      5114      5360 |  17426  2219 |  1215  4784  4336  7404 |  0.91
+                       cycles %: compute 19.0  valu_move 12.0  lds  9.4  vmem 21.5  sync 33.2  salu  4.9  | wait_vm 15.8 barrier  8.8
+
+time-weighted chain shares (weights = kernel times):
+class           instr %  cycles %
+wait_vm            1.6%     15.9%
+vmem_ld            2.5%     14.7%
+barrier            0.5%      8.7%
+v_fp              20.5%      7.1%
+wait_lgkm          4.8%      6.7%
+vmem_st            1.2%      6.6%
+v_logic           11.1%      5.9%
+salu               8.5%      5.5%
+v_int_addr        12.2%      5.0%
+mmac               6.4%      5.0%
+lds_wr             4.4%      4.2%
+v_sel_move         9.8%      3.6%
+lds_rd             5.0%      3.1%
+smem               0.2%      2.8%
+v_cvt_pack         7.3%      2.6%
+v_trans            2.3%      1.2%
+lds_xlane          1.5%      0.9%
+mls                0.0%      0.3%
+v_other            0.1%      0.0%
+  group compute    instr  29.3%  cycles  13.3%
+  group valu_move  instr  40.5%  cycles  17.2%
+  group lds        instr  10.9%  cycles   8.2%
+  group vmem       instr   4.0%  cycles  24.4%
+  group sync       instr   6.9%  cycles  31.4%
+  group salu       instr   8.5%  cycles   5.5%

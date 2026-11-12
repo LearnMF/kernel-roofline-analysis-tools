@@ -1,0 +1,68 @@
+KDA_ITER_DONE ft 1024 16 6
+HIP_PROF:on Sun Nov  1 13:36:59 2026
+HIP_PROF:process id '228922'
+HIP_PROF:db file '/public/home/tanbo/kra_cards_w5/1024_16/trace_3.db'
+HIP_PROF:out put file '/public/home/tanbo/kra_cards_w5/1024_16/trace_3'
+HIP_PROF:profiling ' python3 /public/home/tanbo/mk3/ft_card_run.py --T 1024 --H 16 --iters 6'
+HIP_PROF:process begin
+HIP_PROF:process end run total cost:25(s)
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HIP_PROF:HIP API statistics
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Name                                                          |Calls          |TotalDurationNs            |AverageNs                  |Percentage                 |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|hipLaunchKernel                                               |141            |58419359                   |414321                     |66.139222280934            |
+|hipMalloc                                                     |7              |26368851                   |3766978                    |29.8533795549148           |
+|hipDeviceSynchronize                                          |13             |2796219                    |215093                     |3.16572713485561           |
+|hipMemcpyWithStream                                           |1              |265604                     |265604                     |0.300702409191193          |
+|hipGetDevice                                                  |1694           |177233                     |104                        |0.200653567296361          |
+|hipMemcpy                                                     |1              |166866                     |166866                     |0.188916613500164          |
+|__hipPushCallConfiguration                                    |141            |24881                      |176                        |0.0281689155399997         |
+|__hipPopCallConfiguration                                     |141            |23885                      |169                        |0.0270412984877172         |
+|hipFree                                                       |1              |16896                      |16896                      |0.0191287326459481         |
+|hipGetDeviceCount                                             |4              |15612                      |3903                       |0.017675057650837          |
+|hipDevicePrimaryCtxGetState                                   |31             |13180                      |425                        |0.0149216794669505         |
+|hipGetLastError                                               |143            |12230                      |85                         |0.0138461411138699         |
+|hipGetDeviceProperties_v2                                     |2              |10088                      |5044                       |0.0114210851640817         |
+|hipStreamIsCapturing                                          |25             |9238                       |369                        |0.0104587613744832         |
+|hipGetDeviceProperties                                        |5              |5949                       |1189                       |0.00673513438155452        |
+|hipSetDevice                                                  |2              |658                        |329                        |0.000744951827712704       |
+|hipStreamGetCaptureInfo                                       |1              |574                        |574                        |0.000649851594387678       |
+|hipDeviceGetStreamPriorityRange                               |1              |536                        |536                        |0.000606830060264452       |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Total                                                         |2354           |88327859                   |37522                      |100.0                      |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HIP_PROF:HIPOPS API statistics
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Name                                                          |Calls          |TotalDurationNs            |AverageNs                  |Percentage                 |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|void g2::p3_wy_s4b_kernel<false>(g2::WyS4BParams)             |9              |1129921                    |125546                     |17.942069106567            |
+|at::cuda::(anonymous namespace)::spin_kernel(long)            |6              |928000                     |154666                     |14.7357559784216           |
+|void g2::g2_wu_kernel<false, true, true, 0, true>(g2::WuPar...|9              |672482                     |74720                      |10.6783735472855           |
+|void g2::r4::g2_fwd_prep_a_kernel<1, false, false>(g2::r4::...|9              |608641                     |67626                      |9.664639282826             |
+|void g2::g2_dhu_v8b_kernel<1, true>(g2::BwdNParams)           |9              |557281                     |61920                      |8.84909140884784           |
+|void g2::g2_fwd_h_v8o4_kernel<false, 5, true, true, true, t...|9              |518561                     |57617                      |8.23425469388611           |
+|void g2::p3_wy_s4a_kernel<false, true, 2>(g2::WyS4AParams)    |9              |430721                     |47857                      |6.83943917110102           |
+|void g2::r4::g2_fwd_prep_b_kernel<false>(g2::r4::PrepBParam...|9              |284160                     |31573                      |4.51219010649601           |
+|void g2::g2_dav_kernel<false>(g2::DavParams)                  |9              |280000                     |31111                      |4.44613326935136           |
+|void g2::g2_bwd_tail_kernel<false>(g2::TailParams)            |9              |250400                     |27822                      |3.97611346659136           |
+|void at::native::(anonymous namespace)::distribution_elemen...|7              |179840                     |25691                      |2.85568788271482           |
+|void g2::g2_gate_kernel<1, false>(g2::GateParams)             |9              |142880                     |15875                      |2.26879829116044           |
+|void at::native::reduce_kernel<512, 1, at::native::ReduceOp...|2              |60960                      |30480                      |0.967986728927353          |
+|void at::native::vectorized_elementwise_kernel<4, at::nativ...|5              |51360                      |10272                      |0.815547873978163          |
+|void at::native::elementwise_kernel_manual_unroll<128, 4, a...|2              |49280                      |24640                      |0.782519455405839          |
+|g2::(anonymous namespace)::kda_gn_all_kernel(float const*, ...|9              |48480                      |5386                       |0.769816217493407          |
+|g2::g2_bwd_tail_reduce_kernel(g2::TailParams)                 |9              |38560                      |4284                       |0.612296067379244          |
+|void at::native::vectorized_elementwise_kernel<4, at::nativ...|4              |31520                      |7880                       |0.500507573749839          |
+|void at::native::vectorized_elementwise_kernel<4, at::nativ...|2              |9600                       |4800                       |0.152438854949189          |
+|void at::native::(anonymous namespace)::distribution_elemen...|1              |8320                       |8320                       |0.132113674289298          |
+|void at::native::vectorized_elementwise_kernel<4, at::nativ...|1              |4800                       |4800                       |0.0762194274745947         |
+|void at::native::vectorized_elementwise_kernel<4, at::nativ...|1              |4800                       |4800                       |0.0762194274745947         |
+|void at::native::vectorized_elementwise_kernel<4, at::nativ...|1              |4000                       |4000                       |0.0635161895621623         |
+|g2_arch_probe_kernel(int*)                                    |1              |3040                       |3040                       |0.0482723040672433         |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Total                                                         |141            |6297607                    |44663                      |100.0                      |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HIP_PROF:dump json trace (0/2504)HIP_PROF:dump json trace (0/2504)HIP_PROF:dump json trace (0/2504)HIP_PROF:dump json trace (2354/2504)HIP_PROF:dump json trace (2363/2504)HIP_PROF:dump json trace (2504/2504)
+HIP_PROF:finish

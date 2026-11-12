@@ -1,0 +1,1 @@
+flash_train /root/ft938/flash_train

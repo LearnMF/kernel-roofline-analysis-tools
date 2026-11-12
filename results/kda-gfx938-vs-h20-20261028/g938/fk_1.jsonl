@@ -1,0 +1,2 @@
+{"impl": "ft", "dev": "BW1102", "T": 8192, "H": 64, "tot": 2915.2, "per": {"g2_fwd_prep_a_kernel": 1235.0, "g2_fwd_h_v8o4_kernel": 883.5, "g2_fwd_prep_b_kernel": 796.7}}
+{"impl": "ft", "dev": "BW1102", "T": 8192, "H": 32, "tot": 1363.2, "per": {"g2_fwd_prep_a_kernel": 587.6, "g2_fwd_h_v8o4_kernel": 441.5, "g2_fwd_prep_b_kernel": 334.0}}

@@ -1978,3 +1978,816 @@ Gate 84/84; dav 0.872-0.979x, fwd+bwd 0.988-1.008x (9 shapes). A1 closed: saddr 
 
 ## 114. A2: bwd_tail packed Kahan scan (P-938pk, local commit) -- bit-identical, bwd_tail 1.007-1.014x
 Only add/sub are packed (the gate-backward fmas stay scalar on purpose: packing them would un-fuse them). scalar fp32 1130 -> 1098, packed 129 -> 145. fwd+bwd within noise (0.999-1.001x).
+
+## 115. A2: P-938pk2 (bwd_tail phase A fully packed, local commit) -- bit-identical, bwd_tail 1.085-1.220x
+- Per-source-line ISA buckets (`-gline-tables-only`, mk3/locbucket.py): the production call (gate in kernel, no in-kernel
+  l2norm, no_cast) runs ~650 scalar fp32 ops in phase A; P-938pk had packed 16 of them.  Most of the static 1098 sit in
+  the l2norm / gate_none branches, which this route does not run.
+- **Why §54 / §106 saw "not packable"**: this backend splits a packed fsub into two v_sub_f32 and a packed fneg into
+  two v_xor (no neg / opsel on v_pk_add_f32).  Fix: write a - b as fma(b, -1, a) -- b * -1 is exact, one rounding,
+  one v_pk_fma_f32 (probe mk3/sub_probe.hip; `__builtin_elementwise_fma` on a 2-vector lowers to v_pk_fma_f32,
+  bit-equal to fmaf).  `__builtin_hcu_cvt_pk_bf16_f32(0, a, 0, b)` puts a in the low half (mk3/pk_probe.hip).
+- P-938pk2: lane's two columns as one pf2 through scan, carry and gate backward under `fp contract(off)`; exp2 / rcp
+  per element, both bf16 roundings in one cvt_pk.  dAs's compensation carried negated (nC = -dAsC) so its fma needs
+  no fneg; nC differs from -dAsC only in the sign of an exact zero, which cannot reach dAs (dAs starts at +0, never
+  -0 under RNE).  First gate: dA_log differed in 9 / 11 cases -- at u = 0 the production folds dAs = dAsC = 0 and
+  contracts dAsC = tt - bdg * gg with the unrounded product; replicated explicitly -> **gate 84/84 bit-identical**.
+- Static (dense instance): instructions 4055 -> 3612, scalar fp32 1098 -> 443, packed 145 -> 477; VGPR 84 -> 97
+  (occupancy 3 -> 2 waves / SIMD), no scratch.
+- ABBA vs 859a229 (9 shapes, nmz5 GPUs 1-3): bwd_tail 1024/64 1.217, 2048/16 1.220, 8192/64 1.085, 4096/32 1.192,
+  16384/8 1.192, 32768/16 1.198, 1024/16 1.187, 2048/8 1.193, 32768/64 1.129x; fwd+bwd 1.000-1.015x (1.013, 1.010,
+  1.009, 1.005, 1.000, 1.007, 1.015, 1.013, 1.004).  Kept.
+- Consequence: the "packed fp32 not possible" premise of §54 / §106 no longer holds; prep_a's 287 v_sub (and other
+  VALU-bound kernels' subtractions) are packable the same way -> C3 re-opened with a higher expectation.
+
+## 116. bwd_tail back to 3 waves / SIMD (amdgpu_waves_per_eu(3) on P-938pk2): slower -> reverted
+VGPR 97 -> 84 (occupancy 2 -> 3) but 56 B (dense) / 132 B (varlen) of scratch.  Gate 84/84; ABBA vs P-938pk2 (9
+shapes): bwd_tail 0.891-0.925x, fwd+bwd 0.994-1.001x.  The spill costs more than the third wave gains.
+
+## 117. C3: P-938pk2 on prep_a (local commit 24b9d4c) -- bit-identical, prep_a 1.033-1.062x
+- Production instance (GATE = 1, dense, no in-kernel l2norm): scalar fp32 567 -> 25, packed 249 -> 522, instructions
+  3032 -> 2731 (-10%), VGPR 138 -> 167 (still <= 168: 3 CTAs per CU), no scratch.  Packed: gate scan + carry (Kahan
+  steps via fma(b, -1, a), sigmoid argument / 1 + e / lower_bound product), QgA / Kb / Kn (column pairs, one cvt_pk
+  per pair, T2 halves as b16 / d16_hi stores), the P1a / P1b exp2 arguments.  Same operations in the same order;
+  gate_scan already has contraction off, the other sites have no mul -> add pairs.
+- Bisect by part (G2_PK2 bitmask, dev): the QgA / Kb / Kn part alone lifts the in-kernel-l2norm instance VGPR 153 ->
+  229, so that part is enabled only for L2N = false (the Megatron route); the l2norm instance keeps 154 VGPR.
+- Gate 84/84 bit-identical.  ABBA vs 66fadb3 (9 shapes): prep_a 1024/64 1.037, 2048/16 1.034, 8192/64 1.036, 4096/32
+  1.047, 16384/8 1.047, 32768/16 1.062, 1024/16 1.033, 2048/8 1.036, 32768/64 1.061x; fwd+bwd 0.996-1.015x.
+  In-kernel l2norm route (KB_L2N=1): prep_a 1.007-1.023x except 2048/8 0.909x (reproduced on two builds; cause not
+  isolated), fwd+bwd 0.997-1.009x.  Kept.
+
+## 118. prep_a phase cut on 24b9d4c (G2_PREP_STOP, L2N = 0, 3 alternating rounds, kernel median, nmz5 GPU 6)
+| shape | full | loads + gate scan | gate exchange | QgA / Kb / Kn | P1a | P1b | R store |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 2048/16 | 97 us | 27 (28%) | 9 (9%) | 28 (29%) | 10 (11%) | 19 (19%) | 4 (4%) |
+| 8192/64 | 1098 | 340 (31%) | 21 (2%) | 382 (35%) | 91 (8%) | 178 (16%) | 86 (8%) |
+| 16384/8 | 285 | 79 (28%) | 15 (5%) | 91 (32%) | 31 (11%) | 54 (19%) | 15 (5%) |
+| 32768/16 | 1060 | 339 (32%) | 11 (1%) | 369 (35%) | 92 (9%) | 193 (18%) | 56 (5%) |
+Round-to-round spread <= 2 us.  Versus the f7f2170 cut (§72): the gate exchange is 1-9% (not 11%) and P1a + P1b are
+24-30% (not ~40%); loads + scan and the QgA / Kb / Kn emit are the two big phases.
+
+## 119. (b) "move P1a / P1b from prep_a into prep_b": ceiling -> not pursued
+Timing-only variants (pair = prep_a + prep_b kernel time, 3 alternating rounds, nmz5 GPUs 4 / 5 / 7):
+| shape | pair | prep_a w/o P1 + R store | prep_b w/o R loads | prep_b at 21 KB LDS (3 CTAs) | 21 KB w/o R loads | BEST |
+|---|---:|---:|---:|---:|---:|---:|
+| 1024/64 | 284 us | 1.264x | 1.061x | 0.976x | 1.036x | 1.323x |
+| 2048/16 | 158 | 1.272 | 1.057 | 0.959 | 1.015 | 1.295 |
+| 4096/32 | 484 | 1.258 | 1.060 | 0.978 | 1.037 | 1.315 |
+| 8192/64 | 1884 | 1.229 | 1.049 | 0.993 | 1.053 | 1.307 (-442 us) |
+| 16384/8 | 476 | 1.263 | 1.061 | 0.978 | 1.036 | 1.321 |
+| 32768/16 | 1792 | 1.236 | 1.043 | 0.985 | 1.036 | 1.290 |
+- BEST = prep_a without P1a / P1b / R store + prep_b at 21 KB (the R arena it would need) without R loads, i.e. the
+  moved work for free: 1.29-1.32x on the pair, -442 us (4% of fwd+bwd) at 8192/64.
+- prep_b at 3 CTAs per CU costs only 1-4% (not the assumed 1.16-1.30x); the R hand-off alone is 4-6% of the pair.
+- What the BEST case omits: prep_b would have to run P1a + P1b (~270 us of prep_a time at 8192/64) and rebuild G
+  (gate scan + exchange again, ~360 us; or hand G off as fp32, 32 KB per chunk, more bytes than R's 20 KB) and re-read
+  q / k.  That is ~630 us of VALU-bound work against a 442 us budget, so it pays only if most of it hides under
+  prep_b's TA stalls -- the overlap §57's SQTT measured as zero for the same structure (VALU phases then b_post in one
+  CTA: fused = sum).  (b) is F1 plus a duplicated gate scan; not pursued.
+
+## 120. B1 (dhu: double-buffer vB / dhB to drop a step barrier): both barriers are RAW exchanges -> not pursued
+- dhu_v8b step: [barrier 1] every wave reads all k-tiles of dhB (GEMM-A, dv2 = Kg dh + dv, contraction over k) and
+  writes its (t, v) tile of vB; [barrier 2] every wave reads all t-tiles of vB (GEMM-B, dh += scale Qg^T dO - W^T dv2,
+  contraction over t) and writes its k-tile of dhB.  Each barrier is an all-to-all read-after-write; the WAR hazards
+  (vB / dhB reuse) ride on them for free.  A second buffer removes only the WAR hazards, so no barrier goes away.
+- Timing-only deletion ceilings on 24b9d4c (production instance v8b<1, LIN>, ABBA, 9 shapes, numerically wrong):
+  barrier 1 removed: dhu 1.017-1.089x (one 1.33x at 2048/16 was a baseline outlier: that baseline read 97 us in this
+  run and 75 us in the next), fwd+bwd 1.002-1.011x; barrier 2 removed: dhu 0.998-1.016x, fwd+bwd 0.991-1.012x.
+  The SQTT "barrier 21%" is waiting on the slowest wave of a real dependency, not barrier overhead.
+- What a second dhB buffer could still do is move the bN(dh) emit (u16 gathers, ~19% of dhu, §111) off the
+  barrier-1 -> barrier-2 path; B2 (MMAC lit / lts output in the emit layout, the gathers go entirely) addresses the
+  same cost directly, so B1 folds into B2.
+
+## 121. prep_a emit phase (35% of prep_a, §118): store-deletion ceilings
+Timing-only variants of 24b9d4c (L2N = 0 production instance), ABBA kernel time, 9 shapes:
+| variant | removed | prep_a | fwd+bwd |
+|---|---|---|---|
+| ek1 | all of Kn: exp2(gn - G) * k, the b16 transposing T2 writes, the 16 B pair emit | 1.046-1.090x | 0.967-1.012x |
+| ek1b | only the transposing scatter: T2 written as two 8 B row-major pair stores per rb | 1.011-1.024x | 0.998-1.009x |
+| ek2 | QgA (compute + 2 x 8 B native stores; VGPR capped at 168 to keep 3 CTAs) | 0.995-1.023x | 0.998-1.003x |
+| ek3 | Kb (compute + 2 x 8 B row-major stores) | **1.062-1.135x** | **1.003-1.014x** |
+- ek1b bounds a gfx938 transposed-read (ds_read_m32x16) Kn rewrite: 1-2% of prep_a, ~0.1-0.2% end to end -> not
+  worth it.  QgA (chunk-native, contiguous) costs nothing.
+- Kb is the expensive store: row-major [T, H, 128] with a 16 KB row stride at H = 64, so each wave writes 64 B
+  segments of 16 different rows.  Kb is an internal prep_a -> prep_b hand-off (staged in o), i.e. its layout is free:
+  a chunk-native layout (contiguous 16 KB per (chunk, head), as QgA) with prep_b's T2 load adapted is the candidate
+  (dense path; varlen keeps the row-major staging, whose padded chunks would not fit in o).
+
+## 122. P-938kb (Kb in a chunk-native layout): bit-identical, neutral -> reverted
+- prep_a (gfx938, dense): Kb as (chunk, head) blocks of 16 KB, group (rb, wave) = 1 KB, one 16 B store per lane (the
+  wave writes 1 KB contiguous); prep_b (b_post NKB = !VL) reads group (rb = it, wave I) with one 16 B load per lane
+  and fills the same T2 entries (per instruction the same 16 rows x 32 dims as before, lanes reassigned).  prep_a VGPR
+  167 -> 166, prep_b 97 -> 70.  Gate 84/84 bit-identical.
+- ABBA (9 shapes, key = prep_a + prep_b): 0.991-1.018x, fwd+bwd 0.993-1.009x; l2norm route 0.988-1.017x, fwd+bwd
+  0.997-1.005x.  Per kernel (3 alternating rounds): prep_a 1.017-1.032x, prep_b 0.963-0.993x.  The store-deletion
+  ceiling (1.06-1.13x, §121) was the store's issue / data dependency, not its scattered addresses; what prep_a saves,
+  prep_b's read gives back.  Reverted (patch: results/kda-gfx938-s4b3cta-20261031/p938kb_kb_native.diff).
+
+## 123. B2 / P-938lt (dhu's dh state through MMAC lit1 lts1, bN(dh) emitted from registers): bit-identical, no gain
+- Production dhu_v8b<1, LIN>: GEMM-B (dh += scale Qg^T dO - W^T dv2) as lit1 lts1, whose C fragment is (row 4q + e,
+  column m), bit-identical to lit0 lts0 up to that permutation (mmac_lit_exact 256 / 256, chained).  The lane then
+  holds dh^T[v = 4q + e][k = m]: write_dh scatters with that mapping, the decay is one Gn value per lane, and the
+  bN(dh) slot of (v, k) is a whole v4bh -> one 8 B store per vt from registers, no u16 gathers from dhB.
+  The HbN layout wants k = pi16(m) in lane m, so either the Qg / Wb fragments are read from lane (q, pi16(m)) or the
+  store goes to slot (q, pi16(m)).  Gate 84/84 bit-identical for both forms.
+- ABBA (dhu, 9 shapes) and timing-only bisection (lit = lit / lts on GEMM-B, perm = lane-permuted access):
+| variant | dhu | fwd+bwd |
+|---|---|---|
+| lt1: lit + permuted Qg / Wb loads + register emit (correct) | 0.720-0.855x | 0.942-0.994x |
+| lt2: lt1 with the emit at the old position | 0.729-0.845x | |
+| lt4: only lit on GEMM-B (timing only) | 0.996-1.002x | 1.000-1.002x |
+| lt6: only the new write_dh mapping (timing only) | 1.000-1.002x | |
+| lt5: only the permuted Qg / Wb loads (timing only) | 0.715-0.819x | 0.955-0.992x |
+| lt7: lit, natural loads, permuted 8 B HbN stores (correct) | 0.968-1.016x (2 runs) | 0.995-1.010x |
+| lt8: lt7 with unpermuted stores (wrong layout, timing only) | 1.000-1.058x | 0.999-1.011x |
+- Readings: (1) lit / lts and the scatter mapping are free.  (2) **A pi16 lane permutation inside 16-lane groups of a
+  16 B load costs ~25% of dhu** (the loads sit on the recurrence chain); on the 8 B emit stores it costs ~3%.  Rule
+  (R69): on gfx938 keep per-lane global addresses lane-ordered within each 16-lane group; permute in LDS or in the
+  producer's layout instead.  (3) Even with a free linear store (lt8) the gather-free emit is worth 1-6% of dhu
+  (<= 1% end to end); §111's 1.13-1.18x deleted the HbN stores themselves.  Getting lt8 needs s4b to read HbN in the
+  natural lit1 lts1 column order (its B-operand column permutation), a cross-kernel layout change for <= 1%.
+  Not kept (code: results/kda-gfx938-s4b3cta-20261031/p938lt_dhu_lit1lts1.diff, lt7 form p938lt7_g2_engine.cuh).
+
+## 124. C1: v_new's layout for dav / s4b -- P-938va (local commit 69de6cf), fwd+bwd 1.000-1.017x
+- Ceilings (timing only, ABBA 9 shapes): dav with pass 1's Vn staged as 8 B A-form writes instead of the b16 C -> [j][v]
+  scatter: dav **0.825-0.99x** (twice); dav reading the pass-1 B fragments straight from global (no Vn staging):
+  0.888-1.005x; s4b without its 8 g2_c2a_sel (C -> A in registers, prologue): s4b **1.027-1.058x**, fwd+bwd
+  1.007-1.014x.  So dav prefers the C-form input; the transpose worth removing is s4b's.
+- lit1 lts0 is bit-identical to lit0 lts0 up to the A-operand permutation too (mmac_lit10_exact: 256 / 256, chained),
+  so wu could emit v_new in A form for free -- but then dav pays the ceilings above.
+- **P-938va**: dav's staged [j][v] tile already is v_new's A form, so dav writes it back over its own workspace Vn block
+  (std order, L16 pairs: one lane-ordered 16 B store per sub-block pair; the CTA consumed the block before the barrier)
+  and s4b reads it with 4 x 16 B pair loads and no transpose (vna flag).  Runner: gfx938, not the kept-state route
+  (state_vn is retained there; s4b reads state_anv on that route anyway); KDA_G2_VNA=0 under FTRAIN_KDA_DEV.
+- Gate 84/84 bit-identical.  ABBA vs 24b9d4c (9 shapes): fwd+bwd 1.017, 1.003, 1.004, 1.005, 1.001, 1.002, 1.001,
+  1.000, 1.003x (1024/64, 2048/16, 8192/64, 4096/32, 16384/8, 32768/16, 1024/16, 2048/8, 32768/64); s4b 1.008-1.056x,
+  dav 0.865-0.943x (the extra 16 KB store per CTA).  8 B stores (va1): fwd+bwd 0.997-1.006x; the emit moved after the
+  pass-1 MMACs (va3): no better.  Kept.
+
+## 125. C2: s4b's kt row slices loaded one kt ahead in registers (P-938rp) -> slower, reverted
+- The per-kt g / k / q row slices and the chunk-end g row (12 VGPRs) issued at the top of kt - 1 instead of kt: VGPR
+  241 -> 253 (dense), 256 + 40 B scratch (varlen).  Gate 84/84; ABBA vs 69de6cf: s4b 0.828-1.010x, fwd+bwd
+  0.942-1.001x.  At s4b's VGPR edge the extra live range costs more than the hidden latency.
+- The VGPR-free form is the MLS route (row slices staged in LDS one kt ahead), which needs the 11 KB that P-938s1 frees
+  (§82, itself 0.97-1.00x on s4b): not built in this round.  Code: results/kda-gfx938-s4b3cta-20261031/
+  p938rp_s4b_rowslice_prefetch_g2_wy.cuh.
+
+## 126. 24 shapes: 69de6cf (P-938pk + pk2 + C3 + va) vs 5ebce6f, interleaved ABBA (2026-11-03)
+- Protocol: mk3_fb.py (fwd / bwd device time, the table measurement), per shape 8 fresh processes in ABBA x 2 order
+  (5ebce6f = b938/spa, 69de6cf = b938/va2, sources checked file by file against git), nmz5 GPUs 4-7 (GPUs 0-3 were
+  busy with another user, host load ~27).  Data / table: results/kda-gfx938-24shape-20261103.
+- **69de6cf vs 5ebce6f: geomean fwd 1.019, bwd 1.019, total 1.019 (range 1.006-1.056, 24 / 24 faster)**; largest at
+  H = 64: 16384/64 1.056, 32768/64 1.049, 8192/64 1.033 (forward 1.077-1.089 there: C3 on prep_a).
+- vs H20 FLA default (the 11-02 H20 run): 69de6cf fwd 0.940, bwd 1.063, total 1.033, 16 / 24 shapes >= 1; but the same
+  5ebce6f build ran 2.9% faster in this session than in the 11-02 run (geomean, range 0.972-1.071), so on the 11-02
+  basis the total is ~0.985 x 1.019 = ~1.00.  Read: total vs H20 ~1.00-1.03, forward ~0.90-0.94, backward ~1.04-1.06.
+- Where the gap is: summed over the 24 shapes the forward is 3.09 ms behind H20 and the backward 10.71 ms ahead;
+  forward slower on 18 / 24 shapes (all except H = 8 at T >= 4096 and 16 at T >= 16384), backward slower on 4 / 24
+  (small T at H = 64 / 8).  The remaining deficit is the forward.
+- Forward per kernel (kbench, 69de6cf): 8192/64 prep_a 1097 / prep_b 786 / fwd_h 1149 us (36 / 26 / 38%);
+  32768/16 1060 / 733 / 1073; 2048/16 96 / 62 / 96; 1024/64 168 / 115 / 189.
+
+## 127. Residency on gfx938: 168 VGPRs still give 4 CTAs per CU; C4 = P-938a16 (prep_a 16 KB, local commit 7e4601b)
+- **Residency probe** (mk3/resid_probe.hip: 256-thread CTAs, per-CU concurrency counter via HW_ID, 6 CTAs per CU
+  launched): LDS 21504 B -> 3 CTAs per CU with 4 or 168 VGPRs; LDS 20480 B -> 3; **LDS 16384 B -> 4 CTAs with 168
+  VGPRs**.  So on gfx938 VGPR <= 168 does not bind at 4 waves per SIMD; LDS does.  The compiler's "Occupancy" comment
+  (1 for these kernels) and the 512-VGPR budget used since §24 (168 for 3, 128 for 4) are wrong for gfx938.  Rule
+  (R70): for 4 CTAs per CU on gfx938 shrink LDS to <= 16 KB; do not cap VGPRs at 128 (the caps of §84 / C4 probe
+  spilled and lost 0.86-0.89x).  Items to revisit with this: s4b (32 KB LDS, 241 VGPR), dav / prep_b / wu residency.
+- Ceiling (timing-only, prep_a with a 16 KB array, out-of-range LDS): prep_a 1.33-1.36x at 256 CTAs (1024/16,
+  2048/8), 1.09-1.10x at 512, 1.046-1.076x at large grids.  VGPR cap 128 alone: 0.865-0.891x (76 B scratch).
+- **P-938a16** (gfx938 arena 4096 floats): gate tile in 4 rounds of 16 rows (G [0, 2048)), sTot / Xq / Xk at
+  2048 / 2560 / 2816, REF slots resident at [3072, 4096); the Kn transpose in two token halves (T2 [128][36] bf16,
+  each half emitted by the waves whose pairs it holds); the R partial blocks flushed to global after P1a (blocks 0-7)
+  and after each P1b half (6 blocks each), replacing the final 20 KB copy.  Same arithmetic and reduction order;
+  VGPR 164 (production), no scratch.  Gate 84/84 bit-identical.
+- ABBA vs 69de6cf (9 shapes): prep_a 1024/16 1.247, 2048/8 1.279, 1024/64 1.029, 2048/16 1.027, 8192/64 1.019,
+  4096/32 1.017, 16384/8 1.015, 32768/16 1.016, 32768/64 1.005x; fwd+bwd 1.032 / 1.023 at the 256-CTA grids,
+  0.995-1.003x elsewhere.  In-kernel l2norm route: prep_a 1.05-1.35x, fwd+bwd 0.998-1.020x.  Kept.
+
+## 128. After R70: s4b residency, prep_b's AqkA, prep_a's integer / move work
+- Residency probe 2: VGPR 200 / 249 / 256 with 21248 B LDS -> 3 CTAs per CU; 249 with 32768 B -> 2; 200 / 249 with
+  16384 B -> 3.  So the gfx938 budget is ~768 VGPRs per lane per SIMD (4 x 168 fit, 4 x 200 do not, 3 x 256 do).
+- **s4b**: P-938s1 (§82, LDS 21248 B) therefore already ran at **3 CTAs per CU** (VGPR 247), not 2 as §82 assumed.
+  Re-measured on 7e4601b: s1 at 3 CTAs s4b 0.922-1.002x; s1 forced back to 2 CTAs (dynamic LDS top-up to 32 KB)
+  0.793-0.991x (typ. 0.89).  The third CTA is worth ~+11% on s4b, and s1's restructuring (per-lane dA / dAqk instead
+  of the P-938t MLS staging, no P-29 dwTs tile, single-buffered h / dh staging, swizzled tables) costs the same ~11%.
+  Next step if pursued: bisect s1's four parts at 2 CTAs and restore the costly ones inside 21.3 KB (e.g. the dA / dAqk
+  staging in two 16 KB passes) -- s4b is the largest kernel, so +5-10% there is +1.5-3% end to end.
+- **prep_b's AqkA** (A-form copy of Aqk for fwd_h): store-deletion ceiling prep_b 1.032-1.080x, fwd+bwd 1.000-1.007x.
+  Deleting it needs fwd_h to read row-major Aqk (16 rows x 8 B per load instruction instead of a contiguous L16 pair):
+  at most ~0.5% end to end before fwd_h's extra cost -> low priority.
+- **prep_a's integer / move instructions** (7e4601b, production instance, static): 1127 non-fp VALU ops, spread thin:
+  bf16 unpack of the packed pairs ~99, operand moves around the 65 fp32 MMACs (mmac32) ~120, raw-gate address math
+  ~65, the rest <= 41 per source line.  No concentrated target; an estimated <= 100-150 removable (prep_a <= 4%).
+
+## 129. s4b: P-938s1 bisected at 2 CTAs per CU, then recombined at 3
+Each part alone on 7e4601b (LDS stays > 21.8 KB, so 2 CTAs per CU), ABBA s4b kernel, 9 shapes (GPUs 3 / 4 were
+partly shared with another user during the NOT / NB runs):
+| part | LDS | s4b | fwd+bwd |
+|---|---|---|---|
+| NOT: no P-938t MLS prologue staging (per-lane dA / dAqk) | 32768 | 0.962-1.022x (typ. 0.99) | 0.989-1.006x |
+| DW: dwT B operands straight into registers (no dwTs tile), pi16 lane-permuted loads | 30720 | **0.935-0.990x (typ. 0.94)** | 0.978-0.989x |
+| DW2: the same with lane-ordered loads + ds_bpermute to the pi16 lane (R69) | 30720 | 0.955-1.005x (typ. 0.96) | 0.986-1.000x |
+| NB: single-buffered h / dh staging + cs partials | 24064 | **1.017-1.058x** | 0.976-1.008x |
+| TB: unpadded tables, 4-float groups XOR-swizzled | 32000 | 0.997-1.014x | 0.998-1.004x |
+- The s1 loss is DW (the per-kt dwT loads land on the iteration's critical path instead of P-29's barrier-staged tile;
+  half of it was the pi16-permuted global addresses, R69).  NB and TB are gains even at 2 CTAs.
+- All four with DW2 (21248 B -> 3 CTAs per CU, VGPR 246, gate 84/84): s4b 0.964-1.030x (1.007-1.030x at >= 512 CTAs,
+  0.964 / 0.985x at the 256-CTA grids), fwd+bwd 0.990-1.010x.  Not kept: the remaining DW2 cost (~4%) eats most of the
+  third CTA.  Open routes: keep the dwTs tile (needs 1.5 KB more than s1 frees: 21248 + 2048 > 21845), or prefetch the
+  dwT fragments one kt ahead in registers (VGPR 246 + 8 <= 256 still gives 3 CTAs per CU, but see §125's pressure
+  loss), or NB alone at 2 CTAs (s4b +2-6%, LDS 24064, cheapest).  Files: mk3/wy_bis2.cuh (S1_* macros).
+
+## 130. Correction to §129: the "NB alone" gain was an out-of-range artifact; NB done right is neutral -> not kept
+- NB alone keeps P-938t's prologue staging, which writes dAqk at [0, 16 KB) and dA at [16 KB, 32 KB) of the CTA's LDS;
+  with NB the allocation is 24064 B, so the dA tile landed out of range (writes dropped, reads 0).  Gate on that build:
+  **51 / 84 tensors differ**.  Its 1.017-1.058x is void (the TB / DW / NOT rows of §129 kept a >= 30 KB allocation and
+  are valid).  Rule: every timing-only bisect build also goes through the gate before its numbers are read.
+- NB + NOT (the per-lane dA / dAqk path, 24064 B, 2 CTAs per CU, VGPR 246): gate 84/84.  ABBA vs 7e4601b: s4b
+  0.990-1.044x, fwd+bwd 0.992-1.011x; l2norm route s4b 0.959-1.025x, fwd+bwd 0.990-1.006x.  Neutral -> not kept.
+- So on s4b the only measured structural gain left is the third CTA (+~11%, §128), and every way found so far to free
+  the LDS for it (DW / DW2, NOT) costs about as much.
+
+## 131. 24 shapes: 7e4601b (+ P-938a16) vs 5ebce6f, interleaved ABBA (2026-11-03 afternoon)
+- Same protocol as §126 (mk3_fb.py, 8 fresh processes per shape in ABBA x 2), nmz5 GPUs 1 / 5 / 6 / 7 (GPUs 3 / 4 busy
+  with another user).  Data / table: results/kda-gfx938-24shape-20261103/{afc_5ebce6f_vs_7e4601b.jsonl, table_7e4601b.md}.
+- **7e4601b vs 5ebce6f: geomean fwd 1.022, bwd 1.020, total 1.021 (range 1.000-1.051)**; e.g. 1024/16 1.032 (fwd
+  1.079), 2048/8 1.028 (fwd 1.065), 1024/64 1.033, 8192/64 1.042, 16384/64 1.009, 32768/64 1.000.
+- vs the 11-02 H20 run: fwd 0.906, bwd 1.037, total 1.005, 14 / 24 >= 1 -- lower than §126's 1.033 for the same kind
+  of build because this session ran slower in absolute terms; only the interleaved 7e4601b / 5ebce6f ratio is
+  session-independent.  Forward deficit summed over the shapes 4.52 ms, backward 0.47 ms.
+
+## 132. s4b at 3 CTAs with the dwT fragments prefetched one kt ahead (dwp) -> mixed, not kept
+- All four s1 parts + DW2 (lane-ordered dwT loads + ds_bpermute) + the next kt's 4 dwT fragments loaded at the top
+  of kt (8 VGPRs): LDS 21248 B (3 CTAs per CU), VGPR 254 (dense, no scratch), 256 + 80 B scratch (varlen).
+  Gate 84/84.  ABBA vs 7e4601b: s4b 1.004-1.048x at 2048/16 ... 32768/16 (fwd+bwd 1.002-1.010x), but 0.958 / 0.985x at
+  the 256-CTA grids and **0.896x at 32768/64** (fwd+bwd 0.966x).  Not kept.
+- LDS budget for keeping P-29's dwTs tile instead: NB + TB + a two-pass (16 KB) P-938t prologue + dwTs = 23296 B,
+  1451 B over the 3-CTA limit (21845 B); no further LDS found without numerics changes (the tables are fp32 operands).
+  s4b's third CTA stays open.
+
+## 133. Forward re-design, round 2: what R70 / P-938a16 change in §56-57 / §90 (design only)
+- F1 (prep_a + prep_b in one CTA) died on residency: §57's rule is "the fused CTA must keep the latency-bound stage's
+  residency" (prep_b: 4 CTAs per CU).  §56 attributed the fused kernel's 2-3 CTAs to VGPR 185; by R70 (~768 VGPRs per
+  lane per SIMD) 185 VGPRs allow 4, and the real limit was prep_a's 21.5 KB arena.  prep_a now runs in 16 KB
+  (P-938a16) and prep_b already does (P-938w): a fused CTA in a 16 KB arena at <= 192 VGPRs keeps 4 CTAs per CU, i.e.
+  the rule can now be met.  Expected gain = the hand-off ceiling (§56: 1.4-3.7% end to end), not latency overlap.
+- Constraint: R (20 KB) no longer fits the arena (P-938a16 flushes it in three parts), so the fused CTA re-reads its
+  own R from L2 (written microseconds earlier) instead of HBM; Kb goes CTA-local (registers -> T2) as in P-938f.
+- Plan: (1) ceiling first -- prep_b with its R / Kb loads made L2-hot (timing build) + prep_a without the Kb store, on
+  7e4601b; (2) rebuild P-938f on the a16 layout (the 10-26 patch does not apply); (3) gate + ABBA (both routes).
+- Relaxed numerics (B class): §91-92's FLA-error bar rejected dg -> bf16 and R -> bf16 (1.5-3.1x over).  Candidates
+  re-opened by the fusion: R kept fp32 but never leaving the CU; s4b tables in bf16 (would give s4b its 3rd CTA, +~11%
+  on s4b) -- to be measured against the same FP64 bar before any timing.
+- Step (1) done, hand-off ceiling on 7e4601b (timing only: prep_a without the Kb store, prep_b without the R MLS loads
+  and the Kb loads; ABBA 9 shapes, GPUs 1 / 5 / 7): prep_a 1.039-1.073x, **prep_b 1.234-1.369x** (1.06-1.08x at the
+  256-CTA grids), **fwd+bwd 1.007-1.026x** (8192/64 1.026, 32768/16 1.024, 32768/64 1.022, 4096/32 1.021).  This bounds
+  the fused prep (R re-read from L2 instead of HBM keeps part of prep_b's R cost).
+
+## 134. B class: s4b's intra tables (TA / TQ / TK) at bf16 precision -> fails the FLA bar, not pursued
+- Precision probe (no layout change): the three table products rounded to bf16 at the write (bf2f(bf_rne(x)) -- the
+  numerics of bf16 storage).  FP64 oracle gate (ft_fp64_gate2.py, K3 route, 4096/12 seeds 101-103; rms ratio vs FP64):
+| tensor | 7e4601b | bf16 tables | FLA | bf16 / FLA |
+|---|---|---|---|---|
+| o, q, k, v, beta | 4.4-5.1e-3 | same (+0.6% on q / k) | 4.5-5.1e-3 | <= 1.0 |
+| g_raw | 5.35-5.43e-3 | **1.14-1.15e-2** | 6.25-6.48e-3 | **1.75-1.84x** |
+| A_log | 5.6-9.2e-3 | 0.85-1.12e-2 | 6.0-9.6e-3 | 1.17-1.73x |
+| dt_bias | 5.1-5.4e-3 | **2.24-2.49e-2** | 6.1-6.6e-3 | **3.4-3.7x** |
+  The tables feed the gate gradient (dg -> dg_raw / A_log / dt_bias): bf16 there costs 2-4x the error, over the bar on
+  all three seeds.  Stopped after 3 / 6 cases (consistent).  Log: mk3/fp64_tbn.log.  The B-class route to s4b's third
+  CTA is closed with this precision; remaining s4b candidates need exact (fp32) tables.
+
+## 135. P-938ab: prep_a + prep_b fused on the 16 KB arena -> bit-identical, slower, reverted
+- g2_fwd_prep_a_kernel<..., FUSE = true> runs prep_a's body, then a CTA barrier (__syncthreads: the CTA's R / Kb stores
+  visible), then b_post for its wave (R re-read by MLS and Kb re-read from L2).  16 KB LDS; VGPR 170 / 171 (production
+  / l2norm instances), no scratch.  Launcher: gfx938, KDA_G2_PREP_FUSE.  Gate 84/84 bit-identical.
+- ABBA vs 7e4601b (key = prep_a + prep_b): 0.834-0.865x at >= 512 CTAs (fwd+bwd 0.971-0.976x), 1.028-1.037x only at
+  the 256-CTA grids (fwd+bwd 1.002-1.004x).  The F1 result again: the fused CTA costs the sum of the two latency
+  chains, and at 170 VGPRs (allocated 176) it is no longer clearly inside the 4-CTA budget (168 measured fits, 200 does
+  not), so it can lose the 4th CTA as well.  The hand-off saving (<= 1-2.6%, §133) does not cover it.  Reverted
+  (patch: results/kda-gfx938-s4b3cta-20261031/p938ab_prep_fused.diff).
+- Forward re-design round 2 closes here: on the current algorithm neither re-splitting (§119) nor fusing (§135) the
+  prep stages pays on gfx938; the remaining forward gap to H20 (~6-10%) needs fewer operations per chunk (a different
+  chunk algorithm) or numerics changes that pass the FP64 bar (§92, §134: none found so far).
+
+## 136. s4a to 16 KB: not useful -- VGPR binds first
+- s4a production instance (AFSR, <false, true, 2>): LDS 17664 B, **VGPR 223**.  By the residency probes (§127-128:
+  168 VGPRs fit 4 CTAs per CU, 200 already only 3; ~768 VGPRs per lane per SIMD), 223 VGPRs allow 3 CTAs whatever the
+  LDS, and 17664 B also gives 3.  A 16 KB layout alone changes nothing; a 4th CTA needs VGPR <= ~176 (a 47-register
+  cut; VGPR caps on s4b / prep_a / wu spilled and lost 0.32-0.89x, §82 / §84 / §127).  Not built.
+
+## 137. New chunk algorithm: research plan (started 2026-11-03)
+- Method: (1) prior work (FLA's KDA kernels as run on H20 and as Triton-compiled for gfx938, the DeltaNet / Gated
+  DeltaNet chunkwise derivations, FlashKDA PR #28, cuLA, FLA PRs #1112 / #1128 / #1210, the HCU knowledge base) ->
+  candidate list with source, math form and the work it removes; (2) cost model per 64 x 128 chunk (VALU / exp2 / MMAC /
+  memory per stage, ours vs FLA) + an FP64 reference per candidate against the §92 bar -- only candidates saving
+  >= 25-30% of the prep instructions and passing the bar go on; (3) gfx938 microbenches of the key primitive, then a
+  one-shape prototype, gate, ABBA.
+- Priority hypotheses: factorized decay (one 2^(g - ref) per token, then MMAC, instead of one exp2 per A element);
+  blocked (I + A)^-1 on the matrix unit instead of prep_b's 16-step shfl forward substitution; chunk size 128 or a
+  64 / 16 two-level chunk.
+- FLA 0.5.2 sources archived: results/kda-chunk-algo-20261103/fla052_kda.  FLA's forward = kda_gate_chunk_cumsum ->
+  chunk_kda_fwd_intra (w, u, qg, kg, Aqk, Akk) -> chunk_gated_delta_rule_fwd_h (h, v_new) -> chunk_gla_fwd_o_gk (o from
+  q, v_new, Aqk, h: a separate kernel; ours folds o into fwd_h).  Next: per-stage instruction / exp2 counts of
+  chunk_kda_fwd_intra on both cards and of our prep_a / prep_b / fwd_h.
+- First reading of FLA's chunk_intra.py (chunk_kda_fwd_kernel_inter_solve_fused + _intra_sub_chunk): the off-diagonal
+  16-row blocks already use the factorized decay (q * 2^(g - g_n) and k * 2^(g_n - g) per token per block, reference
+  g_n = the row block's first row, then tl.dot), the diagonal blocks a per-block mid reference (exp2(+-g_m)), and the
+  (I + A)^-1 off-diagonal blocks are a blocked inverse on tl.dot (Ai10 = -Ai11 Akk10 Ai00, ...).  That is the same
+  algorithm family as ours (P1a / P1b references, prep_b's mmB block products): hypotheses 1 and 2 of this section are
+  what both implementations already do.  The H20 forward advantage is therefore hardware throughput (VALU / SFU
+  1.65-3.3x, §53), not a cheaper chunk algorithm -- the remaining lever on the algorithm side is hypothesis 3 (chunk
+  size / two-level chunk), to be costed next.
+
+## 138. Chunk size costed (per token-head, K = V = 128, the 16-row sub-blocks kept): no C reaches -25%
+| work per token | C = 32 | C = 64 (now) | C = 128 | resource on gfx938 |
+|---|---|---|---|---|
+| Aqk + Akk (2 C K MAC) | 8 K | 16 K | 33 K | MMAC (rich) |
+| A-matrix exp2 (diag 2K + off-diag ~(C/32) K) | ~3K | ~4K | ~6K (+50%) | VALU / SFU (the prep_a limit) |
+| solve (I + A)^-1 (~C^2 / 3 MAC) | 0.3 K | 1.4 K | 5.5 K | MMAC + shfl |
+| w / u (2 C K MAC) | 8 K | 16 K | 33 K | MMAC |
+| recurrence (~3 K V MAC, C-independent) / steps per token | same / 2x | 1x | same / 0.5x | fwd_h chain |
+| saved h (K V bf16 per chunk) | **2x retained memory** | 1x | 0.5x | -- |
+- C = 128 moves work onto the matrix unit (fine) but raises the element-wise exp2 / VALU work of the A matrices by ~50%
+  -- the resource prep_a is bound by -- and needs more references for the exp2 range; it only helps the fwd_h chain at
+  small H.  C = 32 cuts the exp2 work by ~25% but doubles the saved-h memory (excluded: no extra retained memory) and
+  the recurrence steps.  The two-level 64 / 16 form is what both FLA and we already run.
+- Conclusion of the algorithm track: FLA's chunk algorithm is ours (§137), and no chunk size gets prep's instruction
+  count down by the 25-30% the forward needs within the memory rule.  The remaining forward gap to H20 is hardware
+  throughput (H20 VALU / SFU 1.65-3.3x gfx938's).  Closed; further forward gains are the small items (AqkA, prep_a
+  integer work) or numerics changes that pass the FP64 bar.
+
+## 139. Full-chain ledger on 2631309 (hipprof --pmc memory / util, kbench --all, nmz5 GPU 1)
+Data / script / tables: results/kda-gfx938-ledger-20261103/{ledger.md, ledger.py, memory/, util/}.  HBM bytes from
+TCC_EA_RDREQ (64 B / 32 B) and TCC_EA_WRREQ; gfx938 HBM peak ~2.0 TB/s read, ~1.8 TB/s write (§1).  8192/64:
+| kernel | us | HBM R / W MB | GB/s (of ~1.9 TB/s) | VALU busy | LDS conflict / LDS active | LDS B / VGPR | limiter (from this table + §1-138) |
+|---|---|---|---|---|---|---|---|
+| s4b | 3093 | 1830 / 617 | 791 (42%) | 0.50 | 0.23 | 32768 / 244 | latency, 2 CTAs per CU (LDS); 3rd CTA blocked (§129-132) |
+| wu | 1582 | 1308 / 673 | 1253 (66%) | 0.56 | **0.52** | 18176 / 124 | bandwidth + LDS bank conflicts; 3 CTAs (LDS 18 KB) |
+| dhu | 1265 | 676 / 403 | 853 (45%) | 0.34 | 0.05 | 33792 / 128 | recurrence chain (1 CTA per CU at NT >= 64) |
+| fwd_h | 1171 | 623 / 403 | 876 (46%) | 0.37 | 0.23 | 27648 / 216 | recurrence chain |
+| prep_a | 1090 | 420 / 575 | 913 (48%) | **0.77** | 0 | 16384 / 164 | VALU issue |
+| s4a | 916 | 740 / 411 | 1257 (66%) | 0.42 | 0.15 | 17664 / 224 | TA / bandwidth, 3 CTAs (VGPR) |
+| prep_b | 808 | 447 / 471 | 1136 (60%) | 0.39 | 0.20 | 16384 / 100 | TA / latency |
+| dav | 747 | 320 / 537 | 1146 (60%) | 0.55 | **0.48** | 16384 / 108 | bandwidth + LDS bank conflicts |
+| tail | 412 | 403 / 159 | 1363 (72%) | 0.62 | 0.36 | 6144 / 100 | VALU + bandwidth |
+| gate | 252 | 134 / 268 | 1597 (84%) | 0.95 | 0 | 2048 / 80 | at bandwidth / VALU |
+| total | 11349 | **6907 / 4516** | 1006 (53%) | | | | |
+- Bytes: 11.4 GB per fwd+bwd at 8192/64; at ~1.9 TB/s that is a ~6.0 ms pure-traffic floor against 11.35 ms measured.
+  The user-visible tensors (q, k, v, g, do in; o, dq, dk, dv, dg out; 134 MB each in bf16) are ~1.5 GB, so ~85% of the
+  traffic is internal hand-offs (Kn / Kb / QgA / R / Wn / Un / AqkA / saved h / Vn / dVn / dOT / dv2 / dwT / dA ...).
+- Same picture at 32768/16 (11.4 GB, 1.04 TB/s average) and 2048/16 (0.71 GB, 0.77 TB/s: small grids under-fill).
+- New leads from the counters (not visible in timing-only work): LDS bank conflicts in wu (0.52 per active LDS
+  cycle) and dav (0.48), bwd_tail (0.36); s4b moves 2.45 GB at 42% of peak (the largest absolute gap); the two
+  recurrence kernels sit at 45-46%; gate is already at 84%.
+- Next: (1) a byte-minimum per hand-off tensor (producer -> consumer, bytes written / read, could it be fused, kept
+  in L2, or shrunk) to rank the internal-traffic cuts on gfx938; (2) wu / dav bank-conflict audit (gfx938 LDS layout);
+  (3) s4b at 42%: latency at 2 CTAs -- the LDS-for-3rd-CTA question stays the main structural lever.
+
+## 140. dav LDS conflicts, first try: pass-1 Vn scatter as paired 4 B writes (P-938bc1) -> slower, reverted
+- Hypothesis: pass 1's 2 B writes put lanes q, q ^ 1 on the two halves of one 4 B word.  Change: one packed
+  __shfl_xor(16) per element pair, then two ds_write_b32 per lane per sub-block instead of four ds_write_b16 (layout
+  unchanged, bit-identical).  VGPR 106, no scratch, gate 84/84.  ABBA vs 2631309: dav 0.961-0.997x, fwd+bwd 0.997-1.000x.
+- So the pass-1 halves are not where dav's 0.48 conflict rate costs time (or the shuffle costs more than it saves).
+  Next: attribute the conflicts per phase (SQ_LDS_BANK_CONFLICT on phase-cut builds: pass-1 staging, pass-1 MMAC reads,
+  dA fp32 staging, pass-2 do scatter, dOT reads, pass-2 MMAC reads) before another layout change; same for wu.
+  Patch: results/kda-gfx938-ledger-20261103/p938bc1_dav_pairwrite.diff.
+
+## 141. LDS bank conflicts located per phase (dav, wu) and a gfx938 bank model that reproduces them
+Data / scripts: results/kda-gfx938-ldsbank-20261103/ (lb_pmc.sh, lb_attr.sh, attr_sum.py, lds_model.py, *.jsonl).
+- Method: one dev build of 2631309 (lbk) with skip masks `KDA_G2_DAV_LSKIP` / `KDA_G2_WU_LSKIP` (bit b drops LDS phase b:
+  stores skipped, loads return 0; numerically wrong when set, uniform branches); hipprof --pmc SQ_LDS_BANK_CONFLICT /
+  SQ_LDS_IDX_ACTIVE / SQ_INSTS_LDS on kbench (last call of each kernel); runs "only phase k" and "skip phase k".  The
+  counters are deterministic (repeat runs identical to the cycle, unaffected by the foreign rccl job that kept all 8
+  GPUs busy during this session, see §151) and the same per CTA at every shape, so they are quoted per CTA.  Sum over phases = full
+  kernel, "only k" = full - "skip k", for both kernels.
+| dav phase (per CTA) | conflict cycles | | wu phase (per CTA) | padded (8192/64) | L16 (1024/16) |
+|---|---:|---|---|---:|---:|
+| pass-1 Vn staging (b16 st) | **0** | | fill1 kbT (b16 st) | 256 | 768 |
+| VnA re-emit reads (b64) | 0 | | w-MMAC B reads (b64) | 512 | **3584** |
+| pass-1 MMAC B reads (b64) | 0 | | Wb B-form tile (b16 st) | 768 | 768 |
+| dA fp32 staging (b32 st) | 128 | | Wb / Qn emit reads (b64) | 0 | 0 |
+| dA staging reads (b128) | 0 | | fill2 natural vb (b64 st) | 0 | 0 |
+| **pass-2 do scatter (b16 st)** | **1792** | | u-MMAC ds_read_m32x16 | 512 | 1536 |
+| dOT reads (b64) | 0 | | saved-h staging (b64 st) | 768 | 768 |
+| pass-2 MMAC B reads (b64) | 0 | | saved-h ds_read_m32x16 | 1024 | 1024 |
+| total | 1920 | | Qn tile (b16 st) | 256 | 256 |
+| | | | total | 4096 | 8704 |
+- §140 explained: P-938bc1's target has no conflicts at all (two b16 lanes on the halves of one dword are served
+  together); 93% of dav's conflicts are in pass 2's do scatter.  In wu the cost is spread over five phases, and the
+  small-grid L16 instance (unpadded rows) is twice as bad as the padded one.
+- Bank model (lds_model.py): 32 banks x 4 B; per cycle b16 / b32 serve 32 lanes and b64 16 lanes in lane order;
+  ds_read_b128 and ds_read_m32x16 serve 8 lanes, grouped by lane bits -- b128: equal (b2 ^ b4, b3, b5), ds_read_m32x16:
+  equal (b1 ^ b4, b3, b5) (pair probes, examples/kda/gfx938/lds_m_bank.hip + lds_m_pat.py: lane 0 conflicts only with
+  lanes 1, 4, 5, 18, 19, 22, 23 under ds_read_m32x16); cost per group = largest number of distinct dwords on one
+  bank - 1.  It reproduces all 18 phases above and every later build's totals (§142-143) to the cycle.
+- Miss on the way: a first wu layout (bc3) was designed on a ds_read_m grouping fitted to the base counts only (even /
+  odd lanes of each 16-lane group); it fitted the base by coincidence and predicted 768 where hipprof gave 3328.  The
+  pattern microbench fixed the grouping.  Rule (R74): fit the LDS model per instruction form with a pattern microbench
+  (not only to the kernel's own counts) before designing a layout; check the new build's counts against the prediction.
+- Also corrects §98's reading: the gfx936 pads are not conflict-free for all KDA patterns on gfx938 -- the plain b16 /
+  b64 phases (wu w-MMAC reads, Wb tile, saved-h staging; dav's do scatter) carry most of the cycles, not only the MLS
+  paths.
+
+## 142. P-938bc2: dav pass-2 swizzle (local commit ddf1681) -> dav 1.03-1.11x
+- i2(v, j) = v * 64 + (j ^ (((v & 15) ^ ((v >> 4) & 3)) << 2)) (gfx938 only).  The scatter's 32 lanes (one t,
+  v = 4k + d) now hit 16 granules (8-way -> 2-way, the minimum with the 8 B granules the b64 reads need); dOT and MMAC
+  reads stay conflict-free.  Conflicts 1920 -> 384 per CTA (= model), conflict / active 0.484 -> 0.158,
+  SQ_WAIT_INST_LDS 15.3M -> 1.5M (8192/64).  VGPR 108 -> 116, no scratch, LDS 16384 (4 CTAs per CU kept).
+- Gate 84/84 bit-identical.  ABBA kbench vs 2631309 (dav kernel): 1024/64 1.038, 2048/16 1.053, 8192/64 1.033,
+  4096/32 1.046, 16384/8 1.047, 32768/16 1.043, 1024/16 1.035, 2048/8 1.107, 32768/64 1.029x.  Kept.
+- Remaining dav conflicts: 256 (scatter, 2-way minimum) + 128 (dA staging: bank bit 5 dropped by the 4-float granule;
+  removing it needs a register swap on the b128 reads).
+
+## 143. P-938bc4: wu layouts (local commit c1fc134) -> wu 1.01-1.09x
+Layout only, gfx938 only (the gfx936 device assembly of 2631309 and c1fc134 differs only in the order of .addrsig_sym
+lines):
+| layout | change | phases (per CTA, padded / L16) |
+|---|---|---|
+| kbT slab | granule XOR 2 ((r >> 4) & 7) (padded), low nibble ^ 4 ((r >> 4) & 3) (L16) | fill1 256 / 768 -> 256 / 256 (2-way minimum: even row pitch); w-MMAC reads 512 / 3584 -> 0 |
+| B-form tile | granule XOR also takes element bits 6..7 | Wb tile 768 -> 0; emits and Qn tile unchanged (Qn at its 2-way minimum) |
+| saved-h staging | granule XOR 2 (k1 ^ k2) + k3 (was 2 k1) | staging 768 -> 256 (2-way minimum: fixed 8 B half); ds_read_m 1024 -> 0 |
+| natural vb rows | L16 only: granule XOR 2 (j & 1) + 4 ((j >> 2) & 1) | u-MMAC ds_read_m 1536 -> 0 (padded rows stay: 512 is their minimum with a 1-granule row shift) |
+- Totals 4096 -> 1280 (padded) and 8704 -> 768 (L16), as predicted.  At 4096/32: VALU instructions -3.3%, LDS
+  instructions -3.3%, SQ_WAIT_INST_LDS 1.97M -> 0.68M, wave cycles -2.8%.  VGPR 124 -> 128 (padded), 128 (L16), no
+  scratch, LDS unchanged (18176 / 16384).
+- Gate 84/84 bit-identical.  ABBA kbench vs 2631309 (wu kernel), three runs on rotated GPUs (median; run 1's GPU 5 gave
+  0.98x on its three shapes, runs 2-3 1.008-1.025x there): 1024/64 1.023, 2048/16 1.018, 8192/64 1.032, 4096/32 1.008,
+  16384/8 1.010, 32768/16 1.022, 1024/16 1.086, 2048/8 1.071, 32768/64 1.035x.  Kept.
+- Left (not built): the padded natural rows at 144 shorts + XOR 4 ((j >> 4) & 1) would take u-MMAC 512 -> 0 (LDS
+  18176 -> 19200 B, still 3 CTAs per CU) -- 512 cycles per CTA, the last non-minimal phase.
+
+## 144. bc2 + bc4 end to end (build bc24 = c1fc134 vs 2631309, mk3_fb.py ABBA x 2, 8 processes per shape)
+| shape | fwd | bwd | fwd+bwd |
+|---|---|---|---|
+| 1024/16 | 1.004 | 1.020 | 1.016 |
+| 1024/64 | 1.000 | 1.005 | 1.003 |
+| 2048/8 | 1.003 | 1.021 | 1.017 |
+| 2048/16 | 0.995 | 1.005 | 1.003 |
+| 4096/32 | 1.002 | 1.005 | 1.004 |
+| 8192/64 | 0.999 | 1.002 | 1.002 |
+| 16384/8 | 1.000 | 1.004 | 1.003 |
+| 32768/16 | 1.000 | 1.008 | 1.007 |
+| 32768/64 | 1.006 | 1.010 | 1.001 |
+- Geomean fwd 1.001 (unchanged kernels: the noise floor), bwd 1.009, total 1.006; peak memory unchanged.  Largest at
+  the 256-CTA grids (L16 wu).  Data: results/kda-gfx938-ldsbank-20261103/fb_bc24_*.jsonl.
+- Conflict cycles removed per CTA (dav 1536, wu 2816 / 7936) are worth 3-11% of the two kernels, i.e. ~0.5-1.5% of the
+  backward: LDS conflicts were real but second-order in both kernels (dav / wu stay bandwidth + issue bound, §139).
+
+## 145. Hand-off byte table (8192/64; producer -> consumer, bytes written / read, minimum, verdict)
+Script: results/kda-gfx938-ledger-20261103/handoff_bytes.py (B per token-head; MB = B x T x H / 1e6).  Sizes from
+g2_runner.cpp and the kernels' parameter lists; per kernel they add up to §139's HBM bytes within ~3% (wu's second g
+read and its phase-3 k re-read partly hit L2).  L2 is 8 MB: every hand-off here is >= 134 MB at this shape, so "kept in L2" is
+only possible inside one kernel (fused producer / consumer per chunk-head), not between kernels.
+| tensor | producer -> consumer | W / R B | W + R MB | min MB | how the minimum is reached | verdict / evidence |
+|---|---|---:|---:|---:|---|---|
+| Kb | prep_a -> prep_b | 256 / 256 | 268 | 0 | fuse prep_a + prep_b | closed: fused 0.83-0.86x (§135); ceiling 1.007-1.026x (§133) |
+| R (fp32) | prep_a -> prep_b | 320 / 320 | 336 | 0 | same fusion; bf16 | closed: bf16 1.5-3.1x over the FP64 bar (§91-92) |
+| QgA, Kn | prep_a -> fwd_h | 512 / 512 | 537 | 537 | -- | minimal (fwd_h reads no q / g) |
+| Wn, Un | prep_b -> fwd_h | 512 / 512 | 537 | 0 | w / u inside fwd_h | closed: <= 2.6% at H = 64, 0.92-0.94x at H = 8 (§77) |
+| AqkA | prep_b -> fwd_h | 128 / 128 | 134 | 0 | fwd_h reads the saved Aqk | low: ceiling <= 1.007x (§71, §128) |
+| Akk (saved) | prep_b -> wu, s4a, s4b | 128 / 384 | 268 | 134 | one reader per kernel pair | blocked: s4a / s4b split is for residency |
+| h (saved) | fwd_h -> wu, s4a, s4b | 512 / 1536 | 1074 | 805 | s4a + s4b merged | blocked (residency); saving v_new instead adds retained memory |
+| g (fp32) | gate -> wu (x2), s4b | 512 / 1536 | 1074 | 268 | wu / s4b recompute from g_raw | **open** for wu (671 MB if only wu does; VALU scan; s4b keeps it, §59) |
+| Wb, KgA, Qn | wu -> dhu | 768 / 768 | 805 | 805 | re-use forward QgA / Kn | excluded (retained memory) |
+| kgB | wu -> s4a | 256 / 256 | 268 | 268 | -- | recompute needs g: more bytes |
+| Vn | wu -> dav (C), dav -> s4b (A) | 512 / 512 | 537 | 403 | wu emits the A form | dav prefers C (0.825-0.99x, §124); P-938va kept |
+| dA (dAqk, fp32) | dav -> s4b | 256 / 256 | 268 | 0 | s4b recomputes do . v_new^T (reads both) | blocked: s4b LDS full (§59, §129-132) |
+| dVn | dav -> dhu | 256 / 256 | 268 | 0 | dhu computes dv = A^T do off its chain | **open** (dav into dhu) |
+| dOT | dav -> dhu | 256 / 256 | 268 | 134 | dhu reads row-major do, transposes in LDS | **open** (pure re-layout of an input) |
+| dh | dhu -> s4b | 512 / 512 | 537 | 537 | -- | recurrence state |
+| dv2 (A form) | dhu -> s4a | 256 / 256 | 268 | 268 | -- | minimal |
+| dwT, dA (s4a), db | s4a -> s4b | 528 / 528 | 554 | 0 | s4a + s4b merged | blocked (residency) |
+| dg (fp32) | s4b -> bwd_tail | 512 / 512 | 537 | 537 | bf16 / fold the tail into s4b | closed (§60, §91-92, §96) |
+| **sum** | | 7128 / 9432 | **8682** | 4840 | | |
+- 8.7 of §139's 11.4 GB are these hand-offs; the remaining ~2.7 GB are the user tensors (q / k / v / g_raw read 3x,
+  do 2x, the outputs).  Of the 3.8 GB between "actual" and "min", ~2.5 GB is closed by measurement (prep fusion, R
+  precision, w / u re-split, Vn form) or blocked (s4's residency split, s4b's full LDS); ~1.3 GB is open (g 0.8,
+  dVn + dOT 0.4, AqkA 0.13).  The excluded rows (backward re-emits of forward tensors) would need retained memory.
+- Open, by bytes (none measured yet; each needs a deletion ceiling first, R63):
+  (1) dav into dhu (dVn + dOT: 537 MB W+R, plus dav's own do / Aqk reads): dhu runs 1 CTA per CU on a serial chain
+  with VALU 0.34 and spare VGPRs, so A^T do on MMAC for the next chunk could sit off the chain -- ceiling: dav's dVn /
+  dOT stores deleted + dhu reading do / Aqk and doing the extra MMAC (timing only);
+  (2) dOT alone (268 -> 134 MB): dhu reads row-major do through LDS (ds_read_m32x16 transposing reads);
+  (3) g in wu (gate kernel 252 us + wu's 512 B / token-head of fp32 g): wu recomputes the gate and chunk scan from
+  g_raw, the gate kernel then writes g only for s4b.
+
+## 146. Where things stand (for the next session)
+- flash-train: ~/Desktop/WorkSpace/wt/ft_938, branch feat/kda-gfx938-mk3, local commits ddf1681 (P-938bc2) and c1fc134
+  (P-938bc4) on 2631309, not pushed.  nmz5: source tree /public/home/tanbo/ft_bc24 (= c1fc134; build base "bc24" for
+  mk3/build_multi.sh), wheels b938/a16 (2631309) and b938/bc24.
+- Tools (nmz5 mk3/, copies in results/kda-gfx938-ldsbank-20261103/): lb_pmc.sh (hipprof LDS counters of dav / wu on
+  kbench; LB_PMC overrides the counter list), lb_attr.sh (per-phase only / skip runs on a skip-mask build), dav_lb.cuh /
+  wu_lb.cuh (the skip-mask instrumentation), fb4.sh + fbsum.py (mk3_fb ABBA on 4 GPUs); examples/kda/gfx938/
+  lds_m_bank.hip (+ lds_m_pat.py) for instruction-form bank probes.
+- Done on c1fc134: pytest tests/python (gfx938) 104 passed; bitwise gate 84/84 for bc2, bc4 and bc24; gfx936 gate and
+  timing, ftrain_test: see §147; the 24-shape table: §152 (BW1300 nodes).
+- Next candidates: §145's three open hand-offs (ceilings first), wu natural rows at 144 shorts (§143), bwd_tail's
+  LDS conflicts (0.36 per active cycle, §139) by the same per-phase method.
+
+## 147. Step 0: c1fc134 verified (gfx936 bw61, ftrain_test); the 24-shape run was contaminated
+- gfx936 (bw61, idle; the a16 / bc24 wheels are fat gfx936 + gfx938 builds): bitwise gate vs 2631309 84 / 84 identical;
+  kbench ABBA (9 shapes, dav and wu keys): dav 1.000-1.007x, wu 0.998-1.014x, total 0.998-1.002x -> no change, as the
+  identical gfx936 assembly predicts.  Data: results/kda-gfx938-a1a3-20261104/bw61/.
+- ftrain_test (cmake build of the c1fc134 tree on nmz5, gfx938): 181 / 181 passed.
+- 24 shapes (mk3_fb ABBA x 2, a16 vs bc24, nmz5 GPUs 0 / 6 / 7): **not usable**.  A foreign rccl alltoallv job keeps
+  all 8 GPUs at HCU 100% (§151), absolute times ran ~25% above the 11-03 table (8192/64 14.4 vs 11.4 ms) and an
+  unchanged forward read 0.82x at 32768/32.  The other ratios (bwd 0.99-1.03x, 1024/16 1.033x) do not contradict §144,
+  but the table has to be re-run on a quiet machine.  Data: results/kda-gfx938-a1a3-20261104/abv/t24_*.
+- The same contamination shows in the unchanged kernels of the ceiling runs below (dhu at 8192/64 and 32768/64 varied
+  by up to 28% between variants); verdicts below use only shapes where the unchanged kernels agree within ~2%.
+
+## 148. A1 ceilings (dav's pass 2 into dhu): closed
+Build a1 (bc24 + dev knobs; results/kda-gfx938-a1a3-20261104/{dav_a1.cuh, engine_a1.cuh, runner_a1.cpp}):
+- A1-light, numerically exact: KDA_G2_DHU_DV=1 -> dhu (production instance <1, true>) forms dv = A^T do itself from the
+  causal-masked row-major Aqk (16 scalar 2 B gathers per lane per step, issued a step ahead, as in dav) and the dO^T
+  fragments it already stages in dOs (same operands, same MMAC order, bf_rne as dav) and dav's pass 2 emits dOT only (no
+  A^T gathers / MMAC / dVn store).  Gate 84 / 84 bit-identical (varlen included).
+- c1f (timing only): dav without pass 2 at all (no do loads, scatter, dOT, MMAC, dVn) -- the dav-side bound of any A1.
+- c2 / A2 bound (timing only): dav without the dOT emit (pass 2 otherwise intact).
+| shape | c1f dav | A1-light dav | A1-light dhu | A2-bound dav |
+|---|---|---|---|---|
+| 1024/16 | 1.719 | 1.091 | 0.612 | -- (GPU contended) |
+| 1024/64 | 1.560 | 0.989 | 0.510 | 1.053 |
+| 2048/8 | 1.655 | 1.041 | 0.445 | 1.118 |
+| 2048/16 | 1.568 | 1.024 | 0.445 | 1.053 |
+| 4096/32 | 1.617 | 0.964 | 0.443 | 1.062 |
+| 8192/64 | 1.579 | 0.975 | 0.424 | 1.090 |
+| 16384/8 | 1.618 | 0.961 | 0.423 | 1.063 |
+| 32768/16 | 1.598 | 0.953 | 0.419 | 1.080 |
+- Reading: dav's pass 2 is 36-42% of dav (255 us at 8192/64, ~2% of fwd+bwd), but almost all of it is the do
+  re-layout (row loads, b16 scatter, dOT emit); the part dhu can take over (A^T gathers, 32 MMAC, dVn store) is
+  0-9% of dav.  Inside dhu the same work costs 1.6-2.4x dhu (+1.5 ms at 8192/64): 128 extra scalar VMEM instructions
+  per CTA-step sit in front of the recurrence's own KA / QW / dO loads (dhu runs 1 CTA per CU on a TA-paced chain).
+  The dOT emit alone (A2's dav-side value) is 4-11% of dav (<= 0.6% end to end) before dhu pays for reading row-major do
+  and transposing it.  Both below the 1% bar -> A1 and A2 closed, not built further.
+- Rule (R75): work moved into a recurrence kernel is not free because the kernel has idle VALU / MMAC: on gfx938 dhu and
+  fwd_h are paced by their per-step VMEM issue, so any added per-step load (even L2-hot scalar gathers) lands on the chain.
+
+## 149. A3 ceilings (wu computes g from g_raw): closed
+Builds g1 / g2 (wu with G2_WU_GCEIL 1 / 2, timing only): g1 reads the fp32 g quads as bf16 quads (the bytes a g_raw
+read would move, same instruction count and pattern), g2 drops both g reads (phase 1 and the LEAN phase-3 re-read).
+| shape | g1 wu | g2 wu |
+|---|---|---|
+| 1024/16 | 0.954 | 1.071 |
+| 1024/64 | 1.019 | 1.126 |
+| 2048/8 | 0.948 | 1.079 |
+| 2048/16 | 1.011 | 1.107 |
+| 4096/32 | 1.026 | 1.149 |
+| 8192/64 | 1.027 | 1.175 |
+| 16384/8 | 1.027 | 1.149 |
+| 32768/16 | 1.004 | 1.151 |
+- Halving g's bytes buys 0.95-1.03x: wu's g reads cost by instruction / latency, not by bytes.  A3 would replace the
+  fp32 reads by g_raw reads (>= g1's cost) and add the gate + chunk scan on the VALU, so its ceiling is ~1.0 -> closed.
+- What g2 does show: the two g reads are 7-18% of wu (221 us at 8192/64, ~1.6% end to end).  Half of that is the LEAN
+  phase-3 re-read that P-938r traded for VGPRs (sA dropped, nothing carried from phase 1); a way to keep phase 1's g
+  (or exp2 g, fp32) for phase 3 without spilling or losing the 3rd CTA is the remaining lever here -- not costed yet.
+
+## 150. After step 0 / A1 / A3: what is left of the plan
+- Hand-off track: of §145's 1.3 GB "open" bytes, g (0.8 GB) and dVn + dOT (0.4 GB) are now closed by measurement; AqkA
+  (0.13 GB, ceiling <= 0.7%) remains.  The hand-off table is exhausted as a source of >= 1% items on this dataflow.
+- Remaining candidates, by measured / estimated size: s4b's 3rd CTA (+~11% s4b, ~3% end to end; LDS 1451 B short,
+  §132) with an LDS inventory under the bank model; wu's phase-3 g re-read (<= ~0.8%, §149); the LDS-conflict sweep of
+  fwd_h / s4b / s4a / prep_b (<= ~1% total, §141 calibration); AqkA (<= 0.7%).
+- Measurement: re-run the 24-shape table and any further ABBA only when nmz5's GPUs are idle (hy-smi HCU% = column 7
+  on the host, not column 8 = Dec%; see §151).
+
+## 151. Measurement environment correction: nmz5 has been under a foreign load since 2026-11-03 20:37
+- A user's rccl-tests alltoallv_perf (container liupj1_rcclx, 8 ranks, started 11-03 20:37, still running at 11-04 10:00,
+  likely hung) keeps every GPU at HCU% 100.  The "0.0%" readings noted during §140-149 were hy-smi's Dec% column
+  (host column 8), not HCU% (column 7): the GPUs were never idle in those sessions.
+- Affected: all timing of §140 (P-938bc1), §142-144 (bc2 / bc4 kernel ABBA and the bc24 end-to-end run), §147-149
+  (24 shapes, A1 / A3 ceilings).  Their ratios are interleaved A/B on the same loaded GPUs (the unchanged forward
+  read 1.000-1.006x in §144, so the noise floor there was ~0.5%), but absolute times ran ~25% slow and the
+  load (a spinning collective holding some CUs) can bias small-grid ratios.  Not affected: the hipprof counts (§141-143),
+  the gates, pytest / ftrain_test, bw61.
+- Re-measurement armed: mk3/t24_run.sh + fb_guard.sh (24 shapes, a16 vs bc24, GPUs 1 / 3 / 5 / 7): every mk3_fb process
+  waits until its GPU reads HCU% 0 on 3 consecutive samples, and each row records the wait and whether the GPU was busy
+  right after the process (post_busy).  Output /tmp/t24g_r2_*.jsonl in tanbo_kda_nmz; it aborts after 12 h of waiting.
+
+## 152. 24 shapes, c1fc134 (bc2 + bc4) vs 2631309, on BW1300 (SothisAI p8c nodes, guarded runs)
+- Machine: nmz5 stays under the foreign rccl load (§151), so the table ran on the SothisAI supernode compute nodes
+  p8c0-p8c9 (login ai01, account qianyongjun_zp; ssh p8c? via sothis-ai01).  **These are BW1300_LC, gfx938, 64 CUs at
+  1350 MHz, 4 GPUs per node** -- a different card from nmz5's BW1102 (72 CUs, 1300 MHz): same ISA and builds, but absolute
+  times are not comparable with the nmz5 tables (§126 / §131), and the 72-CU-tuned host thresholds were not re-checked.
+  Container tanbo_kda (image megatron_train:0.19.2-ubuntu22.04-dtk2610-py3.12-sf_b075-20261014-1059, /opt/hyhal ro, home
+  mounted) on p8c0 / 1 / 3-9 (p8c2 lacks the image); files under /public/home/qianyongjun_zp/tanbo/{b938, mk3, t24*}.
+  The login node resets ssh after many new connections: keep one ControlMaster connection and reach the nodes from ai01.
+- Bitwise gate on BW1300 (a16 vs bc24): 84 / 84 identical.
+- Protocol: fb_guard.sh (mk3_fb ABBA x 2 per shape on one GPU; each process waits for HCU% 0; rows record the wait and
+  post_busy), one shape per GPU, three passes on rotated nodes.  Other users' jobs hit p8c4 / p8c5 / p8c9 during the run:
+  a block (one shape on one GPU) is accepted only with 8 rows, no post_busy, no wait > 30 s and the unchanged forward
+  within 1.5% (t24_combine.py); every shape has >= 1 accepted block.  Data: results/kda-gfx938-24shape-bw1300-20261104/.
+| T/H | total ms 2631309 -> c1fc134 | fwd | bwd | total | accepted blocks |
+|---|---|---|---|---|---|
+| 1024/64 | 1.841 -> 1.826 | 0.997 | 1.009 | **1.008** | 2 block(s): 1.009 / 1.018 |
+| 1024/32 | 0.978 -> 0.971 | 1.007 | 1.007 | **1.007** | 2 block(s): 1.018 / 0.992 |
+| 1024/16 | 0.557 -> 0.545 | 0.999 | 1.029 | **1.021** | 2 block(s): 1.028 / 1.021 |
+| 1024/8 | 0.374 -> 0.371 | 1.004 | 1.009 | **1.008** | 1 block(s): 1.008 |
+| 2048/64 | 3.394 -> 3.387 | 1.004 | 1.002 | **1.002** | 4 block(s): 0.983 / 1.001 / 1.019 / 1.003 |
+| 2048/32 | 1.776 -> 1.756 | 1.002 | 1.014 | **1.011** | 2 block(s): 1.006 / 1.005 |
+| 2048/16 | 0.977 -> 0.971 | 1.003 | 1.006 | **1.006** | 2 block(s): 0.996 / 1.018 |
+| 2048/8 | 0.575 -> 0.561 | 1.018 | 1.028 | **1.024** | 2 block(s): 1.043 / 1.008 |
+| 4096/64 | 6.430 -> 6.413 | 0.998 | 1.004 | **1.003** | 3 block(s): 1.004 / 1.003 / 1.002 |
+| 4096/32 | 3.309 -> 3.306 | 0.999 | 1.002 | **1.001** | 3 block(s): 1.003 / 1.001 / 1.000 |
+| 4096/16 | 1.745 -> 1.739 | 0.999 | 1.004 | **1.004** | 1 block(s): 1.004 |
+| 4096/8 | 1.047 -> 1.041 | 1.006 | 1.006 | **1.006** | 2 block(s): 1.003 / 1.007 |
+| 8192/64 | 12.461 -> 12.432 | 1.000 | 1.003 | **1.002** | 2 block(s): 1.002 / 1.003 |
+| 8192/32 | 6.340 -> 6.323 | 1.008 | 1.003 | **1.003** | 1 block(s): 1.003 |
+| 8192/16 | 3.258 -> 3.244 | 1.002 | 1.006 | **1.004** | 2 block(s): 1.005 / 1.000 |
+| 8192/8 | 1.921 -> 1.905 | 1.005 | 1.005 | **1.009** | 2 block(s): 1.005 / 1.011 |
+| 16384/64 | 23.883 -> 23.714 | 1.003 | 1.009 | **1.007** | 2 block(s): 1.007 / 1.007 |
+| 16384/32 | 12.233 -> 12.170 | 1.000 | 1.007 | **1.005** | 2 block(s): 1.001 / 1.008 |
+| 16384/16 | 6.225 -> 6.219 | 1.002 | 1.003 | **1.001** | 1 block(s): 1.001 |
+| 16384/8 | 3.620 -> 3.613 | 0.998 | 1.003 | **1.002** | 2 block(s): 1.002 / 1.001 |
+| 32768/64 | 47.144 -> 46.852 | 1.000 | 1.009 | **1.006** | 1 block(s): 1.006 |
+| 32768/32 | 24.022 -> 23.903 | 0.998 | 1.007 | **1.005** | 1 block(s): 1.005 |
+| 32768/16 | 11.739 -> 11.618 | 1.000 | 1.012 | **1.010** | 1 block(s): 1.010 |
+| 32768/8 | 6.980 -> 6.977 | 0.992 | 1.004 | **1.000** | 1 block(s): 1.000 |
+- **Geomean over 24 shapes: fwd 1.002 (unchanged code: the noise floor), bwd 1.008, total 1.0065; total >= 1.000 on
+  24 / 24**, largest at small grids (1024/16 1.021, 2048/8 1.024, 2048/32 1.011) and 1.002-1.010 elsewhere.  Consistent
+  with §144 (nmz5, 9 shapes, geomean 1.006).  2048/64's first block (0.983) is outvoted by three blocks at 1.001-1.019.
+- Step 0 is complete: c1fc134 has the gate (gfx938 nmz5 + BW1300, gfx936 bw61), pytest, ftrain_test, gfx936 timing and
+  the 24-shape table.
+
+## 155. s4b third CTA: paper design (LDS inventory, no code yet)
+Today's S4BSmem (32768 B -> 2 CTAs per CU; 3 CTAs need <= 21845 B, VGPR <= 256):
+| buffer | bytes | written / read in kt | readers |
+|---|---:|---|---|
+| TA / TQ / TK (3 x 16 col x 68 pad x fp32) | 13056 | written before barrier 1, read after; WAR = end barrier | TA block b: waves A >= b; TQ / TK block b: waves A <= b |
+| stg (h, dh tiles of kt, double buffered, 2 ahead) | 16384 | read before barrier 1; kt + 2 written after it | all 4 waves read the whole tiles |
+| dwTs (dwT tile of kt, P-29) | 2048 | written before barrier 1, read after | all waves |
+| cs1 / cs2 (double buffered) | 1024 | written before barrier 1, read after | all waves |
+| gM | 256 | written before barrier 1, read after | all waves |
+- §129-132 parts that are known to cost nothing: NB (stg single buffered, 1 tile ahead: 16384 -> 8192; cs 1024 -> 512),
+  TB (unpadded tables with an XOR swizzle: 13056 -> 12288), and a prologue that does not need 32 KB (NOT: per-lane
+  dA / dAqk loads, 0.96-1.02x; or P-938t in two 16 KB passes).  With dwTs kept that is 23296 B -- 1451 B over (§132);
+  dropping dwTs (DW / DW2) is what made P-938s1 lose (~4-6%).
+- **New source of bytes: table blocks read by one wave only.**  TA block 3 is read only by wave 3, TQ and TK block 0 only
+  by wave 0 -- and they are written by that same wave (rows 16A..16A+15).  Those three 1 KB blocks need no LDS: the
+  reading lane (m, q) needs t[c = m][j = 16A + 4q + x], x = 0..3, held by lanes (m' = 4q + x, q' = m & 3) of the same wave
+  in their element e = m >> 2 -> an in-wave exchange (ds_bpermute / DPP: no allocation), which can run before barrier 1.
+  Tables become TA [16][48] (blocks 0-2) and TQ / TK [16][48] (blocks 1-3): 3 x 3072 = 9216 B.
+- Resulting loop footprint: tables 9216 + stg 8192 + dwTs 2048 + cs 512 + gM 256 = **20224 B** (1621 B under the 3-CTA
+  limit), dwTs kept, main-loop structure unchanged (same barriers).  Prologue: NOT, or P-938t in two passes <= 20 KB.
+- Costs to check before coding: (1) the exchange: per kt wave 0 rebuilds 2 operand sets and wave 3 one (16 bpermutes per
+  set, or 4 after a writer-side rotation) -- wave-uniform branches on A, so code is shared but work is not; (2) VGPRs:
+  s1 ran at 246-254 (dense) and 256 + scratch (varlen) -- the exchange must not add live registers across the MMACs
+  (consume immediately), the hard limit is no scratch on the dense and varlen instances; (3) bank conflicts of the
+  48-wide tables' b128 reads (8 lanes per cycle grouped by lane bits (b2 ^ b4, b3, b5), §141 model) -- design the swizzle
+  on the model first; (4) the 1-ahead h / dh prefetch (NB) at 3 CTAs.
+- Gates: LDS <= 21845 B, VGPR <= 256 with no scratch (all instances), modelled conflicts not above today's, bit-identical
+  84 / 84; then ABBA.  Expected: the third CTA's ~+11% on s4b minus the exchange and NB costs; P-938s1 at 3 CTAs without
+  its DW loss would have been ~1.03-1.07x s4b (§128-129 bisect) -> ~1-2% end to end.  Order: model the table swizzle and
+  the exchange cost (static ISA count) -> build -> resources -> gate -> ABBA.
+
+## 153. P-938cg: wu keeps phase 1's exp2f(g) for phase 3 (local commit 6fa39cc) -> wu 1.08-1.11x, fwd+bwd 1.010
+- §149's g2 ceiling put both g reads at 7-18% of wu; the phase-3 re-read exists only because P-938r saved VGPRs, and
+  wu's residency is LDS-bound (R70), so the egr quads (exp2f of the same g, 32 VGPRs) are carried again and phase 3 takes
+  the non-LEAN Qn branch (all q loads first, then the tile).  Same values -> bit-identical.
+- VGPR 126-128 -> 169-172 (all four production instances, dense / varlen x padded / L16), no scratch; LDS unchanged.
+  Gate 84 / 84 (BW1300, p8c6).
+- BW1300 (p8c nodes, guarded runs): kbench ABBA wu 1.094 (1024/16), 1.082 (1024/64), 1.105 (2048/8), 1.075 (2048/16),
+  1.087 (4096/32), 1.101 (8192/64), 1.094 (16384/8), 1.083 (32768/16), 1.086x (32768/64) -- the L16 instance (256-CTA
+  grids) keeps its gain, so 172 VGPRs did not cost its 4th CTA.  mk3_fb ABBA x 2 (9 shapes, all blocks accepted): fwd
+  0.995-1.009 (noise), bwd 1.004-1.017, **total 1.003-1.015, geomean 1.010**.  Kept.
+- gfx936: the change sits under G2_WU_LEAN (gfx938 only).
+
+## 154. fwd_h LDS conflicts located by the model; P-938os (local commit 079f58b) -> fwd_h 1.02-1.04x at H = 64
+- Production instance at H = 64 (wide, NVH 4, MODE 5): the bank model (results/kda-gfx938-ldsbank-20261103/
+  fwdh_model.py) gives 704 extra cycles per CTA-step -- **576 in the wave-private o staging tile** (16 x 16 bf16, 32 B
+  pitch: C-fragment b16 stores 4-way) and 128 in the v_new b16 stores into vB; h writes, bN gathers and every b64 operand
+  read are conflict-free.  hipprof (nmz5 ledger, 8192/64): 90112 per CTA = 704 per step, exactly the model.  The 4-slab
+  instance (H < 64) has no o staging conflicts (0 measured).
+- P-938os: the tile's 8 B granule XOR-ed by (row >> 2) & 3 on stores and reads -> 704 -> 128 per step (hipprof on BW1300:
+  16384 per CTA), VGPR 216 -> 220.  Gate 84 / 84.  ABBA (BW1300) fwd_h: 2048/64 1.016, 4096/64 1.023, 8192/64 1.028,
+  16384/64 1.037, 32768/64 1.042x; 1024/64 1.001; controls 2048/16 1.003, 16384/8 1.010 (other instance).  Kept.
+- This kernel is shared with gfx936 (wide only at NT >= 512 there): layout change, bit-identical by construction;
+  gfx936 gate / timing on bw61: §156.
+- Left in fwd_h: the vB stores (128 per step).
+
+## 156. 079f58b (P-938cg + P-938os) on gfx936 (bw61): unchanged
+- Bitwise gate vs c1fc134 (fat wheel cgos = 079f58b): 84 / 84 identical.
+- kbench ABBA (9 shapes, fwd_h and wu keys): fwd_h 0.994-1.037x (1.037 at 1024/64, 1.010 at 32768/64: the wide
+  instance), wu 0.997-1.006x, total 0.993-1.003x -> no regression.  Data: results/kda-gfx938-fwdh-20261104/bw61/.
+- State: flash-train feat/kda-gfx938-mk3 = 079f58b (local, not pushed); nmz5 source tree /public/home/tanbo/ft_cgos,
+  wheels b938/cgos (nmz5) and /public/home/qianyongjun_zp/tanbo/b938/cgos (p8c).  Next: s4b third CTA per §155
+  (model the 48-wide table swizzle and the in-wave exchange first), fwd_h vB stores (128 per step), conflict sweep of
+  s4b / s4a / prep_b with the model (validate each against one hipprof total).
+
+## 157. Back on nmz5 (idle since 11-04 afternoon): 079f58b confirmed on BW1102, 24 shapes
+- nmz5 GPUs idle (HCU% 0, the rccl job gone).  kbench ABBA cgos (= 079f58b) vs bc24 (= c1fc134), 10 shapes: wu
+  1.082-1.103x everywhere; fwd_h 1.020-1.041x at H = 64 (T >= 4096), unchanged elsewhere -- the BW1300 results of
+  §153-154 hold on BW1102.
+- 24 shapes, 079f58b vs 2631309 (fb_guard.sh, GPUs 1 / 3 / 5 / 7; every process started after the minimal 9-10 s idle
+  check -- note: on nmz5 the post_busy flag reads the run's own utilisation tail and is always true, so only pre_wait is
+  meaningful there): **geomean fwd 1.006, bwd 1.018, total 1.0145**; total >= 1 on 22 / 24 (4096/32 0.993, 8192/16
+  0.991), 1.013-1.037 at the small grids, 1.018-1.022 at 8192/64 / 16384/64 / 32768/64.  Data:
+  results/kda-gfx938-s4b3-20261104/data/t24g_r3_*.jsonl.
+
+## 158. s4b third CTA (P-938s3, §155 design) built: LDS 20224 B, bit-identical, mixed timing -> not kept
+- Build s3 = 079f58b + NB (single-buffered h / dh + cs) + NOT (no MLS prologue) + own table blocks exchanged by
+  ds_bpermute (TA block 3 / TQ, TK block 0 never in LDS; 48-row tables, groups XOR (col & 3)): LDS 32768 -> 20224 B,
+  VGPR 241 -> 256 dense (no scratch), 256 + 72 B scratch varlen.  Gate 84 / 84.
+- ABBA s4b kernel vs 079f58b (nmz5): s3 0.64-0.97x except 16384/8 1.09x.  Bisect (each at 2 CTAs unless noted):
+  NOT 0.97-1.01x, NOT + NB 0.99-1.03x, **NOT + own-block exchange 0.67-0.87x**, all (3 CTAs) 0.64-1.09x -- the
+  exchange after barrier 1 (wave 0: 8 bpermutes + selects per kt, wave 3: 4) stretches the post-barrier chain of one
+  wave and the end barrier makes all waves wait for it.
+- s3d: the exchange moved before barrier 1 (overlapping the barrier wait), same LDS / VGPR, gate 84 / 84.  Two ABBA
+  rounds: 16384/8 1.100 / 1.100, 8192/64 1.023 / 1.038, 4096/64 1.141* / 1.050, 32768/16 1.012 / 1.163, 2048/16
+  1.030 / 1.031; but 1024/16 0.930 / 0.912, 2048/8 -- / 0.954, 1024/64 1.018 / 0.983, 4096/32 0.984 / 0.985, 32768/64
+  -- / 0.996 (* noisy ref).  Totals 0.977-1.044.  Not kept: the 256-CTA grids lose 5-9%, half the rest is within noise,
+  and the dense instance sits at exactly 256 VGPRs (no room for any later change).
+- What it settles: the third CTA is worth roughly what the in-wave exchange + NB cost; the measured net is +2-10% only at
+  large grids with few heads per chunk row.  Possible follow-up (not built): s3d as a second instance selected by CTA
+  count (>= ~1024 CTAs), after a VGPR trim -- expected ~0.5-1% end to end at those shapes.  Files:
+  results/kda-gfx938-s4b3-20261104/{wy_s4b3.cuh (macros S3_NB / S3_OWN / S3_EARLY), data/abs3*_*.jsonl}.
+
+## 159. s4b 3-CTA instance gated by grid (P-938s3r): VGPR not reducible, gating not confirmed -> not kept
+- VGPR trim: amdgpu_num_vgpr caps on s3d spill at once (248: 24 B scratch, 240: 64 B, 232: 96 B on the dense instance;
+  84-176 B varlen) -- the 256 VGPRs are real pressure (NB prefetch registers + the exchanged blocks held across the
+  barrier on top of s4b's 241).  No source-level trim found within this round.
+- Map (s3d vs 079f58b, s4b kernel, 24 shapes x 2 ABBA rounds, nmz5): losses at <= 256 CTAs (0.89-0.95x), H = 32 mostly
+  0.94-1.03x, wins at >= 512 CTAs for H <= 16 (1.03-1.12x) and H = 64 from T = 2048 (1.02-1.11x).  Rule built from it.
+- P-938s3r: s4b templated on S3 (default instance unchanged: same 5820 instructions, register renaming only, 241 VGPR),
+  S3 instance = s3d (20224 B, 256 VGPR, no scratch dense / 72 B varlen), chosen on gfx938 when T/64 x H >= 512 and
+  (H <= 16 or H >= 64 and T >= 2048); KDA_G2_S4B3=0 / 1 dev override.  Gate 84 / 84 default, forced on, keep-state and
+  recompute routes.
+- 24 shapes end to end (fb_guard, s3r vs 079f58b): geomean total 1.007, but the shapes where the rule is off (unchanged
+  code) spread 0.991-1.026 -- the noise of this run is +-2.5%; ruled-on shapes 0.978-1.031.  Re-check of six ruled-on
+  shapes (kbench ABBA): s4b 1.066 (8192/8), 1.048 (16384/16), 1.061 (32768/64), but **0.870 (2048/64), 0.898 (8192/64),
+  0.973 (4096/16)** -- where the macro build s3d had measured 1.07-1.11, 1.02-1.06 and 1.00-1.07 over four rounds.  The
+  template build's S3 instance and s3d have the same resources; why they time differently at H = 64 is not resolved
+  (candidates: code placement / I-cache with two large s4b kernels in one object, scheduling differences).
+- Not kept (no commit).  flash-train stays at 079f58b.  Files: results/kda-gfx938-s4b3-20261104/{wy_s4b3t.cuh,
+  wy_s3d_v2*.cuh, data/ab24*, abr_*, t24g_s3r_*}.  If resumed: first explain s3d vs s3r at 8192/64 (SQTT or an s3d-only
+  rebuild with the template code), then re-derive the rule; the end-to-end value at the ruled-on shapes is ~+1% at best.
+
+## 160. s3d vs s3r explained: the S3 kernel is the same; sharing a code object with the default s4b costs it ~3-4%
+- ISA (gfx938): the S3 instance of the template build (s3r) and of an S3-only template build (s3o: launcher always picks
+  S3, the default s4b instance not instantiated) are identical (5717 instructions); the macro build s3d has the same opcode
+  sequence with different register numbering.
+- ABBA vs 079f58b (nmz5; same GPU for all four variants), s4b kernel: 2048/64 s3d 1.063 / s3o 1.061 / s3r (forced on)
+  1.018; 4096/16 1.067 / 1.071 / 1.027; 16384/16 1.052 / 1.051 / 1.036.  8192/64 on the clean GPU 4: ref ~3060 us,
+  s3d ~2840, s3o ~2850, s3r ~2960 (some runs ~3790) -> s3o = s3d, s3r 3-4% behind them.  So identical machine code is
+  slower when the default s4b kernel sits in the same code object (code placement / instruction fetch; inference -- not
+  traced further).  Totals follow (s3o 1.015-1.018x where s3d is).
+- GPU 0 of this run is void: other users' processes appeared on nmz5 GPUs 0 / 1 / 3 / 5 / 7 during it (hy-smi --showpids),
+  and §159's 0.87 / 0.90 at 2048/64 / 8192/64 (s3r) came from such a disturbed GPU plus this placement loss.
+- Consequence for a gated instance: keeping both s4b kernels costs the S3 path ~3-4% of its ~5-8% gain.  Options:
+  separate code objects / translation units for the two s4b instances (placement control), or making the S3 layout the
+  only s4b on gfx938 if its small-grid loss can be removed.  Not pursued further in this round; nothing committed.
+
+## 161. Step 0 closed; step 1: s4b tables conflict-free (P-938tz, local commit 381933c)
+- 079f58b: pytest tests/python 104 passed (b938/cgos, nmz5 GPU 4); ftrain_test 181 / 181 (cmake build of ft_cgos, GPU 6).
+- Conflict census on 079f58b (hipprof, 8192/64, per CTA / CU-us equivalent): s4b 3136 / 274, wu 1280 / 112 (at its
+  modelled minimum except u-MMAC 512), s4a 768 / 67, prep_b 672 / 59, dav 384 / 34, fwd_h 16384 per CTA (128 per step)
+  / 22, dhu 8192 / 22, bwd_tail 72 / 6.
+- s4b: the 68-float-pitch TA / TQ / TK tables carry ~2700 of the 3136 (bank model: b32 stores 2-way, b128 reads 2-way).
+  Exhaustive GF(2) search on the model: 64-float rows with group ^ h(r), h = 4 (r & 1) ^ ((r >> 1) & 1) ^ 2 ((r >> 2) & 1),
+  is conflict-free for both (the earlier TB swizzle group ^ (r & 15) left the stores 2-way).  Index fits the padded
+  arrays -> LDS 32768 B and the P-938t prologue unchanged.  gfx938 only.  hipprof: 3136 -> 448 per CTA; VGPR 244; gate
+  84 / 84.
+- ABBA s4b (nmz5, other users intermittently on some GPUs): 1024/16 1.011, 2048/8 0.996, 2048/16 1.009, 1024/64 1.054,
+  4096/32 1.023-1.067, 4096/64 1.014, 16384/8 1.020, 32768/16 1.13-1.25 (noisy ref), 32768/64 1.031; 8192/64 1.026,
+  1.031, 1.027, 1.142 on four GPUs and 0.920 on one disturbed run.  Totals 1.003-1.04.  Kept (bit-identical, no resource
+  change).  Data: results/kda-gfx938-s4btab-20261104/.
+- Left for step 1: s4a (768 per CTA) and prep_b (672) need their LDS phases modelled; together ~125 CU-us equivalent,
+  i.e. ~20-25 us (~0.2%) at the measured conversion rate.
+
+## 162. Pushed 381933c; s4b 3-CTA instance in its own translation unit (P-938s3tu) -> still not a win, not committed
+- Pushed: fork (github LearnMF/flash-train) feat/kda-gfx938-mk3 2631309..381933c (P-938bc2, bc4, cg, os, tz).  381933c's
+  gfx936 device assembly is identical to 079f58b's (verified on bw61 in §156).
+- P-938s3tu (on 381933c): the S3 instance compiled only in a new TU g2_s4b3.hip (g2_wy.cuh / g2_intra_pi.cuh guarded by
+  G2_S4B3_TU so only the s4b section is built there; on gfx936 the S3 kernel body is an empty stub and the launcher never
+  selects it); the default s4b TU never instantiates S3.  Rule as §159.  Gate 84 / 84 default, forced on, keep-state,
+  recompute.
+- ABBA s4b vs 381933c (P-938tz is now the reference: its tables are conflict-free, so the S3 margin is smaller):
+  32768/8 1.105, 4096/16 1.050, 1024/16 1.003, 2048/8 1.000, 2048/64 0.990, 16384/16 0.883, 8192/64 0.864; 4096/32
+  (rule off: unchanged code) 0.912 -> that GPU was disturbed, the round is noisy.  No consistent gain at the ruled-on
+  shapes against the tz baseline.  Not committed.  Files: results/kda-gfx938-s4b3tu-20261104/.
+- Reading: after P-938tz the default s4b has no table conflicts, while S3 still pays the in-wave exchange and the
+  1-ahead staging; the separate TU removes the placement loss but the remaining margin is within the noise of the
+  current (shared) nmz5.  Closed for this round.
+
+## 163. Next round started (target card: BW1102 / nmz5): step 0 = 24 shapes of 381933c, step 1 = R70 audit
+- Step 0 running: t24_run.sh a16 tz (381933c vs 2631309), nmz5 GPUs 1 / 3 / 5 / 7, rows in tanbo_kda_nmz:/tmp/t24g_tz_*.jsonl.
+- Step 1 audit frame (R70: ~768 VGPRs per lane per SIMD; the binding residency resource per kernel):
+| kernel | VGPR | LDS | CTAs / CU | bound by | VGPR headroom at that residency |
+|---|---:|---:|---:|---|---:|
+| prep_b | 100 | 16384 | 4 | LDS | ~92 (192 per wave) |
+| dav | 116 | 16384 | 4 | LDS | ~76 |
+| wu (padded) | 172 | 18176 | 3 | LDS | ~84 (256 cap) |
+| dhu (8 waves) | 128 | 33792 | 1 | LDS (throttle) | ~128 (256 cap) |
+| fwd_h wide | 220 | 27648 | 2 | LDS | ~36 |
+| s4a | 224 | 17664 | 3 | VGPR | 0 |
+| s4b | 244 | 32768 | 2 | LDS | ~12 |
+  Candidates: choices made to save VGPRs or keep one-step prefetch in the kernels with headroom -- deeper (2-step)
+  prefetch on the dhu / fwd_h recurrence chains, prep_b / dav loads hoisted earlier, other phase re-reads like P-938cg.
+- Ceiling 1, dhu (build dhuc = 381933c + G2_DHU_CEIL: every step re-reads the last chunk's operands, L2-hot; timing
+  only): dhu 1.266 (1024/64), 1.175 (2048/16), 1.275x (4096/32) -> fwd+bwd 1.015-1.025; at 8192/64, 16384/8, 32768/16,
+  32768/64 only 1.009-1.023x (totals ~1.00).  So the recurrence's per-step load latency is worth up to ~20-27% of dhu
+  at small / medium grids (few CTAs per CU, nothing to hide behind) and ~1-2% at large grids.  dhu has ~128 spare
+  VGPRs (1 CTA per CU): a 2-step-ahead prefetch is the candidate.  Data: tanbo_kda_nmz:/tmp/abdc_*.jsonl.
