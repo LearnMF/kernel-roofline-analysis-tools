@@ -48,6 +48,8 @@ new = """            // q and k interleaved at the 4-row batch level: 8 row-load
                     short* out = w2 ? p.dko : p.dqo;
                     #pragma unroll
                     for (int up = 0; up < 2; ++up) {
+                        // production ISA: dot = pk_mul + add (no fma); out = fma(dy, r, -((dot*y)*r))
+                        #pragma clang fp contract(off)
                         const float y0 = bf2f(yv[w2][up][0]), y1 = bf2f(yv[w2][up][1]);
                         const float y2 = bf2f(yv[w2][up][2]), y3 = bf2f(yv[w2][up][3]);
                         const float4 d = dyv[w2][up];
@@ -59,10 +61,10 @@ new = """            // q and k interleaved at the 4-row batch level: 8 row-load
                             dot += __shfl_xor(dot, off, 64);    // = production levels off=2..32
                         const float r = rr[w2][up];
                         v4bh o;
-                        o[0] = bf_rne(d.x * r - dot * y0 * r);
-                        o[1] = bf_rne(d.y * r - dot * y1 * r);
-                        o[2] = bf_rne(d.z * r - dot * y2 * r);
-                        o[3] = bf_rne(d.w * r - dot * y3 * r);
+                        o[0] = bf_rne(__builtin_fmaf(d.x, r, -((dot * y0) * r)));
+                        o[1] = bf_rne(__builtin_fmaf(d.y, r, -((dot * y1) * r)));
+                        o[2] = bf_rne(__builtin_fmaf(d.z, r, -((dot * y2) * r)));
+                        o[3] = bf_rne(__builtin_fmaf(d.w, r, -((dot * y3) * r)));
                         if (okr[up])
                             *reinterpret_cast<v4bh*>(out + (size_t)(t0 + r0 + 2 * up + hl) * p.H * kK + hh * kK + c4) = o;
                     }

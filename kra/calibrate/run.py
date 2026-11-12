@@ -62,11 +62,17 @@ def detect_arch() -> str:
     raise RuntimeError("cannot detect GPU arch; pass --arch")
 
 
+# Archs whose matrix instructions the DTK clang gates behind a target feature it does not enable by
+# default (gfx938 / BW1102 executes v_mmac_* bit-identically to gfx936, but DTK 26.04's clang only
+# accepts the builtins with mmop2-insts).
+ARCH_FLAGS = {"gfx938": "-Xclang -target-feature -Xclang +mmop2-insts"}
+
+
 def build(arch: str, build_dir: Path, hipcc: str = "hipcc") -> Path:
     build_dir.mkdir(parents=True, exist_ok=True)
     exe = build_dir / "microbench"
-    _sh(f"cd {build_dir} && {hipcc} -O3 -std=c++17 --offload-arch={arch} -save-temps=obj "
-        f"-o {exe} {SRC}")
+    _sh(f"cd {build_dir} && {hipcc} -O3 -std=c++17 --offload-arch={arch} {ARCH_FLAGS.get(arch, '')} "
+        f"-save-temps=obj -o {exe} {SRC}")
     return exe
 
 
