@@ -115,3 +115,93 @@ def test_chain_needs_machine_step_latency():
     r = predict(TheoryMachine(m), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")
     assert r["bottleneck"] != "serial"
     assert any("serial chain is NOT" in n for n in r["notes"])
+
+
+# ------------------------------------------------------------------ M2b: capacity split search
+def _m936():
+    from kra.model.predict import TheoryMachine
+    return TheoryMachine.load("machines/gfx936-bw1000.json")
+
+
+def test_capacity_barriers_cannot_be_grouped():
+    from kra.model.capacity import segments
+    from kra.ops.kda import capacity_graph
+    g = capacity_graph({"T": 16384, "H": 12})
+    segs = segments(g)
+    for kind, ops in segs:
+        if kind == "barrier":
+            assert len(ops) == 1 and ops[0].barrier
+    assert any(kind == "barrier" for kind, _ in segs)
+
+
+def test_capacity_search_prunes_on_lds_and_prices_the_rest():
+    from kra.model.capacity import search
+    from kra.ops.kda import capacity_graph
+    m = _m936()
+    r = search(capacity_graph({"T": 16384, "H": 12}), m, "mmac_bf16", m.peaks["mmac_bf16"])
+    assert 0 < r["feasible"] < r["candidates"]          # capacity actually binds
+    ts = [x["T_split_us"] for x in r["ranked"]]
+    assert ts == sorted(ts) and ts[0] < ts[-1]
+    assert all(x["lds_peak_kb"] <= 64.0 for x in r["ranked"])
+    assert all(x["vgpr_peak"] <= 256 for x in r["ranked"])
+
+
+def test_fusing_s4a_s4b_is_infeasible_as_production_found():
+    from kra.model.capacity import footprint
+    from kra.ops.kda import capacity_graph
+    g = capacity_graph({"T": 16384, "H": 12})
+    byn = {o.name: o for o in g.ops}
+    fp = footprint(g, [byn["wy_bwd_a"], byn["wy_bwd_b"]])
+    assert fp["lds_bytes"] > 65536
+
+
+def test_split_search_is_bounded_below_by_t_theory():
+    from kra.model.capacity import solve
+    from kra.model.predict import predict
+    m = _m936()
+    shape = {"T": 16384, "H": 12}
+    t_theory = predict(m, "kda", shape, "bf16", "fwd+bwd")["T_theory_us"]
+    s = solve(m, "kda", shape, "bf16", "fwd+bwd")
+    assert s["best"]["T_split_us"] > t_theory
+    for f in s["formulations"]:
+        if "T_split_us" in f:
+            assert f["T_split_us"] >= s["best"]["T_split_us"]
+
+
+def test_split_search_changes_with_the_machine():
+    from kra.model.capacity import solve
+    from kra.model.predict import TheoryMachine
+    shape = {"T": 16384, "H": 12}
+    a = solve(_m936(), "kda", shape, "bf16", "fwd+bwd")
+    b = solve(TheoryMachine.load("machines/gfx938-bw1102.json"), "kda", shape, "bf16", "fwd+bwd")
+    assert a["best"]["T_split_us"] != b["best"]["T_split_us"]
+
+
+def test_conservative_residency_prunes_more_and_is_never_faster():
+    from kra.model.capacity import solve
+    m = _m936()
+    shape = {"T": 16384, "H": 12}
+    a = solve(m, "kda", shape, "bf16", "fwd+bwd", residency_mode="shape")
+    b = solve(m, "kda", shape, "bf16", "fwd+bwd", residency_mode="lds")
+    assert b["best"]["T_split_us"] >= a["best"]["T_split_us"]
+
+
+def test_operator_without_capacity_graph_is_refused():
+    import pytest
+    from kra.model.capacity import solve
+    with pytest.raises(SystemExit):
+        solve(_m936(), "gemm", {"M": 4096, "N": 4096, "K": 4096}, "bf16", "fwd")
+
+
+def test_hierarchical_roofline_levels_are_reported():
+    from kra.model.predict import predict
+    r = predict(_m936(), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")
+    assert "hbm" in r["levels"] and "l2" in r["levels"]
+    assert r["levels"]["hbm"]["bound"] == "memory"
+    assert r["levels"]["l2"]["ridge_flop_per_byte"] < r["levels"]["hbm"]["ridge_flop_per_byte"]
+
+
+def test_measured_production_footprints_are_not_an_input_of_the_search():
+    src = open("kra/model/capacity.py", encoding="utf-8").read() + \
+        open("kra/ops/kda.py", encoding="utf-8").read()
+    assert "kda_partition" not in src        # the measured CORE table stays out of the predictor

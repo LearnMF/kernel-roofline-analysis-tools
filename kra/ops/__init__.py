@@ -55,6 +55,11 @@ class Work:
     # Machine `structural` key giving the attainable fraction of the compute peak for the
     # operator's tile pattern (e.g. "mmac_tile_eff"); None = the peak itself.
     compute_eff: str | None = None
+    # Traffic that must cross the inner memory levels, when the operator can bound it from
+    # below (every HBM byte also crosses L2; staged tiles must be written to and read from
+    # LDS).  None = the level is not bounded for this operator and is left out.
+    bytes_l2: float | None = None
+    bytes_lds: float | None = None
     # Charge vector-memory issue (machine `structural.vmem_cycles_per_kb`) for the HBM bytes.
     vmem_issue: bool = False
     # Per-resource extra work the operator cannot avoid, e.g. {"sfu_exp2": 1.2e9}.

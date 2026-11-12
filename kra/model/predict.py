@@ -98,6 +98,14 @@ def _terms(mach: TheoryMachine, w: Work, peak_key: str, peak: float) -> dict:
             t["memory:hbm"] = w.bytes_rd / mach.peaks["hbm_read"] + (w.bytes_wr or 0.0) / mach.peaks["hbm_write"]
         else:
             t["memory:hbm"] = w.bytes_min / mach.bw
+        # multi-level roofline: the same required-bytes argument one level in.  Every HBM byte
+        # also crosses L2, so bytes_l2 defaults to the HBM traffic; LDS traffic has to be declared
+        # by the operator (staged tiles) or the level is left out.
+        lvl = {"l2": (w.bytes_l2 if w.bytes_l2 is not None else w.bytes_min, "l2_read"),
+               "lds": (w.bytes_lds, "lds_read")}
+        for name, (b, key) in lvl.items():
+            if b and key in mach.peaks:
+                t["memory:" + name] = b / mach.peaks[key]
         vm = mach.structural.get("vmem_cycles_per_kb")
         if w.vmem_issue and vm and mach.cus and w.bytes_rd is not None:
             t["issue:vmem"] = (w.bytes_rd / 1024 * vm["read"] + (w.bytes_wr or 0.0) / 1024 * vm["write"]) \
@@ -156,6 +164,18 @@ def predict(mach: TheoryMachine, op_name: str, shape: dict, dtype: str, phase: s
     binding = max(by_binding, key=by_binding.get)
     oi = w.flops / w.bytes_min if w.bytes_min else float("inf")
     ridge = peak / mach.bw if mach.bw else float("inf")
+    # hierarchical roofline: where the operator sits against each level's roof.  The traffic of a
+    # level the operator does not bound is left out rather than guessed.
+    levels = {}
+    for name, key, b in (("hbm", "hbm_read", w.bytes_min),
+                         ("l2", "l2_read", w.bytes_l2 if w.bytes_l2 is not None else w.bytes_min),
+                         ("lds", "lds_read", w.bytes_lds)):
+        bw = mach.peaks.get(key)
+        if not bw or not b:
+            continue
+        levels[name] = {"bw_GBps": bw / 1e9, "bytes": b, "intensity_flop_per_byte": w.flops / b,
+                        "ridge_flop_per_byte": peak / bw, "T_us": b / bw * 1e6,
+                        "bound": "compute" if w.flops / b > peak / bw else "memory"}
 
     out = {
         "schema": "kra.predict/1",
@@ -167,6 +187,7 @@ def predict(mach: TheoryMachine, op_name: str, shape: dict, dtype: str, phase: s
         "work": {"flops": w.flops, "bytes_min": w.bytes_min, "working_set": w.working_set,
                  "other": w.other},
         "arithmetic_intensity_flop_per_byte": oi,
+        "levels": levels,
         "ridge_point_flop_per_byte": ridge,
         "terms_us": {k: v * 1e6 for k, v in terms.items()},
         "kernels": rows,
@@ -208,6 +229,14 @@ def markdown(r: dict) -> str:
          "| bottleneck | %s (%s) |" % (r["bottleneck"], r["binding"]),
          "| ceiling MFU | %.1f%% |" % r["ceiling"]["mfu_pct"],
          "| ceiling HBM utilisation | %.1f%% |" % r["ceiling"]["bw_util_pct"], "",
+         "## hierarchical roofline", "",
+         "| level | attainable bw | required bytes | intensity | ridge | bytes/bw | side |",
+         "| --- | ---: | ---: | ---: | ---: | ---: | --- |"]
+    for name, lv in r.get("levels", {}).items():
+        L.append("| %s | %.0f GB/s | %.1f MB | %.1f | %.1f | %.1f us | %s |" % (
+            name, lv["bw_GBps"], lv["bytes"] / 1e6, lv["intensity_flop_per_byte"],
+            lv["ridge_flop_per_byte"], lv["T_us"], lv["bound"]))
+    L += ["",
          "## per-kernel bound", "", "| kernel | binding | T_us | " +
          " | ".join(sorted(r["terms_us"])) + " |",
          "| --- | --- | ---: |" + " ---: |" * len(r["terms_us"])]

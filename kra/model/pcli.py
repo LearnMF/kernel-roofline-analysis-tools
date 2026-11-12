@@ -37,10 +37,25 @@ def main(argv=None) -> int:
     p.add_argument("--phase", default="fwd", choices=("fwd", "bwd", "fwd+bwd"))
     p.add_argument("--peaks", default="measured", choices=("measured", "theoretical"))
     p.add_argument("--out", default=None)
+    p.add_argument("--split-search", action="store_true",
+                   help="solve the capacity-constrained kernel split (needs a plugin capacity graph)")
+    p.add_argument("--residency", default="shape", choices=("shape", "lds"),
+                   help="how an on-chip handoff is charged: by tensor shape, or everything to LDS")
     p.add_argument("--list-ops", action="store_true", help="list operator plugins and exit")
     a = p.parse_args(argv)
 
     mach = TheoryMachine.load(a.machine, a.peaks)
+    if a.split_search:
+        from . import capacity
+        rs = capacity.solve(mach, a.op, _shape(a.shape), a.dtype, a.phase, a.residency)
+        md = capacity.markdown(rs)
+        if a.out:
+            open(a.out + ".split.json", "w", encoding="utf-8").write(json.dumps(rs, indent=1) + "\n")
+            open(a.out + ".split.md", "w", encoding="utf-8").write(md)
+            print("wrote %s.split.json / .md" % a.out)
+        else:
+            print(md)
+        return 0
     r = predict(mach, a.op, _shape(a.shape), a.dtype, a.phase)
     md = markdown(r)
     if a.out:

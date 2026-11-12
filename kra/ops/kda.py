@@ -97,4 +97,121 @@ class Kda(Op):
         return w
 
 
+    # --- capacity split search entry point (see capacity_graph below) -------------------------
+    def capacity_graphs(self, shape: dict, phase: str, residency_mode: str = "shape") -> list:
+        """[(label, CapGraph)]: one graph per formulation variant the operator admits.  The search
+        then spans formulation x kernel grouping, so a better formulation can win on a machine whose
+        capacity or bandwidth makes the production one the wrong choice."""
+        self.check(shape, phase)
+        return [("/".join("%s=%s" % kv for kv in sorted(f.items())),
+                 capacity_graph(shape, phase, residency_mode, f)) for f in FORMULATIONS]
+
+
 OPS = (Kda(),)
+
+
+# --------------------------------------------------------------------------------- capacity graph (M2b)
+# The split search needs the operator's dataflow plus, for one tile of work (one (chunk, head) tile:
+# C tokens x D channels, 256 threads), how much of each tensor has to be on chip.  Both are derived from
+# the IR, NOT from the production kernels' measured LDS/VGPR: a measured footprint is the footprint of
+# today's implementation on this card, so searching with it would be fitting the answer.  The rules:
+#
+#   core LDS  -- an op that contracts over the token axis (tri / sq / t3 products) has to make one
+#                operand tile visible to all lanes, so the largest input tile is staged in LDS; a
+#                triangular inverse (t3) also keeps its C x C matrix there across the sweep.
+#                Ops that only touch their own lane's rows (valu / sfu) need none.
+#   core regs -- the accumulators: the op's output tiles, in fp32 for anything a product accumulates.
+#   handoffs  -- a tensor produced and consumed inside one kernel stays live across the ops between
+#                them: a per-token row tile keeps the lane mapping (registers), a C x C / state / K x C
+#                tile has to go through LDS.
+#
+# Residency mode "lds" charges every handoff to LDS (upper bound on the footprint, prunes more); mode
+# "shape" applies the rule above.  Both are reported so the sensitivity is visible.
+from ..model.capacity import CapGraph, CapOp, TileTensor  # noqa: E402
+
+THREADS = 256
+LANE_SHAPES = ("row",)          # per-token tiles: the lane mapping carries them in registers
+
+
+def _tile_bytes(name: str) -> float:
+    t = ir.T_[name]
+    dt = ir.DT[ir.MIN_DT.get(name, "bf16")]
+    if t.shape == "head":
+        return t.elems_per_head() * dt
+    return t.elems_per_tok(C) * C * dt
+
+
+def _hbm_bytes(name: str, T: int, H: int) -> float:
+    t = ir.T_[name]
+    dt = ir.DT[ir.MIN_DT.get(name, "bf16")]
+    if t.shape == "head":
+        return t.elems_per_head() * dt * H
+    return t.elems_per_tok(C) * dt * T * H
+
+
+def _core_lds(op) -> float:
+    if not (op.tri or op.sq or op.t3):
+        return 0.0
+    staged = max((_tile_bytes(t) for t in op.ins), default=0.0)
+    if op.t3:
+        staged += max((_tile_bytes(t) for t in op.outs), default=0.0)
+    return staged
+
+
+def _core_regs(op) -> float:
+    acc = 0.0
+    for t in op.outs:
+        b = _tile_bytes(t)
+        if op.tri or op.sq or op.t3:
+            b *= 4.0 / ir.DT[ir.MIN_DT.get(t, "bf16")]        # products accumulate in fp32
+        acc += b
+    return acc
+
+
+def capacity_graph(shape: dict, phase: str = "fwd+bwd", residency_mode: str = "shape",
+                   formulation: dict | None = None) -> CapGraph:
+    T, H = int(shape["T"]), int(shape["H"])
+    if T % C:
+        raise SystemExit("kda: T must be a multiple of the chunk size %d" % C)
+    N, nt = float(T * H), T // C
+    want = {"fwd": ("fwd",), "bwd": ("bwd", "recompute"), "fwd+bwd": ("fwd", "bwd", "recompute")}[phase]
+    form = dict(wy="wu_mat", state="recompute", dAqk="dAqk_dav")
+    form.update(formulation or {})
+    ops = [o for o in ir.formulation(**form) if o.phase in want]
+    names = {o.name for o in ops}
+
+    tensors = {}
+    for o in ops:
+        for t in tuple(o.ins) + tuple(o.outs):
+            if t in tensors:
+                continue
+            kind = ir.T_[t].kind
+            kind = "input" if kind in ("input", "param", "saved") else \
+                   "output" if kind in ("output", "grad_param") else "inter"
+            res = ""
+            if residency_mode == "shape" and ir.T_[t].shape in LANE_SHAPES:
+                res = "reg"
+            tensors[t] = TileTensor(t, _tile_bytes(t), _hbm_bytes(t, T, H), kind, res,
+                                    ir.MIN_DT.get(t, "bf16"))
+    cops = []
+    for o in ops:
+        flops, lanes, sfu = _ops_work([o], N)
+        cops.append(CapOp(
+            name=o.name, ins=tuple(t for t in o.ins if t in tensors),
+            outs=tuple(t for t in o.outs if t in tensors),
+            barrier=o.par.startswith("scan") or o.par == "reduce_T",
+            core_lds=_core_lds(o), core_reg_bytes=_core_regs(o), flops=flops,
+            other={"valu_lane": VALU_PACKED * lanes, "sfu_exp2": sfu},
+            serial=[(nt, _step_key(o), H * SCAN_CTAS_PER_HEAD)] if o.par.startswith("scan") else []))
+    return CapGraph(ops=cops, tensors=tensors, threads=THREADS, tiles=nt * H, compute_eff="mmac_tile_eff",
+                    vmem_issue=True,
+                    note="KDA %s, formulation %s, chunk C=%d, tile = one (chunk, head) on %d threads, "
+                         "residency rule %r; footprints derived from the IR, not from measured kernels "
+                         "(%d ops, %d tensors)"
+                         % (phase, "/".join("%s=%s" % kv for kv in sorted(form.items())), C, THREADS,
+                            residency_mode, len(cops), len(tensors)))
+
+
+FORMULATIONS = ({"state": "recompute"}, {"state": "keep_state"},
+                {"state": "recompute", "wy": "wfree"}, {"state": "keep_state", "wy": "wfree"},
+                {"state": "recompute", "dAqk": "dAqk_s4b"}, {"state": "keep_state", "dAqk": "dAqk_s4b"})
