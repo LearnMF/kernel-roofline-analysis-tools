@@ -556,5 +556,26 @@
       }
     }
   },
-  "raw": "gfx936-bw1000.raw.jsonl"
+  "raw": "gfx936-bw1000.raw.jsonl",
+  "structural": {
+    "_provenance": "measured on BW1000: bound_microbench.hip (mmac tile, k_step) and ta_microbench.hip; copied from examples/kda/kda_bound.py and examples/kda/ceiling/cards.py (idle GPU, results/kda-bound-20261012)",
+    "mmac_tile_eff": 0.92,
+    "_mmac_tile_eff": "attainable fraction of mmac_bf16 with one operand register-resident (436-452 TF)",
+    "vmem_cycles_per_kb": {
+      "read": 21.0,
+      "write": 56.0
+    },
+    "_vmem_cycles_per_kb": "per-CU cycles per 1 KB row-contiguous 16 B/lane load / store instruction",
+    "recurrence_step_us": {
+      "kda_step_with_o": {
+        "1cu": 1.241,
+        "2cu": 2.557
+      },
+      "kda_step_state": {
+        "1cu": 1.015,
+        "2cu": 1.729
+      }
+    },
+    "_recurrence_step_us": "one dependent KDA chunk step (v8o4 structure), by CTAs resident per CU"
+  }
 }

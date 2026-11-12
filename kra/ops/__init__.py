@@ -44,8 +44,19 @@ class Work:
     flops: float = 0.0
     bytes_min: float = 0.0
     working_set: float = 0.0
-    serial: dict | None = None
+    # Dependent steps that cannot overlap each other: [(steps, step_key, ctas), ...].  The
+    # per-step latency is a machine property (machine file `structural.recurrence_step_us`).
+    serial: list = field(default_factory=list)
     kernels: int = 1
+    # When set, HBM is charged as reads at hbm_read + writes at hbm_write instead of
+    # bytes_min at the best stream bandwidth.
+    bytes_rd: float | None = None
+    bytes_wr: float | None = None
+    # Machine `structural` key giving the attainable fraction of the compute peak for the
+    # operator's tile pattern (e.g. "mmac_tile_eff"); None = the peak itself.
+    compute_eff: str | None = None
+    # Charge vector-memory issue (machine `structural.vmem_cycles_per_kb`) for the HBM bytes.
+    vmem_issue: bool = False
     # Per-resource extra work the operator cannot avoid, e.g. {"sfu_exp2": 1.2e9}.
     other: dict = field(default_factory=dict)
     notes: list = field(default_factory=list)
@@ -53,6 +64,9 @@ class Work:
     # each kernel's own bound (they cannot overlap), which is tighter than bounding the
     # aggregate; the aggregate fields above then hold the totals.
     parts: list = field(default_factory=list)
+    # Alternative kernel decompositions of the same work: {name: [(kernel, Work), ...]}.
+    # Each gives a T_split; T_theory always bounds the fused work above.
+    splits: dict = field(default_factory=dict)
 
     @classmethod
     def sequence(cls, parts: list) -> "Work":
@@ -60,7 +74,11 @@ class Work:
         w = cls(flops=sum(p.flops for _, p in parts), bytes_min=sum(p.bytes_min for _, p in parts),
                 working_set=max((p.working_set for _, p in parts), default=0.0),
                 kernels=sum(p.kernels for _, p in parts), parts=list(parts))
+        if all(p.bytes_rd is not None for _, p in parts):
+            w.bytes_rd = sum(p.bytes_rd for _, p in parts)
+            w.bytes_wr = sum(p.bytes_wr or 0.0 for _, p in parts)
         for _, p in parts:
+            w.serial += p.serial
             for k, v in p.other.items():
                 w.other[k] = w.other.get(k, 0.0) + v
             w.notes += [n for n in p.notes if n not in w.notes]
@@ -87,9 +105,9 @@ class Op:
 
 
 def registry() -> dict:
-    from . import elementwise, gemm
+    from . import elementwise, gemm, kda
     ops = {}
-    for mod in (gemm, elementwise):
+    for mod in (gemm, elementwise, kda):
         for op in mod.OPS:
             ops[op.name] = op
     return ops

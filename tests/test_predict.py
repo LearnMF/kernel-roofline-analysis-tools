@@ -56,7 +56,7 @@ def test_rmsnorm_is_memory_bound(mach):
 
 def test_unknown_op_is_refused():
     with pytest.raises(SystemExit, match="no plugin"):
-        get("kda")
+        get("dsa")
 
 
 def test_missing_shape_key_is_refused(mach):
@@ -77,3 +77,41 @@ def test_bw1000_profile_bound_holds_and_beats_tiers(mach):
     tier = next(v for k, v in p.items() if k.startswith("hcu_tiered"))
     assert kra["mape_pct"] < 20.0
     assert kra["mape_pct"] < tier["mape_pct"]
+
+
+# KDA reference: docs/kda_report.md 3.1 (16K/TP8 = T 16384 H 12; TP2 = H 48), bounds in ms
+KDA_REF = {12: {"theory": 0.83, "p54a": 3.70, "p82": 3.35}, 48: {"theory": 2.62, "p54a": 14.38, "p82": 13.37}}
+
+
+@pytest.mark.parametrize("H", [12, 48])
+def test_kda_four_layer_bounds_from_shape_only(mach, H):
+    r = predict(mach, "kda", {"T": 16384, "H": H}, "bf16", "fwd+bwd")
+    ref = KDA_REF[H]
+    assert r["T_theory_us"] / 1e3 == pytest.approx(ref["theory"], rel=0.02)
+    for name in ("p54a", "p82"):
+        assert r["T_split"][name]["T_split_us"] / 1e3 == pytest.approx(ref[name], rel=0.01)
+    ts = [r["T_split"][n]["T_split_us"] for n in ("p54a", "p77b", "p82")]
+    assert r["T_theory_us"] < ts[2] <= ts[1] <= ts[0]
+    assert r["bottleneck"] == ("serial" if H == 12 else "memory")
+
+
+def test_kda_interface_bytes_match_ledger(mach):
+    r = predict(mach, "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")
+    assert r["T_split"]["p82"]["bytes"] / r["work"]["bytes_min"] == pytest.approx(5.08, abs=0.01)
+
+
+def test_kda_ir_matches_optrace():
+    from kra.ops import kda_ir
+    if not Path(kda_ir.CARDS).exists():
+        pytest.skip("ceiling cards not in checkout")
+    worst, _ = kda_ir.validate()
+    assert worst < 1e-6
+
+
+def test_chain_needs_machine_step_latency():
+    import json
+    m = json.loads(BW1000.read_text())
+    m.pop("structural")
+    r = predict(TheoryMachine(m), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")
+    assert r["bottleneck"] != "serial"
+    assert any("serial chain is NOT" in n for n in r["notes"])

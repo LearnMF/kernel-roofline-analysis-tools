@@ -56,6 +56,20 @@ class TheoryMachine:
         launch = m.get("launch", {}).get("launch_stream", {})
         self.launch_us = float(launch.get("best_us", 0.0))
         self.ridge = m.get("ridge_points_flop_per_byte", {})
+        self.cus = int(self.device.get("cu_count", 0))
+        self.clk = float(self.device.get("clock_khz", 0)) * 1e3
+        if self.cus and self.clk:
+            # one lane-op per lane per cycle; packed fp32 pairs are the plugin's business
+            self.peaks.setdefault("valu_lane", self.cus * int(self.device.get("warp_size", 64)) * self.clk)
+        self.structural = {k: v for k, v in m.get("structural", {}).items() if not k.startswith("_")}
+
+    def step_s(self, key: str, ctas: int) -> float | None:
+        """Latency of one dependent recurrence step, or None if the machine file lacks it."""
+        tab = self.structural.get("recurrence_step_us", {}).get(key)
+        if not tab:
+            return None
+        per_cu = max(1, -(-ctas // self.cus)) if self.cus else 1
+        return float(tab.get("%dcu" % per_cu, tab[max(tab)])) * 1e-6
 
     @classmethod
     def load(cls, path: str, peaks: str = "measured") -> "TheoryMachine":
@@ -75,26 +89,41 @@ class TheoryMachine:
 def _terms(mach: TheoryMachine, w: Work, peak_key: str, peak: float) -> dict:
     t = {}
     if w.flops:
-        t["compute:" + peak_key] = w.flops / peak
-    if w.bytes_min:
+        eff = float(mach.structural.get(w.compute_eff, 1.0)) if w.compute_eff else 1.0
+        t["compute:" + peak_key] = w.flops / (peak * eff)
+    if w.bytes_min or w.bytes_rd:
         if not mach.bw:
             raise SystemExit("machine %s has no HBM bandwidth peak" % mach.id)
-        t["memory:hbm"] = w.bytes_min / mach.bw
+        if w.bytes_rd is not None and "hbm_read" in mach.peaks and "hbm_write" in mach.peaks:
+            t["memory:hbm"] = w.bytes_rd / mach.peaks["hbm_read"] + (w.bytes_wr or 0.0) / mach.peaks["hbm_write"]
+        else:
+            t["memory:hbm"] = w.bytes_min / mach.bw
+        vm = mach.structural.get("vmem_cycles_per_kb")
+        if w.vmem_issue and vm and mach.cus and w.bytes_rd is not None:
+            t["issue:vmem"] = (w.bytes_rd / 1024 * vm["read"] + (w.bytes_wr or 0.0) / 1024 * vm["write"]) \
+                / (mach.cus * mach.clk)
     for res, amount in w.other.items():
         if res in mach.peaks:
             t["other:" + res] = amount / mach.peaks[res]
+    if w.serial:
+        ch, missing = 0.0, []
+        for steps, key, ctas in w.serial:
+            s = mach.step_s(key, ctas)
+            if s is None:
+                missing.append(key)
+            else:
+                ch += steps * s
+        if missing:
+            w.notes.append("machine %s has no recurrence_step_us for %s: the serial chain is NOT in "
+                           "this bound" % (mach.id, ",".join(sorted(set(missing)))))
+        if ch:
+            t["serial:chain"] = ch
     t["fixed:launch"] = w.kernels * mach.launch_us * 1e-6
     return t
 
 
-def predict(mach: TheoryMachine, op_name: str, shape: dict, dtype: str, phase: str) -> dict:
-    op = get(op_name)
-    w: Work = op.work(shape, dtype, phase)
-    peak_key, peak = mach.compute_peak(dtype)
-
-    # A sequence of kernels on one stream: each is bounded by its own binding term and
-    # the bounds add.  A single kernel is the one-part case.
-    parts = w.parts or [(op_name, w)]
+def _bound(mach: TheoryMachine, parts: list, peak_key: str, peak: float) -> tuple:
+    """Kernels back to back on one stream: each bounded by its own binding term, summed."""
     rows, by_binding, terms = [], {}, {}
     for name, pw in parts:
         t = _terms(mach, pw, peak_key, peak)
@@ -104,7 +133,26 @@ def predict(mach: TheoryMachine, op_name: str, shape: dict, dtype: str, phase: s
         by_binding[b] = by_binding.get(b, 0.0) + t[b]
         for k, v in t.items():
             terms[k] = terms.get(k, 0.0) + v
-    t_theory = sum(by_binding.values())
+    return sum(by_binding.values()), rows, by_binding, terms
+
+
+def predict(mach: TheoryMachine, op_name: str, shape: dict, dtype: str, phase: str) -> dict:
+    op = get(op_name)
+    w: Work = op.work(shape, dtype, phase)
+    peak_key, peak = mach.compute_peak(dtype)
+
+    # A sequence of kernels on one stream: each is bounded by its own binding term and
+    # the bounds add.  A single kernel is the one-part case.
+    t_theory, rows, by_binding, terms = _bound(mach, w.parts or [(op_name, w)], peak_key, peak)
+    splits = {}
+    for sname, sparts in w.splits.items():
+        ts, srows, sbb, _ = _bound(mach, sparts, peak_key, peak)
+        for _, pw in sparts:
+            w.notes += [n for n in pw.notes if n not in w.notes]
+        splits[sname] = {"T_split_us": ts * 1e6, "O_handoff": ts / t_theory if t_theory else None,
+                         "kernels": srows,
+                         "bytes": sum((pw.bytes_rd or 0) + (pw.bytes_wr or 0) or pw.bytes_min for _, pw in sparts),
+                         "binding_share": {k: v / ts for k, v in sbb.items()} if ts else {}}
     binding = max(by_binding, key=by_binding.get)
     oi = w.flops / w.bytes_min if w.bytes_min else float("inf")
     ridge = peak / mach.bw if mach.bw else float("inf")
@@ -126,6 +174,7 @@ def predict(mach: TheoryMachine, op_name: str, shape: dict, dtype: str, phase: s
         "binding": binding,
         "bottleneck": binding.split(":")[0],
         "T_theory_us": t_theory * 1e6,
+        "T_split": splits,
         "ceiling": {
             "mfu_pct": 100.0 * (w.flops / peak) / t_theory if t_theory else 0.0,
             "bw_util_pct": 100.0 * (w.bytes_min / mach.bw) / t_theory if (t_theory and mach.bw) else 0.0,
@@ -165,6 +214,13 @@ def markdown(r: dict) -> str:
     for row in r["kernels"]:
         L.append("| %s | %s | %.3f | " % (row["kernel"], row["binding"], row["T_us"]) +
                  " | ".join("%.3f" % row["terms_us"].get(k, 0.0) for k in sorted(r["terms_us"])) + " |")
+    for sname, sp in r.get("T_split", {}).items():
+        L += ["", "## T_split: decomposition `%s` -- %.3f us (O_handoff = T_split / T_theory = %.2f, "
+              "interface bytes %.1f MB = %.2fx required)" % (
+                  sname, sp["T_split_us"], sp["O_handoff"], sp["bytes"] / 1e6,
+                  sp["bytes"] / max(1.0, r["work"]["bytes_min"])), "",
+              "| kernel | binding | T_us |", "| --- | --- | ---: |"]
+        L += ["| %s | %s | %.1f |" % (k["kernel"], k["binding"], k["T_us"]) for k in sp["kernels"]]
     L += ["", "## notes", ""] + ["- " + n for n in r["notes"]]
     L += ["", "> " + r["disclaimer"], ""]
     return "\n".join(L)
