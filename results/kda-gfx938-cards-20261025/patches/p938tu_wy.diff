@@ -1,0 +1,109 @@
+diff --git a/src/primitive/hygon/kda/g2/g2_wy.cuh b/src/primitive/hygon/kda/g2/g2_wy.cuh
+index f2731a2..bc732d4 100644
+--- a/src/primitive/hygon/kda/g2/g2_wy.cuh
++++ b/src/primitive/hygon/kda/g2/g2_wy.cuh
+@@ -1156,9 +1156,50 @@ __device__ __forceinline__ void s4b_tail(const WyS4BParams& p, S4BSmem& sm, cons
+     const bf16* dwTg = p.dwT + g2_nat_blk(i, hh, H, 0, true, kD * kBT);
+ 
+     f4 dak[4];
++    f4 aqA[A + 1], aqB[4 - A], akB[4 - A];
++#if G2_MLS938
++    if constexpr (M != 2) {
++        // kra P-938t: full chunk.  dA and dAqk (64 x 64 fp32, row pitch RA) -> LDS by MLS once per CTA (the whole
++        // S4BSmem is free here), then the rows (dak, aqA) and the column gathers (akB, aqB) are read from LDS.
++        // Tile t (wave A loads t = 2A, 2A + 1): rows 32 (t >> 2).., floats 16 (t & 3)..; LDS: dAqk at 0, dA at 16 KB.
++        char* base = reinterpret_cast<char*>(&sm);
++        #pragma unroll
++        for (int u = 0; u < 2; ++u) {
++            const int t = 2 * A + u;
++            g2_mls_tile(dAg + (size_t)(32 * (t >> 2)) * RA + 16 * (t & 3), 2 * RA, base + 16384 + t * 2048);
++            g2_mls_tile(aq_ + (size_t)(32 * (t >> 2)) * RA + 16 * (t & 3), 2 * RA, base + t * 2048);
++        }
++        asm volatile("s_waitcnt vmcnt(0)" ::: "memory");
++        lds_barrier();
++        auto at = [&](int off, int r, int c) {
++            return reinterpret_cast<const float*>(base + off + (((r >> 5) * 4 + (c >> 4)) * 32 + (r & 31)) * 64 + (c & 15) * 4);
++        };
++        #pragma unroll
++        for (int ut = 0; ut < 4; ++ut) dak[ut] = *reinterpret_cast<const f4*>(at(16384, row, 16 * ut + 4 * q));
++        #pragma unroll
++        for (int b = 0; b <= A; ++b) {
++            aqA[b] = *reinterpret_cast<const f4*>(at(0, row, 16 * b + 4 * q));
++            if (b == A) {
++                #pragma unroll
++                for (int x = 0; x < 4; ++x)
++                    if (4 * q + x > m) aqA[b][x] = 0.f;
++            }
++        }
++        #pragma unroll
++        for (int b = A; b < 4; ++b)
++            #pragma unroll
++            for (int x = 0; x < 4; ++x) {
++                const int j = 16 * b + 4 * q + x;
++                const bool keep = b > A || 4 * q + x >= m;
++                akB[b - A][x] = keep ? *at(16384, j, row) : 0.f;
++                aqB[b - A][x] = keep ? *at(0, j, row) : 0.f;
++            }
++        lds_barrier();
++    } else
++#endif
++    {
+     #pragma unroll
+     for (int ut = 0; ut < 4; ++ut) dak[ut] = ld16f(dAg + row * RA + 16 * ut + 4 * q);
+-    f4 aqA[A + 1], aqB[4 - A], akB[4 - A];
+     #pragma unroll
+     for (int b = 0; b <= A; ++b) {
+         aqA[b] = rok ? ld16f(aq_ + row * RA + 16 * b + 4 * q) : f4{0.f, 0.f, 0.f, 0.f};
+@@ -1177,6 +1218,7 @@ __device__ __forceinline__ void s4b_tail(const WyS4BParams& p, S4BSmem& sm, cons
+             akB[b - A][x] = keep ? dAg[j * RA + row] : 0.f;   // dAT[row][j] == dA[j][row]
+             aqB[b - A][x] = (keep && g2_row_ok<M>(j, cl)) ? aq_[j * RA + row] : 0.f;
+         }
++    }
+     const size_t cQ = g2_nat_blk(i, hh, H, 0, true, 8 * 8 * 256);
+     const bf16* hb = p.h + cQ;
+     const bf16* dhb = p.dh + cQ;
+@@ -1213,6 +1255,14 @@ __device__ __forceinline__ void s4b_tail(const WyS4BParams& p, S4BSmem& sm, cons
+         stg4[(t0 * 2 + 0) * 256 + threadIdx.x] = hg4[t0 * 256 + threadIdx.x];
+         stg4[(t0 * 2 + 1) * 256 + threadIdx.x] = dhg4[t0 * 256 + threadIdx.x];
+     }
++#if G2_MLS938
++    // kra P-938u: the chunk-end g row (gn) is published once per kt by wave 3 (16 lanes, 64 B) through the unused
++    // pad column 64 + (kt & 1) of the TK table instead of a 16 B load by every lane (a 64x broadcast through TA)
++    const float* gnrow = g_ + g2_row_g<M>(kBT - 1, cl) * R;
++    if constexpr (A == 3) {
++        if (l < 16) sm.TK[l * TS + 64] = gnrow[l];
++    }
++#endif
+     lds_barrier();
+ 
+     float dbacc = 0.f;
+@@ -1234,7 +1284,17 @@ __device__ __forceinline__ void s4b_tail(const WyS4BParams& p, S4BSmem& sm, cons
+         const f4 gv = ld16f(g_ + rog + kc);
+         const v4bh kk = rok ? ld8(k_ + ro + kc) : v4bh{0, 0, 0, 0};
+         const v4bh qq = rok ? ld8(q_ + ro + kc) : v4bh{0, 0, 0, 0};
++#if G2_MLS938
++        f4 gn;
++        #pragma unroll
++        for (int e = 0; e < 4; ++e) gn[e] = sm.TK[(4 * q + e) * TS + 64 + buf];
++        float gn_next = 0.f;
++        if constexpr (A == 3) {
++            if (l < 16 && kt + 1 < 8) gn_next = gnrow[kc + 16 + l];
++        }
++#else
+         const f4 gn = ld16f(g_ + rgn + kc);
++#endif
+         f4 dkp, dgK;
+         {   // pass K tile kt  [verbatim; cs partials replace the fused kernel's atomics]
+             #pragma clang fp contract(off)
+@@ -1372,6 +1432,11 @@ __device__ __forceinline__ void s4b_tail(const WyS4BParams& p, S4BSmem& sm, cons
+             *reinterpret_cast<f4*>(dk_ + ro + kc) = ok;
+             *reinterpret_cast<f4*>(dg_ + ro + kc) = og;
+         }
++#if G2_MLS938
++        if constexpr (A == 3) {
++            if (l < 16 && kt + 1 < 8) sm.TK[l * TS + 64 + (buf ^ 1)] = gn_next;
++        }
++#endif
+         lds_barrier();                             // table WAR: kt's reads done before kt+1 writes
+     }
+     db = xsum16(db) + xsum16(dbacc);

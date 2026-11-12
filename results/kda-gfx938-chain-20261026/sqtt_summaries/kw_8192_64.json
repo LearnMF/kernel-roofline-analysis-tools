@@ -1,0 +1,1 @@
+{"g2_gate_kernel": 480.0, "g2_fwd_prep_a_kernel": 1390.4, "g2_fwd_prep_b_kernel": 918.6, "g2_fwd_h_v8o4": 1242.6999999999998, "g2_wu_kernel": 1646.5, "kda_gn_all_kernel": 34.8, "g2_dav_kernel": 720.7, "g2_dhu_v8b": 1531.1, "p3_wy_s4a_kernel": 1391.6, "p3_wy_s4b_kernel": 3346.2999999999997, "g2_bwd_tail_kernel": 1344.6}

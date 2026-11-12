@@ -1,0 +1,8 @@
+{"tag": "a16", "impl": "ft", "arch": "gfx938", "T": 32768, "H": 64, "fwd_ms": 14.3369, "bwd_ms": 44.2565, "fwd_peak_mb": 5263.852, "bwd_peak_mb": 10305.569}
+{"tag": "bc24", "impl": "ft", "arch": "gfx938", "T": 32768, "H": 64, "fwd_ms": 14.0275, "bwd_ms": 42.8284, "fwd_peak_mb": 5263.852, "bwd_peak_mb": 10305.569}
+{"tag": "bc24", "impl": "ft", "arch": "gfx938", "T": 32768, "H": 64, "fwd_ms": 13.9478, "bwd_ms": 42.704, "fwd_peak_mb": 5263.852, "bwd_peak_mb": 10305.569}
+{"tag": "a16", "impl": "ft", "arch": "gfx938", "T": 32768, "H": 64, "fwd_ms": 13.9577, "bwd_ms": 43.5694, "fwd_peak_mb": 5263.852, "bwd_peak_mb": 10305.569}
+{"tag": "a16", "impl": "ft", "arch": "gfx938", "T": 32768, "H": 64, "fwd_ms": 14.0649, "bwd_ms": 42.9592, "fwd_peak_mb": 5263.852, "bwd_peak_mb": 10305.569}
+{"tag": "bc24", "impl": "ft", "arch": "gfx938", "T": 32768, "H": 64, "fwd_ms": 13.9547, "bwd_ms": 43.9179, "fwd_peak_mb": 5263.852, "bwd_peak_mb": 10305.569}
+{"tag": "bc24", "impl": "ft", "arch": "gfx938", "T": 32768, "H": 64, "fwd_ms": 16.2941, "bwd_ms": 43.1772, "fwd_peak_mb": 5263.852, "bwd_peak_mb": 10305.569}
+{"tag": "a16", "impl": "ft", "arch": "gfx938", "T": 32768, "H": 64, "fwd_ms": 14.0782, "bwd_ms": 43.2898, "fwd_peak_mb": 5263.852, "bwd_peak_mb": 10305.569}

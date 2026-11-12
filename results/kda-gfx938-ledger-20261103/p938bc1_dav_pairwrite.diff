@@ -1,0 +1,33 @@
+diff --git a/src/primitive/hygon/kda/g2/g2_dav.cuh b/src/primitive/hygon/kda/g2/g2_dav.cuh
+index 72f2ce0..98fa4d1 100644
+--- a/src/primitive/hygon/kda/g2/g2_dav.cuh
++++ b/src/primitive/hygon/kda/g2/g2_dav.cuh
+@@ -107,9 +107,28 @@ __global__ void __launch_bounds__(256) g2_dav_kernel(DavParams p_) {
+             const int sb = t >> 6, c = t & 63;                    // 32 sub-blocks x 64 quads
+             const v4bh vq = *reinterpret_cast<const v4bh*>(p.Vn + nblk + (size_t)sb * 256 + c * 4);
+             const int d0 = sb >> 3, d1 = sb & 7, m = c & 15, q = c >> 4;
++#if defined(__gfx938__)
++            // kra P-938bc: lanes q, q ^ 1 (lane ^ 16) hold columns q + 4e and q + 1 + 4e of the same row: swap one packed
++            // pair so each lane writes two 4 B words (e = q & 1, q & 1 + 2) instead of four 2 B halves (bank conflicts).
++            {
++                const bool od = q & 1;
++                const uint32_t mine = od ? ((uint32_t)(unsigned short)vq[0] | ((uint32_t)(unsigned short)vq[2] << 16))
++                                         : ((uint32_t)(unsigned short)vq[1] | ((uint32_t)(unsigned short)vq[3] << 16));
++                const uint32_t oth = (uint32_t)__shfl_xor((int)mine, 16, 64);
++                const int qe = q & ~1;
++                #pragma unroll
++                for (int h = 0; h < 2; ++h) {
++                    const int e = (od ? 1 : 0) + 2 * h;
++                    const unsigned short a = (unsigned short)vq[e], b = (unsigned short)(oth >> (16 * h));
++                    const uint32_t w = od ? ((uint32_t)b | ((uint32_t)a << 16)) : ((uint32_t)a | ((uint32_t)b << 16));
++                    *reinterpret_cast<uint32_t*>(slab + i1(16 * d0 + m, 16 * d1 + qe + 4 * e)) = w;
++                }
++            }
++#else
+             #pragma unroll
+             for (int e = 0; e < 4; ++e)
+                 slab[i1(16 * d0 + m, 16 * d1 + q + 4 * e)] = vq[e];
++#endif
+         }
+         __syncthreads();
+         // kra P-938va: the staged [j][v] tile IS v_new's A form: fragment (row tile a, column tile vt) of lane (q, m) =

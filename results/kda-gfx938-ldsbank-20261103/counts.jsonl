@@ -1,0 +1,11 @@
+{"build": "a16 (2631309)", "shape": "8192x64", "k": "g2_dav", "SQ_LDS_BANK_CONFLICT": 15728640, "SQ_LDS_IDX_ACTIVE": 32505856, "SQ_INSTS_LDS": 4325376, "per_cta_conflict": 1920}
+{"build": "a16 (2631309)", "shape": "8192x64", "k": "g2_wu", "SQ_LDS_BANK_CONFLICT": 33554432, "SQ_LDS_IDX_ACTIVE": 65093632, "SQ_INSTS_LDS": 7880704, "per_cta_conflict": 4096}
+{"build": "a16 (2631309)", "shape": "1024x16", "k": "g2_dav", "SQ_LDS_BANK_CONFLICT": 491520, "SQ_LDS_IDX_ACTIVE": 1015808, "SQ_INSTS_LDS": 135168, "per_cta_conflict": 1920}
+{"build": "a16 (2631309)", "shape": "1024x16", "k": "g2_wu", "SQ_LDS_BANK_CONFLICT": 2228224, "SQ_LDS_IDX_ACTIVE": 3112960, "SQ_INSTS_LDS": 221184, "per_cta_conflict": 8704}
+{"build": "bc2", "shape": "8192x64", "k": "g2_dav", "SQ_LDS_BANK_CONFLICT": 3145728, "SQ_LDS_IDX_ACTIVE": 19922944, "SQ_INSTS_LDS": 4325376, "per_cta_conflict": 384}
+{"build": "bc3", "shape": "8192x64", "k": "g2_wu", "SQ_LDS_BANK_CONFLICT": 27262976, "SQ_LDS_IDX_ACTIVE": 58802176, "SQ_INSTS_LDS": 7618560, "per_cta_conflict": 3328}
+{"build": "bc3", "shape": "1024x16", "k": "g2_wu", "SQ_LDS_BANK_CONFLICT": 589824, "SQ_LDS_IDX_ACTIVE": 1474560, "SQ_INSTS_LDS": 204800, "per_cta_conflict": 2304}
+{"build": "bc24", "shape": "8192x64", "k": "g2_dav", "SQ_LDS_BANK_CONFLICT": 3145728, "SQ_LDS_IDX_ACTIVE": 19922944, "SQ_INSTS_LDS": 4325376, "per_cta_conflict": 384}
+{"build": "bc24", "shape": "8192x64", "k": "g2_wu", "SQ_LDS_BANK_CONFLICT": 10485760, "SQ_LDS_IDX_ACTIVE": 42024960, "SQ_INSTS_LDS": 7618560, "per_cta_conflict": 1280}
+{"build": "bc24", "shape": "1024x16", "k": "g2_dav", "SQ_LDS_BANK_CONFLICT": 98304, "SQ_LDS_IDX_ACTIVE": 622592, "SQ_INSTS_LDS": 135168, "per_cta_conflict": 384}
+{"build": "bc24", "shape": "1024x16", "k": "g2_wu", "SQ_LDS_BANK_CONFLICT": 196608, "SQ_LDS_IDX_ACTIVE": 1081344, "SQ_INSTS_LDS": 204800, "per_cta_conflict": 768}
