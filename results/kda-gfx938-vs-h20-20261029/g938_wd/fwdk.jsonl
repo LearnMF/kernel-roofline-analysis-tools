@@ -1,0 +1,8 @@
+{"impl": "ft", "dev": "BW1102", "T": 2048, "H": 16, "tot": 242.1, "per": {"g2_fwd_prep_a_kernel": 99.0, "g2_fwd_h_v8o4_kernel": 82.5, "g2_fwd_prep_b_kernel": 60.7}}
+{"impl": "ft", "dev": "BW1102", "T": 2048, "H": 64, "tot": 781.1, "per": {"g2_fwd_prep_a_kernel": 317.8, "g2_fwd_h_v8o4w_kernel": 256.4, "g2_fwd_prep_b_kernel": 206.9}}
+{"impl": "ft", "dev": "BW1102", "T": 4096, "H": 32, "tot": 758.1, "per": {"g2_fwd_prep_a_kernel": 306.5, "g2_fwd_h_v8o4_kernel": 259.0, "g2_fwd_prep_b_kernel": 192.6}}
+{"impl": "ft", "dev": "BW1102", "T": 8192, "H": 32, "tot": 1447.1, "per": {"g2_fwd_prep_a_kernel": 582.8, "g2_fwd_h_v8o4_kernel": 489.4, "g2_fwd_prep_b_kernel": 374.8}}
+{"impl": "ft", "dev": "BW1102", "T": 8192, "H": 64, "tot": 2837.3, "per": {"g2_fwd_prep_a_kernel": 1174.8, "g2_fwd_h_v8o4w_kernel": 869.6, "g2_fwd_prep_b_kernel": 793.0}}
+{"impl": "ft", "dev": "BW1102", "T": 16384, "H": 8, "tot": 905.3, "per": {"g2_fwd_h_v8o4w_kernel": 409.3, "g2_fwd_prep_a_kernel": 304.8, "g2_fwd_prep_b_kernel": 191.2}}
+{"impl": "ft", "dev": "BW1102", "T": 16384, "H": 64, "tot": 5364.6, "per": {"g2_fwd_prep_a_kernel": 2285.3, "g2_fwd_h_v8o4w_kernel": 1642.3, "g2_fwd_prep_b_kernel": 1437.1}}
+{"impl": "ft", "dev": "BW1102", "T": 32768, "H": 16, "tot": 2807.9, "per": {"g2_fwd_prep_a_kernel": 1148.5, "g2_fwd_h_v8o4_kernel": 928.0, "g2_fwd_prep_b_kernel": 731.4}}

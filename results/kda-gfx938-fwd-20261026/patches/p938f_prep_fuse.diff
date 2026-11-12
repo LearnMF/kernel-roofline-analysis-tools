@@ -1,0 +1,193 @@
+diff --git a/src/primitive/hygon/kda/g2/g2_fwd_prep.cuh b/src/primitive/hygon/kda/g2/g2_fwd_prep.cuh
+index 6c3a2a1..d6e2548 100644
+--- a/src/primitive/hygon/kda/g2/g2_fwd_prep.cuh
++++ b/src/primitive/hygon/kda/g2/g2_fwd_prep.cuh
+@@ -176,8 +176,14 @@ __device__ __forceinline__ float exp2_inrange(float x) { return __builtin_amdgcn
+ // L2N = false (kra P-94): q / k arrive already normalized (Megatron-LM-k3 runs FLA's l2norm before
+ // the call, use_qk_l2norm_in_kernel=False): qn = q, kn = k bit for bit, so skipping the l2norm block
+ // leaves every output equal to the X1 chain's (gate -> fwd_intra2_split -> to_gn) on the raw q / k.
+-template <int GATE, bool VL, bool L2N = true>
+-__global__ void __launch_bounds__(256) g2_fwd_prep_a_kernel(PrepAParams p) {
++template <int I, int M, bool FU = false>
++__device__ __forceinline__ void b_post(const PrepBParams& p, float* smem, const float* Rg,
++                                       int i, int hh, int l, long t0, int cl, const v4bh* kbr = nullptr);
++
++// kra P-938f: FU = prep_a + prep_b in one CTA (gfx938): R stays in the LDS arena, Kb stays in registers and goes
++// straight into prep_b's T2 -- neither round-trips through HBM.  Same arithmetic, bit-identical.
++template <int GATE, bool VL, bool L2N, bool FU>
++__device__ __forceinline__ void prep_a_body(const PrepAParams& p, const PrepBParams& pb) {
+     using namespace fi2;
+     // One 21 KB arena (3 CTAs/CU), phases alias it (floats):
+     //   l2n exchange X      [0, 512)                           before the gate
+@@ -344,6 +350,7 @@ __global__ void __launch_bounds__(256) g2_fwd_prep_a_kernel(PrepAParams p) {
+         for (int e = 0; e < 4; ++e) { x[e] = a[e]; x[4 + e] = b[e]; }
+     };
+     const size_t nblk = g2_nat_blk(i, hh, p.H, p.NT, false, 8192);
++    v4bh kbk[FU ? 4 : 1][2];                           // P-938f: Kb kept for prep_b's pass 0
+     {   // ---- QgA + Kn (fwd_intra2a verbatim)
+         short* T2 = reinterpret_cast<short*>(smem);
+         float gn[8];
+@@ -362,7 +369,9 @@ __global__ void __launch_bounds__(256) g2_fwd_prep_a_kernel(PrepAParams p) {
+                 kb[s >> 2][s & 3] = bf_rne(K(rb, s) * bta * eg);
+                 T2[(cbase + s) * kT2 + 16 * rb + m] = bf_rne(K(rb, s) * __builtin_amdgcn_exp2f(gn[s] - G_(rb, s)));
+             }
+-            if (rok) {
++            if constexpr (FU) {
++                kbk[rb][0] = kb[0]; kbk[rb][1] = kb[1];
++            } else if (rok) {
+                 *reinterpret_cast<v4bh*>(p.Kb + cta0 + (size_t)row * rs + cbase) = kb[0];
+                 *reinterpret_cast<v4bh*>(p.Kb + cta0 + (size_t)row * rs + cbase + 4) = kb[1];
+             }
+@@ -466,7 +475,15 @@ __global__ void __launch_bounds__(256) g2_fwd_prep_a_kernel(PrepAParams p) {
+     }
+     if (p.stop == 6) return;
+     #undef PA_RED
+-    {
++    if constexpr (FU) {                                // R is complete in smem (the last RED ended on a barrier)
++        const v4bh* kr = &kbk[0][0];
++        switch (wv) {
++            case 0: b_post<0, M, true>(pb, smem, smem, i, hh, l, tok0, cl, kr); break;
++            case 1: b_post<1, M, true>(pb, smem, smem, i, hh, l, tok0, cl, kr); break;
++            case 2: b_post<2, M, true>(pb, smem, smem, i, hh, l, tok0, cl, kr); break;
++            default: b_post<3, M, true>(pb, smem, smem, i, hh, l, tok0, cl, kr); break;
++        }
++    } else {
+         const f4* s4 = reinterpret_cast<const f4*>(smem);
+         f4* d4 = reinterpret_cast<f4*>(p.R + g2_nat_blk(i, hh, p.H, p.NT, false, 5120));
+         #pragma unroll
+@@ -475,6 +492,11 @@ __global__ void __launch_bounds__(256) g2_fwd_prep_a_kernel(PrepAParams p) {
+     });   // g2_vl_dispatch
+ }
+ 
++template <int GATE, bool VL, bool L2N = true>
++__global__ void __launch_bounds__(256) g2_fwd_prep_a_kernel(PrepAParams p) {
++    prep_a_body<GATE, VL, L2N, false>(p, PrepBParams{});
++}
++
+ #ifndef KDA_P938B2
+ #define KDA_P938B2 1
+ #endif
+@@ -490,9 +512,9 @@ __device__ __forceinline__ int prepb_t2i(int dim, int tok) {
+ }
+ 
+ // fis::s_post verbatim except the T2 pass-0 operand: Kb (already bf16(kn * beta * 2^g)).
+-template <int I, int M>
++template <int I, int M, bool FU>
+ __device__ __forceinline__ void b_post(const PrepBParams& p, float* smem, const float* Rg,
+-                                       int i, int hh, int l, long t0, int cl) {
++                                       int i, int hh, int l, long t0, int cl, const v4bh* kbr) {
+     using namespace fi2;
+     const int m = l & 15, q4 = l >> 4, pm = pi16(m);
+     const long tok0 = t0;
+@@ -504,6 +526,12 @@ __device__ __forceinline__ void b_post(const PrepBParams& p, float* smem, const
+         return f4{r[0], r[64], r[128], r[192]};
+     };
+ 
++    f4 Aqkd, Ld, Aqko[NA], Akko[NA];
++    if constexpr (FU) {
++        Aqkd = R4(I); Ld = R4(4 + I);
++        #pragma unroll
++        for (int cb = 0; cb < I; ++cb) { Aqko[cb] = R4(8 + pidx(I, cb)); Akko[cb] = R4(14 + pidx(I, cb)); }
++    } else {
+ #if G2_MLS938
+     // kra P-938b (gfx938): R blocks I..I+1 and 4+I..5+I (2 KB contiguous each) by MLS into a wave-private 4 KB LDS
+     // slot (smem is free until the first barrier; 4 slots = 16 KB) -- 2 tile loads instead of 8 x 4 B gathers per lane
+@@ -512,8 +540,7 @@ __device__ __forceinline__ void b_post(const PrepBParams& p, float* smem, const
+     g2_mls_tile(Rg + (4 + I) * 256, 32, rl + 512);
+     asm volatile("s_waitcnt vmcnt(0)" ::: "memory");
+     auto R4l = [&](int slot) { const float* r = rl + slot * 256 + 4 * m + q4; return f4{r[0], r[64], r[128], r[192]}; };
+-    f4 Aqkd = R4l(0), Ld = R4l(2);
+-    f4 Aqko[NA], Akko[NA];
++    Aqkd = R4l(0); Ld = R4l(2);
+ #if KDA_P938B2
+     // P-938b2: the wave's off-diagonal runs (I blocks from 8 + pidx(I, 0), I blocks from 14 + pidx(I, 0)) in two more
+     // rounds through the same slot, 2 KB tiles aligned to even blocks (all inside the CTA's 20 blocks)
+@@ -535,14 +562,14 @@ __device__ __forceinline__ void b_post(const PrepBParams& p, float* smem, const
+     }
+ #endif
+ #else
+-    f4 Aqkd = R4(I), Ld = R4(4 + I);
+-    f4 Aqko[NA], Akko[NA];
++    Aqkd = R4(I); Ld = R4(4 + I);
+     #pragma unroll
+     for (int cb = 0; cb < I; ++cb) {
+         Aqko[cb] = R4(8 + pidx(I, cb));
+         Akko[cb] = R4(14 + pidx(I, cb));
+     }
+ #endif
++    }
+     lds_barrier();
+     if (p.stop == 1) return;
+ 
+@@ -653,7 +680,15 @@ __device__ __forceinline__ void b_post(const PrepBParams& p, float* smem, const
+             const bool rok = g2_row_ok<M>(row, cl);
+             const size_t o = g2_rm_tok(tok0 + row, hh, p.H, kK) + cq;
+             const v4bh z4 = v4bh{0, 0, 0, 0};
+-            if (pass == 0) {
++            if (pass == 0 && FU) {
++                if (it == 0) {                                  // the lane's own Kb (rows 16rb+m, dims cbase..+7)
++                    const int cb8 = 32 * I + 8 * q4;
++                    #pragma unroll
++                    for (int rb = 0; rb < 4; ++rb)
++                        #pragma unroll
++                        for (int d = 0; d < 8; ++d) T2[prepb_t2i(cb8 + d, 16 * rb + m)] = kbr[2 * rb + (d >> 2)][d & 3];
++                }
++            } else if (pass == 0) {
+                 const v4bh k0 = rok ? *reinterpret_cast<const v4bh*>(p.Kb + o) : z4;
+                 const v4bh k1 = rok ? *reinterpret_cast<const v4bh*>(p.Kb + o + 4) : z4;
+                 #pragma unroll
+@@ -713,6 +748,16 @@ __global__ void __launch_bounds__(256) g2_fwd_prep_b_kernel(PrepBParams p) {
+     });
+ }
+ 
++#if defined(__gfx938__) || !defined(__HIP_DEVICE_COMPILE__)
++template <int GATE, bool VL, bool L2N>
++__global__ void __launch_bounds__(256) g2_fwd_prep_ab_kernel(PrepAParams p, PrepBParams pb) {
++    prep_a_body<GATE, VL, L2N, true>(p, pb);
++}
++#else
++template <int GATE, bool VL, bool L2N>
++__global__ void __launch_bounds__(256) g2_fwd_prep_ab_kernel(PrepAParams, PrepBParams) {}
++#endif
++
+ }  // namespace r4
+ }  // namespace g2
+ 
+@@ -739,6 +784,25 @@ extern "C" int g2_fwd_prep_l2n(const void* q, const void* k, const void* v, cons
+     pa.kp = g2::g2_kp_layout(H);   // kra P-61e
+     pa.qn_out = (short*)qn_out; pa.kn_out = (short*)kn_out;    // kra P-77b
+     const dim3 grid(NT, H), blk(256);
++    g2::r4::PrepBParams pb{(const short*)Kb, (const short*)v, (const float*)beta, (const float*)R,
++                           (short*)Wn, (short*)Un, (short*)AqkA, (short*)Aqk, (short*)Akk,
++                           ctok, clen, (float)scale, H, NT};
++    pb.kp = pa.kp;   // kra P-62
++    if (const char* e = g2::g2_getenv("G2_PREPB_STOP")) pb.stop = atoi(e);
++    // kra P-938f: gfx938 runs prep_a + prep_b as one kernel (KDA_G2_PREP_FUSE=0 restores the pair)
++    if (g2::g2_cur_gfx938() && g2::g2_env_long("KDA_G2_PREP_FUSE", 1) != 0) {
++        if (!l2n) pa.qn_out = pa.kn_out = nullptr;
++#define G2_PREP_AB(GT, VLT, L2) hipLaunchKernelGGL((g2::r4::g2_fwd_prep_ab_kernel<GT, VLT, L2>), grid, blk, 0, s, pa, pb)
++        if (l2n) {
++            if (gate) { if (ctok) G2_PREP_AB(1, true, true); else G2_PREP_AB(1, false, true); }
++            else      { if (ctok) G2_PREP_AB(0, true, true); else G2_PREP_AB(0, false, true); }
++        } else {
++            if (gate) { if (ctok) G2_PREP_AB(1, true, false); else G2_PREP_AB(1, false, false); }
++            else      { if (ctok) G2_PREP_AB(0, true, false); else G2_PREP_AB(0, false, false); }
++        }
++#undef G2_PREP_AB
++        return (int)hipGetLastError();
++    }
+ #define G2_PREP_A(GT, VLT, L2) hipLaunchKernelGGL((g2::r4::g2_fwd_prep_a_kernel<GT, VLT, L2>), grid, blk, 0, s, pa)
+     if (l2n) {
+         if (gate) { if (ctok) G2_PREP_A(1, true, true); else G2_PREP_A(1, false, true); }
+@@ -751,11 +815,6 @@ extern "C" int g2_fwd_prep_l2n(const void* q, const void* k, const void* v, cons
+ #undef G2_PREP_A
+     int rc = (int)hipGetLastError();
+     if (rc) return rc;
+-    g2::r4::PrepBParams pb{(const short*)Kb, (const short*)v, (const float*)beta, (const float*)R,
+-                           (short*)Wn, (short*)Un, (short*)AqkA, (short*)Aqk, (short*)Akk,
+-                           ctok, clen, (float)scale, H, NT};
+-    pb.kp = pa.kp;   // kra P-62
+-    if (const char* e = g2::g2_getenv("G2_PREPB_STOP")) pb.stop = atoi(e);
+     if (ctok) hipLaunchKernelGGL(g2::r4::g2_fwd_prep_b_kernel<true>, grid, blk, 0, s, pb);
+     else hipLaunchKernelGGL(g2::r4::g2_fwd_prep_b_kernel<false>, grid, blk, 0, s, pb);
+     return (int)hipGetLastError();

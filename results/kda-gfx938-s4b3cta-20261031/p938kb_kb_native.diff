@@ -1,0 +1,59 @@
+diff --git a/src/primitive/hygon/kda/g2/g2_fwd_prep.cuh b/src/primitive/hygon/kda/g2/g2_fwd_prep.cuh
+index 720b806..63041c0 100644
+--- a/src/primitive/hygon/kda/g2/g2_fwd_prep.cuh
++++ b/src/primitive/hygon/kda/g2/g2_fwd_prep.cuh
+@@ -464,6 +464,12 @@ __global__ void __launch_bounds__(256) g2_fwd_prep_a_kernel(PrepAParams p) {
+                 T2[(cbase + s) * kT2 + 16 * rb + m] = bf_rne(K(rb, s) * __builtin_amdgcn_exp2f(gn[s] - G_(rb, s)));
+             }
+             }
++#if defined(__gfx938__)
++            // kra P-938kb (dense): Kb in a chunk-native layout -- (chunk, head) block of 16 KB, group (rb, wave) = 1 KB,
++            // lane l's 8 columns as one 16 B store (the wave writes 1 KB contiguous instead of 64 B pieces of 16 rows
++            // 16 KB apart).  Kb is prep_a -> prep_b only (staged in o, NT * H * 8192 = T * H * 128 when dense).
++            if constexpr (!VL) st16x2(pa(p.Kb + nblk, (uint32_t)((4 * rb + wv) * 512 + 8 * l)), kb[0], kb[1]); else
++#endif
+             if (rok) {
+                 *reinterpret_cast<v4bh*>(pa(p.Kb + cta0, (uint32_t)(row * rs + cbase))) = kb[0];
+                 *reinterpret_cast<v4bh*>(pa(p.Kb + cta0, (uint32_t)(row * rs + cbase + 4))) = kb[1];
+@@ -607,7 +613,8 @@ __device__ __forceinline__ int prepb_t2i(int dim, int tok) {
+ }
+ 
+ // fis::s_post verbatim except the T2 pass-0 operand: Kb (already bf16(kn * beta * 2^g)).
+-template <int I, int M>
++// NKB (gfx938, dense): Kb in prep_a's chunk-native layout (kra P-938kb).
++template <int I, int M, bool NKB = false>
+ __device__ __forceinline__ void b_post(const PrepBParams& p, float* smem, const float* Rg,
+                                        int i, int hh, int l, long t0, int cl) {
+     using namespace fi2;
+@@ -778,6 +785,16 @@ __device__ __forceinline__ void b_post(const PrepBParams& p, float* smem, const
+             const bool rok = g2_row_ok<M>(row, cl);
+             const size_t o = g2_rm_tok(tok0 + row, hh, p.H, kK) + cq;
+             const v4bh z4 = v4bh{0, 0, 0, 0};
++#if defined(__gfx938__)
++            if (NKB && pass == 0) {   // kra P-938kb: group (rb = it, wave I) of the chunk-native Kb, 16 B per lane
++                v4bh k0, k1;
++                ld16x2(reinterpret_cast<const bf16*>(p.Kb) + nblk + (4 * it + I) * 512 + 8 * l, k0, k1);
++                const int rw = 16 * it + m, cn = 32 * I + 8 * q4;
++                #pragma unroll
++                for (int d = 0; d < 8; ++d)
++                    T2[prepb_t2i(cn + d, rw)] = d < 4 ? k0[d & 3] : k1[d & 3];
++            } else
++#endif
+             if (pass == 0) {
+                 const v4bh k0 = rok ? *reinterpret_cast<const v4bh*>(p.Kb + o) : z4;
+                 const v4bh k1 = rok ? *reinterpret_cast<const v4bh*>(p.Kb + o + 4) : z4;
+@@ -831,10 +848,10 @@ __global__ void __launch_bounds__(256) g2_fwd_prep_b_kernel(PrepBParams p) {
+     g2_vl_dispatch<VL>(cl, [&](auto mode_) {
+     constexpr int M = decltype(mode_)::value;
+     switch (wv) {
+-        case 0: b_post<0, M>(p, smem, Rg, i, hh, l, tok0, cl); break;
+-        case 1: b_post<1, M>(p, smem, Rg, i, hh, l, tok0, cl); break;
+-        case 2: b_post<2, M>(p, smem, Rg, i, hh, l, tok0, cl); break;
+-        default: b_post<3, M>(p, smem, Rg, i, hh, l, tok0, cl); break;
++        case 0: b_post<0, M, !VL>(p, smem, Rg, i, hh, l, tok0, cl); break;
++        case 1: b_post<1, M, !VL>(p, smem, Rg, i, hh, l, tok0, cl); break;
++        case 2: b_post<2, M, !VL>(p, smem, Rg, i, hh, l, tok0, cl); break;
++        default: b_post<3, M, !VL>(p, smem, Rg, i, hh, l, tok0, cl); break;
+     }
+     });
+ }

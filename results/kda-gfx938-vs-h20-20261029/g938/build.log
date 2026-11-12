@@ -1,0 +1,22 @@
+Processing ./.
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: flash-train
+  Building wheel for flash-train (pyproject.toml): started
+  Building wheel for flash-train (pyproject.toml): still running...
+  Building wheel for flash-train (pyproject.toml): finished with status 'done'
+  Created wheel for flash-train: filename=flash_train-0.1.0-cp312-cp312-linux_x86_64.whl size=2015365 sha256=12a1572c5d2544a1b2e41d1a9a2c2a8200b71338d8d41cd641910294c47d9aa3
+  Stored in directory: /tmp/pip-ephem-wheel-cache-8_mqa1ya/wheels/3b/c6/5a/572c8f2eb10d873ac0886b22c0b4bcb086698feea2d853eb49
+Successfully built flash-train
+Installing collected packages: flash-train
+Successfully installed flash-train-0.1.0
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+
+[notice] A new release of pip is available: 26.2.1 -> 26.2.2
+[notice] To update, run: pip install --upgrade pip

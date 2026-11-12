@@ -1,0 +1,6 @@
+{"mode": "mk3", "T": 1024, "H": 64, "arm": "ft_saveh", "fwd_ms": 0.6429, "bwd_ms": 1.613, "fb_ms": 2.2521, "kernel_fb_ms": 1.8655, "peak_over_inputs_gib": 0.311}
+{"mode": "mk3", "T": 2048, "H": 64, "arm": "ft_saveh", "fwd_ms": 1.1569, "bwd_ms": 2.9682, "fb_ms": 4.1187, "kernel_fb_ms": 3.6945, "peak_over_inputs_gib": 0.611}
+{"mode": "mk3", "T": 4096, "H": 64, "arm": "ft_saveh", "fwd_ms": 2.118, "bwd_ms": 5.6346, "fb_ms": 7.7357, "kernel_fb_ms": 7.3752, "peak_over_inputs_gib": 1.209}
+{"mode": "mk3", "T": 8192, "H": 64, "arm": "ft_saveh", "fwd_ms": 3.9581, "bwd_ms": 10.3892, "fb_ms": 14.3238, "kernel_fb_ms": 13.9659, "peak_over_inputs_gib": 2.406}
+{"mode": "mk3", "T": 16384, "H": 64, "arm": "ft_saveh", "fwd_ms": 8.129, "bwd_ms": 20.4588, "fb_ms": 28.5569, "kernel_fb_ms": 28.0437, "peak_over_inputs_gib": 4.801}
+{"mode": "mk3", "T": 32768, "H": 64, "arm": "ft_saveh", "fwd_ms": 13.1151, "bwd_ms": 40.1721, "fb_ms": 53.2565, "kernel_fb_ms": 52.6185, "peak_over_inputs_gib": 9.59}

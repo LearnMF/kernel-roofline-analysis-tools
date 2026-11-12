@@ -1,0 +1,9 @@
+KDA_ITER_DONE ft 2048 16 1
+HIP_PROF:on Sun Oct 25 14:53:10 2026
+HIP_PROF:process id '148673'
+HIP_PROF:db file '/public/home/tanbo/kra_cards_938/2048_16/pmc_write.db'
+HIP_PROF:out put file '/public/home/tanbo/kra_cards_938/2048_16/pmc_write'
+HIP_PROF:profiling ' python3 /public/home/tanbo/mk3/ft_card_run.py --T 2048 --H 16 --iters 1'
+HIP_PROF:process begin
+HIP_PROF:process end run total cost:26(s)
+HIP_PROF:finish

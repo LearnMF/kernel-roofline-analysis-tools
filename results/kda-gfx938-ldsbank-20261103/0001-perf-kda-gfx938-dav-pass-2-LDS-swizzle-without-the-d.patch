@@ -1,0 +1,41 @@
+From ddf16814d574d3b73d0199a3bcc20067a0917786 Mon Sep 17 00:00:00 2001
+From: tanbo <tanbo@dustess.com>
+Date: Tue, 3 Nov 2026 22:43:21 +0800
+Subject: [PATCH 1/2] perf(kda): gfx938 dav pass-2 LDS swizzle without the
+ do-scatter bank conflicts (P-938bc2)
+
+Per-phase hipprof attribution (dev skip-mask build) put 1792 of dav's 1920 LDS
+bank-conflict cycles per CTA in pass 2's b16 do scatter: the 32 lanes of one
+store share t and have v = 4k + d, and the (v & 15) swizzle left them on 4 banks.
+The pass-2 granule XOR now also takes v bits 4..5, which spreads them over 16
+granules (8-way -> 2-way); the dOT and MMAC b64 reads stay conflict-free.
+gfx938 only (gfx936 assembly unchanged).  Conflicts 1920 -> 384 per CTA, VGPR
+108 -> 116, no scratch, LDS 16384.  Gate 84/84 bit-identical.
+dav 1.029-1.107x (9 shapes, ABBA).
+
+Generated with [Devin](https://devin.ai)
+
+Co-Authored-By: Devin <158243242+devin-ai-integration[bot]@users.noreply.github.com>
+---
+ src/primitive/hygon/kda/g2/g2_dav.cuh | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/primitive/hygon/kda/g2/g2_dav.cuh b/src/primitive/hygon/kda/g2/g2_dav.cuh
+index 72f2ce0..363e8d9 100644
+--- a/src/primitive/hygon/kda/g2/g2_dav.cuh
++++ b/src/primitive/hygon/kda/g2/g2_dav.cuh
+@@ -48,7 +48,10 @@ __global__ void __launch_bounds__(256) g2_dav_kernel(DavParams p_) {
+     // conflict-free.  Layout only -- bit-identical.
+     __shared__ __align__(16) short slab[128 * 64];
+     auto i1 = [](int r, int c) { return (size_t)r * kK + (c ^ ((r & 15) << 2)); };       // pass 1 [j][v]
+-    auto i2 = [](int v, int j) { return (size_t)v * 64 + (j ^ ((v & 15) << 2)); };       // pass 2 [v][t]
++    // kra P-938bc2: pass 2's swizzle also takes v bits 4..5 into the granule's low bits: the do scatter (lanes with v = 4k + d,
++    // one t) then spreads over 16 granules (8-way -> 2-way bank conflicts, 1792 -> 256 extra cycles per CTA); the dOT and
++    // MMAC b64 reads stay conflict-free (rows 16 vt + m and the 8 even / odd rows of a dOT group still map to distinct granules).
++    auto i2 = [](int v, int j) { return (size_t)v * 64 + (j ^ (((v & 15) ^ ((v >> 4) & 3)) << 2)); };   // pass 2 [v][t]
+     auto iA = [](int t, int j) { return (size_t)t * 64 + (j ^ ((t & 15) << 2)); };       // dA staging fp32
+ #else
+     __shared__ __align__(16) short slab[128 * kPadJ3];       // 8704 shorts:
+-- 
+2.39.5 (Apple Git-154)
+

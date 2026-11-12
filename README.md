@@ -19,7 +19,9 @@
 
 ## 实践平台与适用范围
 
-**本仓库的所有数值、阈值和结论，都是在下面这台机器上实测得到的**：
+**本仓库的数值、阈值和结论按卡分开**：主体是在 gfx936（下表）上实测的；2026-10-25 起又在 gfx938（BW1102，nmz5，72 CU，约 1.3 GHz，[`machines/gfx938-bw1102.json`](machines/gfx938-bw1102.json)）上做了一轮。两张卡的数字和规则不能互相套用，按卡查阅的入口见下一节「按卡索引」。
+
+gfx936 平台：
 
 | 项 | 值 |
 |---|---|
@@ -34,6 +36,21 @@
 - 峰值和延迟必须重新跑 `kra calibrate`；
 - 计数器语义（例如 `TA_TA_BUSY` 的归一化）要用已知工作量的 kernel 重新标定；
 - `thresholds.json` 中标为 `hcu_calibrated: true` 的阈值，只在 gfx936 + KDA 上验证过。
+
+## 按卡索引（gfx936 / gfx938 / 通用）
+
+同一个仓库、同一个分支，用目录和文件名前缀区分卡。通用工具和方法论只有一份，两张卡共用。
+
+| 类别 | 通用（两张卡共用） | gfx936（BW1000） | gfx938（BW1102） |
+|---|---|---|---|
+| 机器标定 | `kra/calibrate/` | `machines/gfx936-bw1000.json` | `machines/gfx938-bw1102.json` |
+| 方法论 | `docs/methodology.md`、`docs/playbook.md` 第 1–10 节、`docs/playbook_intro.md`、`docs/tutorial/` | `docs/playbook.md` §11.1 | `docs/playbook.md` §11.2、`docs/playbook_gfx938.md` |
+| 优化过程与结论 | — | `docs/kda_report.md`、`docs/kda_phase{1,2,3}_summary.md`、`docs/kda_retrospective.md`、`docs/kda_mk3_round.md` | `docs/kda_gfx938_round.md`（§1–§138）、`docs/kda_gfx938_push_summary_7e4601b.md` |
+| 脚本 | `kra/`、`examples/kda/ceiling/`（用 `KRA_MACHINE` 切卡）、`examples/kda/kda_ir.py` 等算法模型 | `examples/kda/` 顶层的 `p*_*.py` 补丁和探针、`examples/kda/hier_pmc/` | `examples/kda/gfx938/` |
+| 结果 | `results/kda-chunk-algo-*`（FLA 算法参考） | `results/kda-gfx936-*`，以及不带卡名的 `results/kda-*`（10-09 至 10-25，均在 bw7/bw52 上测得；`kda-3reports-*` 除外） | `results/kda-gfx938-*` |
+| 跨平台 | `results/kda-xplat-*`（gfx936 对 A800 / H20）、`results/kda-3reports-20261102`（gfx936 / gfx938 / H20 三方） | | `results/kda-gfx938-vs-h20-*` |
+
+新结果目录请按 `results/kda-<gfx936|gfx938>-<日期>-<主题>` 命名，新脚本放到 `examples/kda/`（gfx936）或 `examples/kda/gfx938/`。
 
 ## 判断上限要看哪些指标
 
@@ -142,8 +159,8 @@ kra/sqtt/        L3：xcompute.py（停顿汇总）、pcmap.py（逐指令归因
 kra/isa/         L3：静态 ISA 规则
 kra/opspec/      L4 输入：launcher 接口捕获（PyTorch 包装的任意算子通用）
 kra/model/       L2 分类 + L4 下限模型、MFU/HFU、四层分解、融合候选、报告
-machines/        各机器的标定结果（machine.json + 原始输出）
-examples/kda/    KDA 算子的采集驱动、门禁、A/B 和实验补丁脚本
+machines/        各机器的标定结果（gfx936-bw1000、gfx938-bw1102；machine.json + 原始输出）
+examples/kda/    KDA 算子的采集驱动、门禁、A/B 和实验补丁脚本（gfx938 专用的在 examples/kda/gfx938/）
 docker/sqtt/     SQTT 采集镜像（kra-sqtt）的 Dockerfile 与使用说明
 results/         分析结果、预先登记的预测与验证记录、上限评估
 docs/            操作流程、测量口径、设计

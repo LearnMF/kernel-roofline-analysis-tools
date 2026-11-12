@@ -1,0 +1,16 @@
+{"tag": "a16", "impl": "ft", "arch": "gfx938", "T": 8192, "H": 64, "fwd_ms": 3.5587, "bwd_ms": 10.8242, "fwd_peak_mb": 1325.4, "bwd_peak_mb": 2585.854}
+{"tag": "bc24", "impl": "ft", "arch": "gfx938", "T": 8192, "H": 64, "fwd_ms": 3.5545, "bwd_ms": 10.7619, "fwd_peak_mb": 1325.4, "bwd_peak_mb": 2585.854}
+{"tag": "bc24", "impl": "ft", "arch": "gfx938", "T": 8192, "H": 64, "fwd_ms": 3.5548, "bwd_ms": 11.7114, "fwd_peak_mb": 1325.4, "bwd_peak_mb": 2585.854}
+{"tag": "a16", "impl": "ft", "arch": "gfx938", "T": 8192, "H": 64, "fwd_ms": 3.5466, "bwd_ms": 10.8119, "fwd_peak_mb": 1325.4, "bwd_peak_mb": 2585.854}
+{"tag": "a16", "impl": "ft", "arch": "gfx938", "T": 8192, "H": 64, "fwd_ms": 3.5467, "bwd_ms": 10.8989, "fwd_peak_mb": 1325.4, "bwd_peak_mb": 2585.854}
+{"tag": "bc24", "impl": "ft", "arch": "gfx938", "T": 8192, "H": 64, "fwd_ms": 3.5496, "bwd_ms": 10.8045, "fwd_peak_mb": 1325.4, "bwd_peak_mb": 2585.854}
+{"tag": "bc24", "impl": "ft", "arch": "gfx938", "T": 8192, "H": 64, "fwd_ms": 3.5484, "bwd_ms": 10.8086, "fwd_peak_mb": 1325.4, "bwd_peak_mb": 2585.854}
+{"tag": "a16", "impl": "ft", "arch": "gfx938", "T": 8192, "H": 64, "fwd_ms": 3.5504, "bwd_ms": 10.8415, "fwd_peak_mb": 1325.4, "bwd_peak_mb": 2585.854}
+{"tag": "a16", "impl": "ft", "arch": "gfx938", "T": 1024, "H": 16, "fwd_ms": 0.1738, "bwd_ms": 0.4903, "fwd_peak_mb": 41.943, "bwd_peak_mb": 80.553}
+{"tag": "bc24", "impl": "ft", "arch": "gfx938", "T": 1024, "H": 16, "fwd_ms": 0.1731, "bwd_ms": 0.4807, "fwd_peak_mb": 41.943, "bwd_peak_mb": 80.553}
+{"tag": "bc24", "impl": "ft", "arch": "gfx938", "T": 1024, "H": 16, "fwd_ms": 0.1716, "bwd_ms": 0.4801, "fwd_peak_mb": 41.943, "bwd_peak_mb": 80.553}
+{"tag": "a16", "impl": "ft", "arch": "gfx938", "T": 1024, "H": 16, "fwd_ms": 0.1698, "bwd_ms": 0.4875, "fwd_peak_mb": 41.943, "bwd_peak_mb": 80.553}
+{"tag": "a16", "impl": "ft", "arch": "gfx938", "T": 1024, "H": 16, "fwd_ms": 0.1747, "bwd_ms": 0.4913, "fwd_peak_mb": 41.943, "bwd_peak_mb": 80.553}
+{"tag": "bc24", "impl": "ft", "arch": "gfx938", "T": 1024, "H": 16, "fwd_ms": 0.1707, "bwd_ms": 0.4779, "fwd_peak_mb": 41.943, "bwd_peak_mb": 80.553}
+{"tag": "bc24", "impl": "ft", "arch": "gfx938", "T": 1024, "H": 16, "fwd_ms": 0.173, "bwd_ms": 0.4829, "fwd_peak_mb": 41.943, "bwd_peak_mb": 80.553}
+{"tag": "a16", "impl": "ft", "arch": "gfx938", "T": 1024, "H": 16, "fwd_ms": 0.1723, "bwd_ms": 0.4894, "fwd_peak_mb": 41.943, "bwd_peak_mb": 80.553}

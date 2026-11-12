@@ -1,0 +1,64 @@
+Current Python version 3.10 is below the recommended 3.11 version. It is recommended to upgrade to Python 3.11 or higher for the best experience.
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:549: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+/usr/local/lib/python3.10/dist-packages/numpy/core/getlimits.py:89: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+Traceback (most recent call last):
+  File "/public/home/tanbo/hier_pmc/kda_run.py", line 4, in <module>
+    runpy.run_path("/public/home/tanbo/kra/examples/kda/kda_iter.py", run_name="__main__")
+  File "/usr/lib/python3.10/runpy.py", line 289, in run_path
+    return _run_module_code(code, init_globals, run_name,
+  File "/usr/lib/python3.10/runpy.py", line 96, in _run_module_code
+    _run_code(code, mod_globals, init_globals,
+  File "/usr/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/public/home/tanbo/kra/examples/kda/kda_iter.py", line 50, in <module>
+    exec(compile(src, "kda_op_bench_tp", "exec"), g)
+  File "kda_op_bench_tp", line 50, in <module>
+torch.OutOfMemoryError: HIP out of memory. Tried to allocate 96.00 MiB. GPU 0 has a total capacity of 63.98 GiB of which 0 bytes is free. Of the allocated memory 218.00 MiB is allocated by PyTorch, and 0 bytes is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+[31mHIP_PROF [2026-10-14 00:18:24.463921] [254276] [ERROR]: exited with status: 1
+[m
+HIP_PROF:on Wed Oct 14 00:17:56 2026
+HIP_PROF:process id '254275'
+HIP_PROF:db file '/public/home/tanbo/kra_cards/p1_16384_12/S4A_33_trace_1.db'
+HIP_PROF:out put file '/public/home/tanbo/kra_cards/p1_16384_12/S4A_33_trace_1'
+HIP_PROF:profiling ' python3 /public/home/tanbo/hier_pmc/kda_run.py --tree /opt/kda_env/g2_calib --arm g2 --T 16384 --H 12 --iters 4'
+HIP_PROF:process begin
+HIP_PROF:process end run total cost:28(s)
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HIP_PROF:IP:[31m10.16.1.47[0m HIP API statistics
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Name                                                          |Calls          |TotalDurationNs            |AverageNs                  |Percentage                 |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|hipMalloc                                                     |4              |48993231                   |12248307                   |96.4110779905329           |
+|hipLaunchKernel                                               |1              |1740434                    |1740434                    |3.4249041079037            |
+|hipGetDevice                                                  |133            |26420                      |198                        |0.051990461304948          |
+|hipGetDeviceProperties_v2                                     |8              |21099                      |2637                       |0.0415195587839931         |
+|__hipPopCallConfiguration                                     |1              |8710                       |8710                       |0.0171399287648031         |
+|hipMemGetInfo                                                 |3              |8170                       |2723                       |0.0160772925382826         |
+|hipDevicePrimaryCtxGetState                                   |7              |6990                       |998                        |0.0137552355988488         |
+|hipStreamIsCapturing                                          |8              |4710                       |588                        |0.00926854930909557        |
+|hipSetDevice                                                  |7              |2460                       |351                        |0.00484089836526011        |
+|hipGetLastError                                               |7              |1600                       |228                        |0.003148551782283          |
+|hipGetDeviceCount                                             |4              |1130                       |282                        |0.00222366469623737        |
+|hipGetDeviceProperties                                        |1              |810                        |810                        |0.00159395433978077        |
+|__hipPushCallConfiguration                                    |1              |760                        |760                        |0.00149556209658442        |
+|hipDeviceGetStreamPriorityRange                               |1              |490                        |490                        |0.000964243983324168       |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Total                                                         |186            |50817014                   |273209                     |100.0                      |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HIP_PROF:IP:[31m10.16.1.47[0m HIPOPS API statistics
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Name                                                          |Calls          |TotalDurationNs            |AverageNs                  |Percentage                 |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|void at::native::(anonymous namespace)::distribution_elemen...|1              |343200                     |343200                     |100.0                      |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Total                                                         |1              |343200                     |343200                     |100.0                      |
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+HIP_PROF:dump json trace (0/189)HIP_PROF:dump json trace (0/189)HIP_PROF:dump json trace (0/189)HIP_PROF:dump json trace (186/189)HIP_PROF:dump json trace (188/189)HIP_PROF:dump json trace (189/189)
+HIP_PROF:finish

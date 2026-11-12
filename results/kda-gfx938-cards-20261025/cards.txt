@@ -1,0 +1,42 @@
+
+### 16384_8: kernels 12  total 3.9 ms  sum-floor 3.0 ms
+wy_s4b#1                   t=   828.4 floor=   539.3 (issue  ) gap= 1.54x  ta=0.64 valu=0.47 mmop=0.17 hbm=   766GB/s req=      0MB w=None
+dhu_v8b#1                  t=   543.1 floor=   509.2 (issue  ) gap= 1.07x  ta=0.38 valu=0.19 mmop=0.06 hbm=   496GB/s req=      0MB w=None
+fwd_h_v8o4#1               t=   530.7 floor=   457.3 (issue  ) gap= 1.16x  ta=0.36 valu=0.19 mmop=0.07 hbm=   477GB/s req=      0MB w=None
+wu#1                       t=   439.4 floor=   259.0 (issue  ) gap= 1.70x  ta=0.55 valu=0.50 mmop=0.05 hbm=   957GB/s req=      0MB w=None
+fwd_prep_a#1               t=   366.2 floor=   300.9 (issue  ) gap= 1.22x  ta=0.43 valu=0.80 mmop=0.15 hbm=   679GB/s req=      0MB w=None
+wy_s4a#1                   t=   282.2 floor=   211.3 (issue  ) gap= 1.34x  ta=0.71 valu=0.40 mmop=0.11 hbm=  1020GB/s req=      0MB w=None
+bwd_tail#1                 t=   282.2 floor=   217.2 (issue  ) gap= 1.30x  ta=0.61 valu=0.74 mmop=0.00 hbm=  1193GB/s req=      0MB w=None
+fwd_prep_b#1               t=   238.0 floor=   207.4 (issue  ) gap= 1.15x  ta=0.84 valu=0.30 mmop=0.05 hbm=   985GB/s req=      0MB w=None
+dav#1                      t=   189.2 floor=   132.7 (issue  ) gap= 1.43x  ta=0.66 valu=0.32 mmop=0.06 hbm=   978GB/s req=      0MB w=None
+gate#1                     t=   121.4 floor=   112.9 (issue  ) gap= 1.08x  ta=0.38 valu=0.79 mmop=0.00 hbm=   829GB/s req=      0MB w=None
+bwd_tail_reduce#1          t=    17.5 floor=     6.6 (issue  ) gap= 2.64x  ta=0.03 valu=0.01 mmop=0.00 hbm=    61GB/s req=      0MB w=None
+kda_gn_all#1               t=    12.6 floor=     4.3 (issue  ) gap= 2.91x  ta=0.18 valu=0.07 mmop=0.00 hbm=   332GB/s req=      0MB w=None
+
+### 2048_16: kernels 12  total 1.1 ms  sum-floor 0.8 ms
+wy_s4b#1                   t=   255.0 floor=   175.8 (issue  ) gap= 1.45x  ta=0.64 valu=0.36 mmop=0.13 hbm=   622GB/s req=      0MB w=None
+wu#1                       t=   147.0 floor=    72.9 (issue  ) gap= 2.02x  ta=0.44 valu=0.35 mmop=0.03 hbm=   718GB/s req=      0MB w=None
+fwd_prep_a#1               t=   117.4 floor=    75.2 (issue  ) gap= 1.56x  ta=0.39 valu=0.56 mmop=0.10 hbm=   524GB/s req=      0MB w=None
+wy_s4a#1                   t=   112.3 floor=    85.9 (issue  ) gap= 1.31x  ta=0.63 valu=0.22 mmop=0.06 hbm=   680GB/s req=      0MB w=None
+dhu_v8b#1                  t=   104.2 floor=    85.1 (issue  ) gap= 1.22x  ta=0.65 valu=0.25 mmop=0.07 hbm=   646GB/s req=      0MB w=None
+bwd_tail#1                 t=   101.8 floor=    54.3 (issue  ) gap= 1.87x  ta=0.42 valu=0.48 mmop=0.00 hbm=   828GB/s req=      0MB w=None
+fwd_h_v8o4#1               t=    94.9 floor=    78.1 (issue  ) gap= 1.21x  ta=0.65 valu=0.26 mmop=0.10 hbm=   666GB/s req=      0MB w=None
+fwd_prep_b#1               t=    77.5 floor=    58.4 (issue  ) gap= 1.33x  ta=0.64 valu=0.20 mmop=0.03 hbm=   735GB/s req=      0MB w=None
+dav#1                      t=    59.9 floor=    36.2 (issue  ) gap= 1.66x  ta=0.50 valu=0.22 mmop=0.04 hbm=   773GB/s req=      0MB w=None
+gate#1                     t=    37.2 floor=    28.2 (issue  ) gap= 1.32x  ta=0.24 valu=0.53 mmop=0.00 hbm=   677GB/s req=      0MB w=None
+kda_gn_all#1               t=     5.6 floor=     1.4 (issue  ) gap= 3.98x  ta=0.08 valu=0.02 mmop=0.00 hbm=   187GB/s req=      0MB w=None
+bwd_tail_reduce#1          t=     4.3 floor=     0.6 (issue  ) gap= 7.21x  ta=0.01 valu=0.00 mmop=0.00 hbm=    63GB/s req=      0MB w=None
+
+### 8192_64: kernels 12  total 13.9 ms  sum-floor 10.8 ms
+wy_s4b#1                   t=  3364.8 floor=  2411.8 (issue  ) gap= 1.40x  ta=0.71 valu=0.47 mmop=0.16 hbm=   754GB/s req=      0MB w=None
+wu#1                       t=  1628.2 floor=  1010.7 (issue  ) gap= 1.61x  ta=0.60 valu=0.56 mmop=0.05 hbm=  1050GB/s req=      0MB w=None
+dhu_v8b#1                  t=  1507.4 floor=  1184.5 (issue  ) gap= 1.27x  ta=0.76 valu=0.29 mmop=0.09 hbm=   715GB/s req=      0MB w=None
+wy_s4a#1                   t=  1422.1 floor=  1284.2 (issue  ) gap= 1.11x  ta=0.90 valu=0.34 mmop=0.09 hbm=   856GB/s req=      0MB w=None
+fwd_prep_a#1               t=  1382.5 floor=  1203.5 (issue  ) gap= 1.15x  ta=0.46 valu=0.83 mmop=0.15 hbm=   731GB/s req=      0MB w=None
+bwd_tail#1                 t=  1257.4 floor=   868.6 (issue  ) gap= 1.45x  ta=0.64 valu=0.69 mmop=0.00 hbm=  1071GB/s req=      0MB w=None
+fwd_h_v8o4#1               t=  1200.7 floor=   913.3 (issue  ) gap= 1.31x  ta=0.80 valu=0.36 mmop=0.14 hbm=   948GB/s req=      0MB w=None
+fwd_prep_b#1               t=   901.4 floor=   878.6 (issue  ) gap= 1.03x  ta=0.92 valu=0.31 mmop=0.05 hbm=  1043GB/s req=      0MB w=None
+dav#1                      t=   722.6 floor=   524.8 (issue  ) gap= 1.38x  ta=0.72 valu=0.36 mmop=0.06 hbm=  1023GB/s req=      0MB w=None
+gate#1                     t=   468.0 floor=   451.7 (issue  ) gap= 1.04x  ta=0.40 valu=0.92 mmop=0.00 hbm=   860GB/s req=      0MB w=None
+kda_gn_all#1               t=    33.4 floor=    15.9 (issue  ) gap= 2.10x  ta=0.36 valu=0.11 mmop=0.00 hbm=   376GB/s req=      0MB w=None
+bwd_tail_reduce#1          t=    12.1 floor=     3.4 (issue  ) gap= 3.57x  ta=0.14 valu=0.04 mmop=0.00 hbm=   353GB/s req=      0MB w=None
