@@ -46,14 +46,21 @@ def _step_key(op) -> str:
 
 class Kda(Op):
     name = "kda"
-    params = ("T", "H")
+    params = ("T", ("H", "heads"))
     phases = ("fwd", "bwd", "fwd+bwd")
+    # TP cuts the head axis: every rank runs the whole recurrence over the sequence for H/tp heads, so the
+    # operator itself communicates nothing (the all-reduce belongs to the row-parallel linear after it).
+    # CP cuts the sequence and so cuts the recurrence: the phased form (local state-only pass, all_gather of
+    # the per-rank state, merge, then a pass for o and h; compress_h0 / expand_h0 on the backward) is a KDA
+    # formulation, not a generic rewrite -- the interface above is where it goes, and it is not implemented
+    # yet, so cp>1 is refused rather than priced with the wrong dataflow.
+    parallel = ("tp",)
 
     def work(self, shape: dict, dtype: str, phase: str) -> Work:
         self.check(shape, phase)
         if dtype != "bf16":
             raise SystemExit("kda plugin models the bf16 operator only")
-        T, H = int(shape["T"]), int(shape["H"])
+        T, H, tp = _per_rank(shape)
         if T % C:
             raise SystemExit("kda: T must be a multiple of the chunk size %d" % C)
         save_h = bool(shape.get("save_h", 0))
@@ -238,9 +245,26 @@ def _occupancy_of(op_names, T: int, H: int, phase: str) -> dict | None:
 _GRAPH_CACHE: dict = {}
 
 
+def _per_rank(shape: dict) -> tuple:
+    """(tokens, heads on this rank, tp).  `heads` is the operator's total head count and is divided by tp;
+    `H` is the per-rank count and is taken as given (both accepted, and they must agree)."""
+    tp = int(shape.get("tp", 1) or 1)
+    if "heads" in shape:
+        tot = int(shape["heads"])
+        if tot % tp:
+            raise SystemExit("kda: heads=%d is not divisible by tp=%d" % (tot, tp))
+        h = tot // tp
+        if "H" in shape and int(shape["H"]) != h:
+            raise SystemExit("kda: H=%s contradicts heads=%d / tp=%d = %d"
+                             % (shape["H"], tot, tp, h))
+    else:
+        h = int(shape["H"])
+    return int(shape["T"]), h, tp
+
+
 def capacity_graph(shape: dict, phase: str = "fwd+bwd", residency_mode: str = "shape",
                    formulation: dict | None = None, vgpr_mode: str = "full") -> CapGraph:
-    T, H = int(shape["T"]), int(shape["H"])
+    T, H, tp = _per_rank(shape)
     if T % C:
         raise SystemExit("kda: T must be a multiple of the chunk size %d" % C)
     N, nt = float(T * H), T // C
@@ -272,7 +296,7 @@ def capacity_graph(shape: dict, phase: str = "fwd+bwd", residency_mode: str = "s
             barrier=o.par.startswith("scan") or o.par == "reduce_T",
             core_lds=_core_lds(o), core_reg_bytes=_core_regs(o),
             movable=_operands(o) if vgpr_mode == "full" else (), flops=flops,
-            other={"valu_lane": VALU_PACKED * lanes, "sfu_exp2": sfu},
+            other={"valu_lane": VALU_PACKED * lanes, "sfu_exp2": sfu}, phase=o.phase,
             serial=[(nt, _step_key(o), H * SCAN_CTAS_PER_HEAD)] if o.par.startswith("scan") else [],
             ctas=_ctas(o, nt, H)))
     return CapGraph(ops=cops, tensors=tensors, threads=THREADS, tiles=nt * H,

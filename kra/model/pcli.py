@@ -26,7 +26,9 @@ def main(argv=None) -> int:
     if "--list-ops" in argv:
         from ..ops import registry
         for name, op in sorted(registry().items()):
-            print("%-12s shape: %-24s phases: %s" % (name, ",".join(op.params), ",".join(op.phases)))
+            keys = ",".join(p if isinstance(p, str) else "|".join(p) for p in op.params)
+            print("%-12s shape: %-24s phases: %-13s parallel: %s"
+                  % (name, keys, ",".join(op.phases), ",".join(op.parallel) or "-"))
         return 0
 
     p = argparse.ArgumentParser(prog="kra predict")
@@ -47,13 +49,20 @@ def main(argv=None) -> int:
                    help="include the concurrency terms (bandwidth attainable at the kernel's CTA count, "
                         "per-CU resources scaled by the CUs it can occupy, memory latency its registers "
                         "cannot hide)")
+    p.add_argument("--mem-budget", default=None, type=float,
+                   help="device memory this operator may use, per rank, in GB (default: the machine's whole "
+                        "device.global_mem_bytes -- the rest of the model is then not subtracted)")
+    p.add_argument("--layers", default=1, type=int,
+                   help="layers of this operator resident at once: every layer's save-for-backward set is "
+                        "live together, only one layer's workspace peak is")
     p.add_argument("--list-ops", action="store_true", help="list operator plugins and exit")
     a = p.parse_args(argv)
 
     mach = TheoryMachine.load(a.machine, a.peaks, a.occupancy == "on")
     if a.split_search:
         from . import capacity
-        rs = capacity.solve(mach, a.op, _shape(a.shape), a.dtype, a.phase, a.residency, vgpr_mode=a.vgpr)
+        rs = capacity.solve(mach, a.op, _shape(a.shape), a.dtype, a.phase, a.residency, vgpr_mode=a.vgpr,
+                            mem_budget=a.mem_budget * 2 ** 30 if a.mem_budget else None, layers=a.layers)
         md = capacity.markdown(rs)
         if a.out:
             open(a.out + ".split.json", "w", encoding="utf-8").write(json.dumps(rs, indent=1) + "\n")

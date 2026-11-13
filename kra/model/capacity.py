@@ -50,6 +50,7 @@ class CapOp:
     ins: tuple = ()
     outs: tuple = ()
     barrier: bool = False
+    phase: str = ""                 # "fwd" | "bwd" | "recompute" | "" when the plugin does not declare it
     core_lds: float = 0.0           # LDS the op needs for its own products (staged operands, whole tiles)
     core_reg_bytes: float = 0.0     # per-CTA register bytes for its accumulators
     movable: tuple = ()             # operand tiles (bytes) that live in registers, or in LDS when registers run out
@@ -259,8 +260,14 @@ def kernel_work(graph: CapGraph, kernel: list, produced_elsewhere: dict = None, 
     return w
 
 
-def search(graph: CapGraph, mach, peak_key: str, peak: float, limit: int = 0) -> dict:
-    """Rank every legal grouping by T_split, keeping the infeasible ones visible."""
+def search(graph: CapGraph, mach, peak_key: str, peak: float, limit: int = 0,
+           budget: float | None = None, layers: int = 1) -> dict:
+    """Rank every legal grouping by T_split, keeping the infeasible ones visible.
+
+    Two kinds of rejection are reported separately: a grouping whose working set does not fit the chip
+    (infeasible), and one that fits but whose device-memory peak exceeds the budget (over budget).  The
+    second is what keeps the search from buying time with capacity it does not have."""
+    from . import memory
     from .predict import _bound
 
     dev = mach.device
@@ -294,6 +301,14 @@ def search(graph: CapGraph, mach, peak_key: str, peak: float, limit: int = 0) ->
                 w.occupancy = occupancy(graph, k, f)
                 w.barriers = (f["barriers"], graph.threads)
                 parts.append(("+".join(o.name for o in k), w))
+            spilled = [x for f in fps for x in f["handoffs_spilled"]]
+            mem = memory.peak(graph, g, spilled)
+            row["mem"] = mem
+            row["mem_peak_bytes"] = mem["peak_bytes"]
+            row["mem_carried_bytes"] = mem["carried_peak_bytes"]
+            row["mem_saved_bytes"] = (mem["saved_for_backward"] or {}).get("bytes")
+            row["mem_resident_bytes"] = memory.resident_bytes(mem, layers)
+            row["within_budget"] = budget is None or row["mem_resident_bytes"] <= budget
             row["occupancy"] = [dict(kernel=n, **(mach.concurrency(w.occupancy) if mach.use_occupancy else {}),
                                      **w.occupancy) for n, w in parts]
             t, krows, _, _ = _bound(mach, parts, peak_key, peak)
@@ -301,19 +316,28 @@ def search(graph: CapGraph, mach, peak_key: str, peak: float, limit: int = 0) ->
             row["bytes"] = sum((w.bytes_rd or 0) + (w.bytes_wr or 0) for _, w in parts)
             row["per_kernel"] = krows
         rows.append(row)
-    feas = sorted([r for r in rows if r["feasible"]], key=lambda r: r["T_split_us"])
+    priced = sorted([r for r in rows if r["feasible"]], key=lambda r: r["T_split_us"])
+    feas = [r for r in priced if r["within_budget"]]
+    over = [r for r in priced if not r["within_budget"]]
+    front = memory.pareto(feas) if feas else []
+    front_saved = memory.pareto([r for r in feas if r["mem_saved_bytes"] is not None], mem_key="mem_saved_bytes")
     return {"machine": mach.id, "lds_per_cu": lds_per_cu, "vgpr_max": vgpr_max,
-            "candidates": len(rows), "feasible": len(feas),
+            "candidates": len(rows), "feasible": len(feas), "over_budget": len(over),
             "ranked": feas[:limit] if limit else feas,
+            "pareto": front, "pareto_saved": front_saved,
+            "smallest": min(feas, key=lambda r: r["mem_resident_bytes"]) if feas else None,
+            "over_budget_examples": over[:5],
             "infeasible_examples": [r for r in rows if not r["feasible"]][:5],
             "note": graph.note}
 
 
 def solve(mach, op_name: str, shape: dict, dtype: str, phase: str,
-          residency_mode: str = "shape", top: int = 5, vgpr_mode: str = "full") -> dict:
+          residency_mode: str = "shape", top: int = 5, vgpr_mode: str = "full",
+          mem_budget: float | None = None, layers: int = 1) -> dict:
     """Operator-independent split solver: ask the plugin for its capacity graphs, search each, and
     return the best feasible kernel split with its T_split.  Operators whose plugin does not expose
     a capacity graph are reported as such -- no split is invented for them."""
+    from . import memory
     from ..ops import get
 
     op = get(op_name)
@@ -321,32 +345,66 @@ def solve(mach, op_name: str, shape: dict, dtype: str, phase: str,
         raise SystemExit("operator %s has no capacity graph: its plugin declares no dataflow, so the "
                          "kernel split cannot be solved (T_theory is still available)." % op_name)
     peak_key, peak = mach.compute_peak(dtype)
+    budget, budget_src = memory.budget_bytes(mach, mem_budget)
     per_form, notes = [], []
+    if budget is None:
+        notes.append("device memory is reported but NOT constrained: " + budget_src)
     for label, graph in op.capacity_graphs(shape, phase, residency_mode, vgpr_mode):
-        r = search(graph, mach, peak_key, peak)
+        r = search(graph, mach, peak_key, peak, budget=budget, layers=layers)
         if not r["ranked"]:
             per_form.append({"formulation": label, "feasible": 0, "candidates": r["candidates"],
-                             "why_not": r["infeasible_examples"][0]["why_not"] if r["infeasible_examples"] else ""})
+                             "over_budget": r.get("over_budget", 0),
+                             "why_not": (r["over_budget_examples"][0]["mem"]["at_kernel"] + ": peak %.2f GB > budget"
+                                         % (r["over_budget_examples"][0]["mem_resident_bytes"] / 2 ** 30)
+                                         if r.get("over_budget_examples") else
+                                         r["infeasible_examples"][0]["why_not"] if r["infeasible_examples"] else "")})
             continue
         best = r["ranked"][0]
         per_form.append({"formulation": label, "candidates": r["candidates"], "feasible": r["feasible"],
+                         "over_budget": r["over_budget"],
+                         "mem": best["mem"], "mem_peak_bytes": best["mem_peak_bytes"],
+                         "mem_resident_bytes": best["mem_resident_bytes"],
+                         "mem_carried_bytes": best["mem_carried_bytes"],
+                         "mem_saved_bytes": best["mem_saved_bytes"],
+                         "mem_saved_min_bytes": min([r["mem_saved_bytes"] for r in r["ranked"]
+                                                     if r["mem_saved_bytes"] is not None] or [None]),
+                         "mem_min_bytes": r["smallest"]["mem_resident_bytes"],
+                         "pareto": [{"T_split_us": x["T_split_us"], "mem_resident_bytes": x["mem_resident_bytes"],
+                                     "mem_peak_bytes": x["mem_peak_bytes"],
+                                     "mem_carried_bytes": x["mem_carried_bytes"], "formulation": label,
+                                     "mem_saved_bytes": x["mem_saved_bytes"],
+                                     "n_kernels": x["n_kernels"], "kernels": x["kernels"]} for x in r["pareto"]],
                          "T_split_us": best["T_split_us"], "T_worst_us": r["ranked"][-1]["T_split_us"],
                          "kernels": best["kernels"], "lds_peak_kb": best["lds_peak_kb"],
                          "vgpr_peak": best["vgpr_peak"], "min_residency": best["min_residency"],
                          "spilled": best.get("spilled", []), "occupancy": best.get("occupancy", []),
                          "per_kernel": best["per_kernel"], "top": r["ranked"][:top],
                          "note": r["note"]})
-        for k in best["per_kernel"]:
-            pass
     priced = [f for f in per_form if "T_split_us" in f]
     if not priced:
-        raise SystemExit("no feasible kernel split for %s on %s: every grouping exceeds the on-chip "
-                         "capacity.  The operator cannot run on this machine as described." % (op_name, mach.id))
+        raise SystemExit("no kernel split of %s runs on %s within the constraints: every grouping either "
+                         "exceeds the on-chip capacity or exceeds the device-memory budget (%s).  The "
+                         "operator cannot run on this machine as described." % (op_name, mach.id, budget_src))
     best = min(priced, key=lambda f: f["T_split_us"])
+    cands = [x for f in priced for x in f["pareto"]]
+    front = memory.pareto(cands)
+    front_saved = memory.pareto([x for x in cands if x["mem_saved_bytes"] is not None],
+                                mem_key="mem_saved_bytes")
     return {"schema": "kra.split_search/1", "machine": mach.id, "op": op_name, "phase": phase,
+            "mem_budget_bytes": budget, "mem_budget_source": budget_src, "layers": layers,
+            "mem_resident_bytes": best["mem_resident_bytes"],
+            "mem_peak_bytes": best["mem_peak_bytes"],
+            "mem_carried_bytes": best["mem_carried_bytes"],
+            "mem_saved_bytes": best["mem_saved_bytes"],
+            "mem_min_bytes": min(f["mem_min_bytes"] for f in priced),
+            "pareto": front, "pareto_saved": front_saved,
             "shape": dict(shape), "residency_mode": residency_mode, "vgpr_mode": vgpr_mode,
             "lds_per_cu_kb": float(mach.device.get("lds_per_cu", 0)) / 1024,
             "best": best, "formulations": per_form, "notes": notes}
+
+
+def _gb(b) -> str:
+    return "-" if b is None else "%.3f GB" % (b / 2 ** 30)
 
 
 def markdown(r: dict) -> str:
@@ -355,15 +413,45 @@ def markdown(r: dict) -> str:
          "shape `%s`, LDS %.0f KB/CU, residency rule `%s`, vgpr rule `%s`" % (
              ",".join("%s=%s" % kv for kv in r["shape"].items()), r["lds_per_cu_kb"], r["residency_mode"],
              r.get("vgpr_mode", "full")), "",
-         "| formulation | candidates | feasible | best T_split | worst feasible | kernels | LDS peak | VGPR peak | tiles/CU |",
-         "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
+         "device memory: budget %s (%s), %d layer(s) of this operator resident" % (
+             _gb(r["mem_budget_bytes"]), r["mem_budget_source"], r.get("layers", 1)), "",
+         "| formulation | candidates | feasible | over budget | best T_split | worst feasible | kernels | "
+         "peak mem | saved for bwd | LDS peak | VGPR peak | tiles/CU |",
+         "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
     for f in r["formulations"]:
         if "T_split_us" not in f:
-            L.append("| %s | %d | 0 | - | - | - | - | - | - |" % (f["formulation"], f["candidates"]))
+            L.append("| %s | %d | 0 | %d | - | - | - | - | - | - | - | - |  <- %s" % (
+                f["formulation"], f["candidates"], f.get("over_budget", 0), f.get("why_not", "")))
             continue
-        L.append("| %s | %d | %d | **%.0f us** | %.0f us | %d | %.1f KB | %.0f | %d |" % (
-            f["formulation"], f["candidates"], f["feasible"], f["T_split_us"], f["T_worst_us"],
-            len(f["kernels"]), f["lds_peak_kb"], f["vgpr_peak"], f["min_residency"]))
+        L.append("| %s | %d | %d | %d | **%.0f us** | %.0f us | %d | %s | %s | %.1f KB | %.0f | %d |" % (
+            f["formulation"], f["candidates"], f["feasible"], f["over_budget"], f["T_split_us"],
+            f["T_worst_us"], len(f["kernels"]), _gb(f["mem_peak_bytes"]), _gb(f["mem_saved_bytes"]),
+            f["lds_peak_kb"], f["vgpr_peak"], f["min_residency"]))
+    mem = b["mem"]
+    L += ["", "## device memory of that split", "",
+          "the stage peak is one instance of the operator; the save-for-backward set is what every layer of "
+          "the model holds at once, so it is the term a recompute policy trades against time.", "",
+          "| term | bytes | where |", "| --- | ---: | --- |",
+          "| caller's tensors (inputs, outputs, grads) | %s | resident throughout |" % _gb(mem["persistent_bytes"]),
+          "| workspace at its peak | %s | at `%s`: %s |" % (
+              _gb(mem["workspace_peak_bytes"]), mem["at_kernel"], ", ".join("`%s`" % t for t in mem["live_at_peak"])),
+          "| **stage peak** | **%s** | |" % _gb(mem["peak_bytes"]),
+          "| saved for the backward | %s | %s |" % (
+              _gb((mem["saved_for_backward"] or {}).get("bytes")),
+              ("after `%s`: %s" % ((mem["saved_for_backward"] or {}).get("after", ""),
+                                   ", ".join("`%s`" % t for t in (mem["saved_for_backward"] or {}).get("tensors", ())))
+               if mem["saved_for_backward"] else "not derived: the plugin declares no phase per op")),
+          "| resident at %d layer(s) | %s | against the budget |" % (
+              r.get("layers", 1), _gb(b["mem_resident_bytes"]))]
+    for key, axis, head in (("pareto", "mem_resident_bytes", "time vs resident memory"),
+                            ("pareto_saved", "mem_saved_bytes", "time vs bytes saved for the backward")):
+        front = r.get(key) or []
+        if len(front) < 2:
+            continue
+        L += ["", "## %s: the non-dominated candidates" % head, "",
+              "| T_split | memory | formulation | kernels |", "| ---: | ---: | --- | ---: |"]
+        L += ["| %.0f us | %s | %s | %d |" % (x["T_split_us"], _gb(x[axis]), x["formulation"], x["n_kernels"])
+              for x in front]
     L += ["", "## best split: %s, T_split = %.3f ms" % (b["formulation"], b["T_split_us"] / 1e3), "",
           "| kernel | binding | T_us |", "| --- | --- | ---: |"]
     L += ["| %s | %s | %.1f |" % (k["kernel"], k["binding"], k["T_us"]) for k in b["per_kernel"]]

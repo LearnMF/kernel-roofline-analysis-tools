@@ -103,17 +103,34 @@ class Work:
 class Op:
     """Base class.  `params` documents the shape keys `kra predict --shape` must supply."""
     name = ""
-    params: tuple = ()
+    params: tuple = ()              # required shape keys; a tuple entry means "one of these"
     phases: tuple = ("fwd",)
+    # Parallel decompositions the plugin models, as shape keys ("tp", "cp", ...).  Which axis a mode cuts,
+    # what it has to communicate, and what its backward has to keep are operator semantics -- KDA cuts the
+    # sequence and hands the recurrent state on, ring attention passes K/V blocks and rescales, a GEMM cuts
+    # N or K and reduces -- so a mode is only honoured where the plugin declares and implements it.  The
+    # solver prices the per-rank work; it never infers a decomposition.
+    parallel: tuple = ()
 
     def work(self, shape: dict, dtype: str, phase: str) -> Work:
         raise NotImplementedError
 
     def check(self, shape: dict, phase: str) -> None:
-        missing = [p for p in self.params if p not in shape]
+        want = [(p,) if isinstance(p, str) else p for p in self.params]
+        missing = ["|".join(p) for p in want if not any(k in shape for k in p)]
         if missing:
             raise SystemExit("op %s needs --shape %s (missing %s)"
-                             % (self.name, ",".join(self.params), ",".join(missing)))
+                             % (self.name, ",".join("|".join(p) for p in want), ",".join(missing)))
+        for mode in ("tp", "cp"):
+            n = int(shape.get(mode, 1) or 1)
+            if n < 1:
+                raise SystemExit("%s=%d is not a rank count" % (mode, n))
+            if n > 1 and mode not in self.parallel:
+                raise SystemExit(
+                    "op %s declares no %s decomposition (it models: %s).  What %s cuts, what it has to "
+                    "communicate and what its backward has to keep are operator semantics, so the solver "
+                    "will not infer them -- add the formulation to the plugin, or pass the per-rank shape "
+                    "directly." % (self.name, mode, ",".join(self.parallel) or "none", mode))
         if phase not in self.phases:
             raise SystemExit("op %s has no %r phase (has %s)"
                              % (self.name, phase, ",".join(self.phases)))

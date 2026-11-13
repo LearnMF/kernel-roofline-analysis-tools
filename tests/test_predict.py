@@ -379,3 +379,67 @@ def test_fusing_more_handoffs_through_lds_costs_more_barriers():
     one = footprint(g, [ops["wy_bwd_a"]])
     two = footprint(g, [ops["wy_bwd_a"], ops["wy_bwd_b"]])
     assert two["barriers"] > one["barriers"]
+
+
+# ------------------------------------------------------------------ M3b: device memory and per-rank shape
+from kra.model.capacity import solve  # noqa: E402
+
+def test_memory_peak_is_a_liveness_peak_not_the_sum_of_the_tensors():
+    from kra.model import memory
+    from kra.ops import get
+    label, g = get("kda").capacity_graphs({"T": 16384, "H": 12}, "fwd+bwd")[0]
+    m = memory.peak(g, [[o] for o in g.ops])
+    allocated = sum(t.hbm_bytes for t in g.tensors.values())
+    assert m["peak_bytes"] < allocated                      # a value freed before the peak costs nothing
+    assert m["peak_bytes"] == m["persistent_bytes"] + m["workspace_peak_bytes"]
+    assert m["saved_for_backward"]["after"].endswith("scan_fwd_o")
+
+
+def test_keeping_the_state_is_faster_but_holds_more_across_the_backward():
+    r = solve(_m936(), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")
+    by = {f["formulation"]: f for f in r["formulations"]}
+    keep, recomp = by["state=keep_state"], by["state=recompute"]
+    assert keep["T_split_us"] < recomp["T_split_us"]
+    assert keep["mem_saved_bytes"] > recomp["mem_saved_bytes"]
+    # which is the whole point of the memory term: ranking on time alone always picks keep_state
+    assert r["best"]["formulation"].endswith("keep_state")
+
+
+def test_a_layer_budget_makes_the_fastest_formulation_unaffordable():
+    shape = {"T": 16384, "H": 12}
+    free = solve(_m936(), "kda", shape, "bf16", "fwd+bwd", layers=61)
+    tight = solve(_m936(), "kda", shape, "bf16", "fwd+bwd", layers=61, mem_budget=8 * 2 ** 30)
+    assert free["best"]["formulation"].endswith("keep_state")
+    assert tight["best"]["formulation"].endswith("recompute")
+    assert tight["best"]["T_split_us"] > free["best"]["T_split_us"]
+    assert tight["mem_resident_bytes"] <= 8 * 2 ** 30
+
+
+def test_a_budget_nothing_fits_is_refused_instead_of_ranked():
+    with pytest.raises(SystemExit) as e:
+        solve(_m936(), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd", mem_budget=2 ** 20)
+    assert "memory budget" in str(e.value)
+
+
+def test_the_time_memory_front_is_non_dominated_and_shows_the_trade():
+    r = solve(_m936(), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd", layers=61)
+    front = r["pareto"]
+    assert len(front) >= 2
+    for a, b in zip(front, front[1:]):
+        assert a["T_split_us"] < b["T_split_us"] and a["mem_resident_bytes"] > b["mem_resident_bytes"]
+
+
+def test_tp_divides_the_head_count_and_must_agree_with_a_given_H():
+    a = solve(_m936(), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")
+    b = solve(_m936(), "kda", {"T": 16384, "heads": 96, "tp": 8}, "bf16", "fwd+bwd")
+    assert a["best"]["T_split_us"] == b["best"]["T_split_us"]
+    for bad in ({"T": 16384, "heads": 96, "tp": 7}, {"T": 16384, "heads": 96, "tp": 8, "H": 16}):
+        with pytest.raises(SystemExit):
+            solve(_m936(), "kda", bad, "bf16", "fwd+bwd")
+
+
+def test_cp_is_refused_until_the_plugin_declares_it():
+    with pytest.raises(SystemExit) as e:
+        solve(_m936(), "kda", {"T": 16384, "H": 12, "cp": 2}, "bf16", "fwd+bwd")
+    msg = str(e.value)
+    assert "no cp decomposition" in msg and "will not infer" in msg
