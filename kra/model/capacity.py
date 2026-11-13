@@ -334,6 +334,7 @@ def search(graph: CapGraph, mach, peak_key: str, peak: float, limit: int = 0,
             "smallest": min(feas, key=lambda r: r["mem_resident_bytes"]) if feas else None,
             "over_budget_examples": over[:5],
             "infeasible_examples": [r for r in rows if not r["feasible"]][:5],
+            "all_rows": rows,
             "note": graph.note}
 
 
@@ -343,7 +344,7 @@ def solve(mach, op_name: str, shape: dict, dtype: str, phase: str,
     """Operator-independent split solver: ask the plugin for its capacity graphs, search each, and
     return the best feasible kernel split with its T_split.  Operators whose plugin does not expose
     a capacity graph are reported as such -- no split is invented for them."""
-    from . import ceiling, memory
+    from . import ceiling, memory, rounds as _rounds
     from .predict import predict as _predict
     from ..ops import get
 
@@ -353,7 +354,7 @@ def solve(mach, op_name: str, shape: dict, dtype: str, phase: str,
                          "kernel split cannot be solved (T_theory is still available)." % op_name)
     peak_key, peak = mach.compute_peak(dtype)
     budget, budget_src = memory.budget_bytes(mach, mem_budget)
-    per_form, notes = [], []
+    per_form, notes, all_rows = [], [], {}
     if budget is None:
         notes.append("device memory is reported but NOT constrained: " + budget_src)
     for label, graph in op.capacity_graphs(shape, phase, residency_mode, vgpr_mode):
@@ -367,6 +368,7 @@ def solve(mach, op_name: str, shape: dict, dtype: str, phase: str,
                                          r["infeasible_examples"][0]["why_not"] if r["infeasible_examples"] else "")})
             continue
         best = r["ranked"][0]
+        all_rows[label] = r["all_rows"]
         per_form.append({"formulation": label, "candidates": r["candidates"], "feasible": r["feasible"],
                          "over_budget": r["over_budget"],
                          "mem": best["mem"], "mem_peak_bytes": best["mem_peak_bytes"],
@@ -400,6 +402,7 @@ def solve(mach, op_name: str, shape: dict, dtype: str, phase: str,
                           [r for f in priced for r in f["feasible_rows"]], priced)
     for f in per_form:
         f.pop("feasible_rows", None)
+    ledger = _rounds.run(all_rows, ceil, budget)
     cands = [x for f in priced for x in f["pareto"]]
     front = memory.pareto(cands)
     front_saved = memory.pareto([x for x in cands if x["mem_saved_bytes"] is not None],
@@ -413,6 +416,7 @@ def solve(mach, op_name: str, shape: dict, dtype: str, phase: str,
             "mem_min_bytes": min(f["mem_min_bytes"] for f in priced),
             "pareto": front, "pareto_saved": front_saved,
             "ceiling": ceil, "T_theory_us": t_theory_us, "T_attain_us": ceil["T_attain_us"],
+            "rounds": ledger,
             "shape": dict(shape), "residency_mode": residency_mode, "vgpr_mode": vgpr_mode,
             "lds_per_cu_kb": float(mach.device.get("lds_per_cu", 0)) / 1024,
             "best": best, "formulations": per_form, "notes": notes}
@@ -446,6 +450,34 @@ def markdown(r: dict) -> str:
             f["formulation"], f["candidates"], f["feasible"], f["over_budget"], f["T_split_us"],
             f["T_worst_us"], len(f["kernels"]), _gb(f["mem_peak_bytes"]), _gb(f["mem_saved_bytes"]),
             f["lds_peak_kb"], f["vgpr_peak"], f["min_residency"]))
+    g = r["rounds"]
+    L += ["", "## multi-round search: the ledger", "",
+          "round 0 is one kernel per op, where an implementation starts; each round takes the levers that "
+          "act on the factor furthest from its own roof, adopts the best, and keeps what the others cost.  "
+          "A predicted gain below %.0f%% is not decided here -- it has to be measured." % g["gate_pct"], "",
+          "| round | lever | what | predicted T | gain | binding after | verdict |",
+          "| ---: | --- | --- | ---: | ---: | --- | --- |"]
+    for x in g["rounds"]:
+        L.append("| %d | %s | %s | %.0f us | %s | %s | %s |" % (
+            x["round"], x["lever"], x.get("what") or x.get("formulation", ""), x["T_split_us"],
+            "-" if not x["round"] else "%+.1f%%" % -x["gain_pct"],
+            x["diagnosis"][0]["term"] if x.get("diagnosis") else "", x["verdict"]))
+    seen_ref = set()
+    lines = []
+    for x in [x for x in g["rounds"] if x.get("refuted")]:
+        for y in x["refuted"][:3]:
+            key = (y["lever"], str(y["what"]), y["why"])
+            if key in seen_ref:
+                continue                                  # a lever refuted for the same reason every round
+            seen_ref.add(key)
+            lines.append("- round %d, `%s %s`: %s" % (x["round"], y["lever"], y["what"], y["why"]))
+    if lines:
+        L += ["", "levers refuted on the way (from the same model, not from experience):", ""] + lines
+    L += ["", "**%s**" % g["stop"], "",
+          "greedy path reached %.0f us; the exhaustive search over every grouping x formulation reached "
+          "%.0f us (%s)." % (g["reached_us"], g["exhaustive_best_us"],
+                             "the same candidate" if g["greedy_is_exhaustive"]
+                             else "the greedy path is stuck in a local optimum, which is itself the finding")]
     c = r["ceiling"]
     L += ["", "## attainable ceiling", "",
           "| step | time | what it adds |", "| --- | ---: | --- |",

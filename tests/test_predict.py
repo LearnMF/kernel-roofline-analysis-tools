@@ -493,3 +493,39 @@ def test_the_capability_level_is_reported_and_differs_between_the_cards():
     assert a["level"] == "L3" and not a["missing_for_next"]
     assert b["level"] == "L2" and b["missing_for_next"]
     assert any("recurrence_step_us" in m for m in b["missing_for_next"])
+
+
+# ------------------------------------------------------------------- M3c: the multi-round search ledger
+def test_the_ledger_starts_unfused_and_ends_where_the_exhaustive_search_ends():
+    g = solve(_m936(), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")["rounds"]
+    assert g["rounds"][0]["lever"] == "baseline"
+    assert len(g["rounds"][0]["kernels"]) == max(len(x["kernels"]) for x in g["rounds"])
+    times = [x["T_split_us"] for x in g["rounds"]]
+    assert times == sorted(times, reverse=True)             # every adopted round is faster
+    assert g["greedy_is_exhaustive"] and g["reached_us"] == g["exhaustive_best_us"]
+
+
+def test_a_gain_below_the_gate_is_flagged_as_a_measurement_not_a_decision():
+    g = solve(_m936(), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")["rounds"]
+    assert g["gate_pct"] == 5.0
+    below = [x for x in g["rounds"] if x.get("below_gate")]
+    assert below and all("measured" in x["verdict"] for x in below)
+    assert g["below_gate_from_round"] == below[0]["round"]
+    assert "measurement campaign" in g["stop"]
+
+
+def test_every_refutation_names_the_terms_the_move_made_worse():
+    g = solve(_m936(), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")["rounds"]
+    ref = [y for x in g["rounds"] for y in x.get("refuted", ())]
+    assert ref
+    for y in ref:
+        assert y["why"]
+        assert "us" in y["why"] or y["why"] in ("no term changed",) or y["why"].startswith("does not fit")
+
+
+def test_each_round_diagnoses_the_factor_furthest_from_its_own_roof():
+    g = solve(_m936(), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")["rounds"]
+    for x in g["rounds"]:
+        d = x["diagnosis"]
+        assert [y["T_us"] for y in d] == sorted([y["T_us"] for y in d], reverse=True)
+        assert abs(sum(y["share_pct"] for y in d) - 100.0) < 1e-6
