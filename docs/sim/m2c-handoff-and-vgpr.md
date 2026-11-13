@@ -1,67 +1,63 @@
-# M2c: handoff pricing and VGPR estimate
+# M2c：交接计价与 VGPR 估算
 
-Follow-up to `m2b-split-search.md`.  M2b found that the generic search over-charged the production split
-(4183 us vs 3710 us for the same p54a grouping) and under-estimated VGPR (0.4-0.75x of the measured
-kernels).  Both were fixed from semantics only; the measured `CORE` footprints and the production timings
-are still validation-only (a test enforces that `kda_partition` is not imported by the predictor).
+接 `m2b-split-search.md`。M2b 暴露了两个问题：通用搜索给生产拆法算贵了（同一个 p54a 分组，搜索算
+4183 us，手写拆法 3710 us）；VGPR 估算系统性偏低（只有实测 kernel 的 0.4–0.75 倍）。这一轮两项都只
+从语义改，实测的 `CORE` footprint 和生产耗时仍然只做校验（有一条测试强制预测器不得 import
+`kda_partition`）。
 
-## 1. What the over-charge actually was: unversioned dataflow, not layouts
+## 1. 算贵的真实原因是数据流没有版本，不是 layout
 
-Comparing the search's per-kernel HBM bytes with the optrace-validated hand-written IR kernel by kernel
-showed the gap sat in one place: `fwd_prep` read 403 MB instead of 202 MB.  The backward recompute
-re-produces `qn`, `kn`, `W`, `U`, ... under the same tensor name, and the M2b pricing treated "a tensor
-some *other* kernel produces" as a read, so the forward kernel was charged for reading back the
-backward's recomputed copy.
+把搜索给每个生产 kernel 算出的 HBM 字节和 optrace 逐字节核对过的手写 IR 一个个比，差距集中在一处：
+`fwd_prep` 被算成读 403 MB，实际是 202 MB。反向重算会用同样的张量名再产生一遍 `qn`、`kn`、`W`、`U`，
+而 M2b 的计价规则是「别的 kernel 产生的张量就算一次读」，于是前向 kernel 被收了一笔「读回反向重算结
+果」的钱。
 
-Fix (`kra/model/capacity.py::dataflow`): versioned def-use.  Every read is bound to the latest producer
-before it; a value is written to HBM only if a consumer of *that version* is outside the kernel.  This is
-an operator-independent correctness fix, not a KDA rule.
+修法（`kra/model/capacity.py::dataflow`）：带版本的 def-use。每次读都绑定到它之前最近的那个生产者；
+只有**这个版本**的消费者落在 kernel 之外时，才算一次写出 HBM。这是与算子无关的正确性修复，不是给
+KDA 开的特例。
 
-After it, for every production kernel the search's bytes are **at or below** the hand-written IR:
+改完之后，每个生产 kernel 的字节数都**不超过**手写 IR：
 
-| kernel | search rd / wr MB | hand IR rd / wr MB | difference |
+| kernel | 搜索 读/写 MB | 手写 IR 读/写 MB | 差在哪 |
 |---|---:|---:|---|
-| fwd_prep | 202.1 / 254.8 | 202.1 / 280.0 | hand writes a second layout of Kg/Qg |
-| wu | 277.6 / 251.7 | 277.6 / 352.3 | hand writes W in natA *and* natB, U in natC |
-| dav | 125.8 / 100.7 | 125.8 / 151.0 | hand writes dVn (natC copy) |
-| head_gate | 50.3 / 102.2 | 50.3 / 100.7 | g fp32 vs Gn vecK (dtype rule) |
-| others | equal | equal | |
+| fwd_prep | 202.1 / 254.8 | 202.1 / 280.0 | 手写版多写了一份 Kg/Qg 的另一种 layout |
+| wu | 277.6 / 251.7 | 277.6 / 352.3 | 手写版把 W 按 natA 和 natB 各写一份，U 写 natC |
+| dav | 125.8 / 100.7 | 125.8 / 151.0 | 手写版多写 dVn（natC 副本） |
+| head_gate | 50.3 / 102.2 | 50.3 / 100.7 | g 用 fp32 对 Gn 用 vecK，是 dtype 规则的差别 |
+| 其余 | 相等 | 相等 | |
 
-The remaining differences are exactly the **layout copies** (`Mat` with a non-row layout or a `tag`).
-They are deliberately **not** charged by the search: a consumer can re-fragment a row-major tile on load
-through LDS, so a second HBM layout is an implementation choice (it trades HBM bytes for LDS shuffles),
-not a requirement.  Charging them would make `T_split` stop being a lower bound and would require knowing
-which layouts the production kernels chose -- i.e. the answer.  The per-op IR does not say which operand
-of a product is A or B, so there is no semantic basis for deriving the copies either.  The hand-written
-decomposition keeps them, so `T_split(search) <= T_split(hand IR)` holds by construction and is tested.
+剩下的差额，恰好就是**layout 副本**（`Mat` 带非 row 的 layout 或带 `tag` 的那些）。搜索**故意不收**这
+笔钱：消费者可以在 load 时经 LDS 把行主序的 tile 重新分片，所以在 HBM 里多存一份 layout 是实现选择
+（用 HBM 字节换 LDS 搬运），不是必需项。收了这笔钱，`T_split` 就不再是下限；而且还得知道生产 kernel
+选了哪些 layout，也就是知道答案。语义上也推不出来：逐 op 的 IR 并没有说一次乘法里哪个输入是 A 哪个是
+B。手写拆法保留了这些副本，所以 `T_split(搜索) <= T_split(手写 IR)` 是结构上成立的，并且有测试守着。
 
-## 2. Handoffs that do not fit on chip: spill inside the kernel
+## 2. 片上放不下的交接：在 kernel 内部落盘
 
-M2b could only say "s4a+s4b does not fit (80 KB LDS)".  A kernel writer has a third option besides
-on-chip and separate kernels: keep one launch, write the handoff to global memory in phase 1 and read it
-back in phase 2.  The shared inputs are still loaded once.  `footprint(..., lds_cap=...)` now does this:
-when the LDS peak passes the card's `lds_per_cu`, the largest LDS-resident handoff is spilled (repeat
-until it fits); `kernel_work(..., spilled=...)` charges one write + one read for it.
+M2b 只能给出「s4a+s4b 放不下（需要 80 KB LDS）」。但写 kernel 的人除了「全放片上」和「拆成两个
+kernel」还有第三种选择：保持一次 launch，第一阶段把交接张量写到全局内存，第二阶段再读回来，两个阶段
+共用的输入仍然只读一次。现在 `footprint(..., lds_cap=...)` 就按这个来：LDS 峰值超过卡的
+`lds_per_cu` 时，把最大的那个驻留 LDS 的交接张量落盘（不够就继续落），`kernel_work(..., spilled=...)`
+给它算一次写加一次读。
 
-Without being told, the search spills `dA@wy_bwd_a` and `dwT@wy_bwd_a` in the best gfx936 split -- which
-is the production `wy_s4_split` structure ("s4a writes dA (fp32) + dwT, s4b reads them").  With the spill
-rule, no grouping is infeasible on 64 KB any more; on a 24 KB card some single ops no longer fit and are
-pruned (tested).
+没有任何提示的情况下，gfx936 上最优拆法落盘的是 `dA@wy_bwd_a` 和 `dwT@wy_bwd_a`，这正是生产
+`wy_s4_split` 的结构（「s4a 写 dA（fp32）和 dwT，s4b 读它们」）。有了落盘规则，64 KB 上已经没有分组
+是不可行的了；换成 24 KB 的卡，一些单个 op 自己就放不下，会被剪掉（有测试）。
 
-## 3. VGPR: operands, addressing allowance, register-to-LDS fallback
+## 3. VGPR：操作数、寻址余量、寄存器放不下退回 LDS
 
-M2b counted accumulators only.  Added, from semantics:
+M2b 只算了累加器。这一轮从语义补了三项：
 
-| term | rule | provenance / scope |
+| 项 | 规则 | 出处 / 适用范围 |
 |---|---|---|
-| accumulators | output tiles, fp32 for products | unchanged |
-| operands | a product op holds its non-staged operands; one product has two operands, so the two largest non-staged input tiles | algorithmic, any MMAC op |
-| addressing / loop state | `REG_BASE_VGPR = 16` per thread per kernel | **heuristic assumption about the compiler**, not measured, not fitted; `--vgpr acc` reports without it |
-| register pressure | operands go to registers first; past `max_vgpr_per_thread` they move to LDS (largest first) | what a kernel writer does; reported as `operands_moved_to_lds` |
+| 累加器 | 输出 tile，乘法类按 fp32 | 未改动 |
+| 操作数 | 乘法类 op 要持有没有放进 LDS 的操作数；一次乘法有两个操作数，所以取未暂存输入里最大的两个 | 算法性质，对任何 MMAC op 成立 |
+| 寻址 / 循环状态 | `REG_BASE_VGPR = 16`，每线程每 kernel | **对编译器的启发式假设**，没有测量、没有拟合；`--vgpr acc` 可以看不含这一项的结果 |
+| 寄存器压力 | 操作数先放寄存器，超过 `max_vgpr_per_thread` 的部分按从大到小挪到 LDS | 写 kernel 的人就是这么做的；以 `operands_moved_to_lds` 报出来 |
 
-Comparison with the measured production kernels (validation only):
+与实测生产 kernel 对照（仅做校验，不参与搜索）：
 
-| op | VGPR acc-only (M2b) | VGPR full (M2c) | measured |
+| op | 仅累加器（M2b） | 补全后（M2c） | 实测 |
 |---|---:|---:|---:|
 | re_l2norm | 32 | 48 | 20 |
 | re_gate | 33 | 49 | 96 |
@@ -71,43 +67,40 @@ Comparison with the measured production kernels (validation only):
 | wy_bwd_b | 96 | 176 | 236 |
 | tail | 48 | 64 | 120 |
 
-The MMAC ops move from 0.4-0.75x to 0.75-1.16x of the measured footprint.  `re_gate` and `tail` stay
-low: their scratch (cumulative-sum buffers, per-row reduction partials) is not expressed in the IR, and
-inventing it from the measured number would be fitting.  `re_l2norm` is over-estimated (lane-local op,
-the measured kernel keeps far less than one row tile live).
+乘法类 op 从实测的 0.4–0.75 倍提到 0.75–1.16 倍。`re_gate` 和 `tail` 仍然偏低：它们的 scratch（前缀和
+缓冲、逐行归约的中间结果）在 IR 里没有表达，照着实测值补就是拟合答案。`re_l2norm` 则偏高——它是逐
+lane 的 op，实测 kernel 同时存活的远不到一个完整行 tile。
 
-## 4. Results after M2c
+## 4. M2c 之后的结果
 
-16K / H=12, bf16, fwd+bwd:
+16K / H=12，bf16，fwd+bwd：
 
 | | M2b | M2c |
 |---|---:|---:|
-| gfx936 best `T_split` | 3.295 ms (keep_state / W-free) | **2.675 ms** (keep_state / dAqk in s4b, 6 kernels) |
-| gfx938 best `T_split` | 2.113 ms (dAqk in s4b / keep_state) | **1.710 ms** (same formulation and split as gfx936) |
-| production p54a grouping, priced by the search | 4183 us (rank 260 / 512) | **3672 us** (rank 412 / 1024) |
-| production p54a, hand-written IR | 3710 us | 3710 us |
-| `T_theory` (fully fused) | 0.837 ms | 0.837 ms |
+| gfx936 最优 `T_split` | 3.295 ms（keep_state / W-free） | **2.675 ms**（keep_state / dAqk 放进 s4b，6 个 kernel） |
+| gfx938 最优 `T_split` | 2.113 ms（dAqk 放 s4b / keep_state） | **1.710 ms**（与 gfx936 同一拆法同一 formulation） |
+| 搜索给生产 p54a 分组的计价 | 4183 us（512 个可行里排 260） | **3672 us**（1024 个可行里排 412） |
+| 生产 p54a，手写 IR | 3710 us | 3710 us |
+| `T_theory`（完全融合） | 0.837 ms | 0.837 ms |
 
-H=48: gfx936 10.70 ms, gfx938 6.84 ms, same formulation and split.  In M2b the two cards picked different
-formulations; now both agree (the card changes the time, not the split).  Three things changed at once
-(versioned dataflow, spill, VGPR operands) and which one flipped gfx936 away from W-free is not isolated.  gfx938 still has no
-`recurrence_step_us`, so its serial bound is omitted, not borrowed.
+H=48：gfx936 10.70 ms，gfx938 6.84 ms，拆法和 formulation 相同。M2b 时两张卡选的 formulation 不一样，
+现在一致了（卡只改变耗时，不改变拆法）。但这一轮同时动了三处（数据流版本化、落盘、VGPR 操作数），
+究竟是哪一处让 gfx936 从 W-free 翻过去的，没有单独隔离验证。gfx938 仍然没有 `recurrence_step_us`，
+所以它的串行下限是直接不计入，而不是沿用 gfx936 的数。
 
-What the hold-out now says:
+留出验证现在说明什么：
 
-* **absolute**: the generic search prices the production grouping within 1% of the optrace-validated
-  hand IR (3672 vs 3710 us; the 38 us are the layout copies).  This is the claim M2b could not make.
-* **ranking**: the production grouping is in the middle of the list, and that is structural, not noise.
-  `T_split` is a lower bound in which fusing never costs anything once it fits; the minimum per number of
-  kernels falls monotonically (8 kernels 3028 us ... 18 kernels 4358 us).  Production keeps more kernels
-  for reasons a lower bound does not price -- occupancy (the best split runs at 256 VGPR, 1 tile/CU),
-  latency hiding, compile-time register allocation.  So "rank of the production split" is not a useful
-  acceptance metric for a lower-bound tool; "the search prices a given split like the validated IR does"
-  and "the search finds the same sub-kernel boundary and spills" are.
+* **绝对值**：通用搜索给生产分组的计价，与 optrace 核对过的手写 IR 差 1% 以内（3672 对 3710 us，这
+  38 us 就是 layout 副本）。这个结论 M2b 还给不出来。
+* **排名**：生产分组排在中游，而这是结构决定的，不是噪声。`T_split` 是下限，一旦放得下，融合在下限里
+  永远不要钱，所以按 kernel 数分组看最小值是单调下降的（8 个 kernel 3028 us……18 个 kernel 4358 us）。
+  生产之所以保留更多 kernel，原因是下限不计价的那些东西：占用率（最优拆法跑在 256 VGPR、每 CU 1 个
+  tile）、延迟掩藏、编译期寄存器分配。所以对一个下限工具来说，「生产拆法排第几」不是合适的验收指标；
+  「给定一个拆法，搜索的计价是否与核对过的 IR 一致」和「搜索能否找到同样的子 kernel 边界与落盘」才是。
 
-## Known gaps (updated)
+## 已知缺口（更新）
 
-* occupancy is reported but not priced -- now the main reason the search prefers fewer, fatter kernels;
-* layout copies are intentionally not charged to HBM; their LDS shuffle traffic is not charged either;
-* VGPR for lane-local ops with scratch (`re_gate`, `tail`) is still low; `REG_BASE_VGPR` is a heuristic;
-* the operand rule uses the two largest non-staged inputs because the IR does not pair operands.
+* 占用率只报不计价——现在它是搜索偏向「少而肥」的 kernel 的主要原因；
+* layout 副本有意不计入 HBM，它们的 LDS 搬运也没有计价；
+* 带 scratch 的逐 lane op（`re_gate`、`tail`）VGPR 仍偏低；`REG_BASE_VGPR` 是启发式假设；
+* 操作数规则取「未暂存输入里最大的两个」，因为 IR 没有给出操作数的配对关系。
