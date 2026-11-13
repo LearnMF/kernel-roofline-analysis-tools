@@ -68,6 +68,10 @@ class Work:
     # bandwidth attainable at that CTA count, and the memory latency the kernel cannot hide).
     # None = the operator does not bound its occupancy and those terms are left out.
     occupancy: dict | None = None
+    # (barriers per tile of work, threads per block): values the kernel hands between its ops through
+    # LDS or a spill, each of which the block must synchronise on before the consumer reads it.  The
+    # machine solver turns it into the exposed barrier time.  () = not derived, term left out.
+    barriers: tuple = ()
     # Per-resource extra work the operator cannot avoid, e.g. {"sfu_exp2": 1.2e9}.
     other: dict = field(default_factory=dict)
     notes: list = field(default_factory=list)

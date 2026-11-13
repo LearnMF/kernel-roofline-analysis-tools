@@ -18,7 +18,7 @@
 | **L2 + 曲线** | 加 `hbm_read_vs_ctas` 曲线、`latency.gmem_hbm_ws`、`l2_read`、`lds_read`、`launch` | 并发带宽、掩藏不住的延迟、多层屋顶、固定开销；**拆法推荐才有意义** | 算子特有的依赖链步长 |
 | **L3 + 算子相关** | 加 `structural`：`mmac_tile_eff`、`vmem_cycles_per_kb`、`recurrence_step_us` | 可达算力、访存发射、串行递推链 | — |
 
-当前状态：gfx936 = **L3**；gfx938 = **L2**（无 `structural`，其报告自动声明「串行链没有计入」）。
+当前状态：gfx936 = **L3**；gfx938 = **L2**（无 `structural`，串行链只用自身实测的依赖 MMAC + barrier 延迟给出较松的通用下限，报告里注明）。
 
 ### 等级是实测过的，不是推测
 
@@ -62,7 +62,7 @@ machine L0-min has no device.lds_per_cu: the capacity split cannot be solved on 
 | `latency.gmem_hbm_ws` | **L2** | **`latency:hbm`** | 无 | **有** | `k_chase` 指针追逐 |
 | `peaks.l2_read` `lds_read` | L2 | `memory:l2` `memory:lds` | 多半无 | 有 | `l2_read`/`lds_read` |
 | `launch.launch_stream` | L2 | `fixed:launch` | 无 | 有（含驱动模型时） | 空 kernel `k_empty` |
-| `latency.lds` `mmac_*_dependent` `barrier` | L2 | 依赖链项（**已测、predict 尚未接入**） | 无 | 有 | `k_lds_chase`/`k_mmac_latency`/`barrier` |
+| `latency.lds` `mmac_*_dependent` `barrier` | L2 | `serial:chain` 通用下限、`sync:barrier`（M2e 已接入） | 无 | 有 | `k_lds_chase`/`k_mmac_latency`/`barrier` |
 | `peaks.vmem_issue` `vmem_store` | L2 | 推导 `vmem_cycles_per_kb` | 无 | 有 | `vmem_issue`/`vmem_store` |
 | `structural.mmac_tile_eff` | **L3** | 可达算力系数 | 无 | 勉强 | 需真机调优，**最难要** |
 | `structural.vmem_cycles_per_kb` | L3 | `issue:vmem` | 无 | 有 | 从 `vmem_issue` 推 |

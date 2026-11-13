@@ -94,7 +94,9 @@ class Kda(Op):
         if k.name == "fwd_h_o" and any(m.tensor == "h" for m in k.writes):
             w.serial = [(T // C, "kda_step_with_o", H * SCAN_CTAS_PER_HEAD)]
         w.bytes_min = w.bytes_rd + w.bytes_wr
-        w.occupancy = _occupancy_of(k.ops, T, H, phase)
+        occ = _occupancy_of(k.ops, T, H, phase)
+        if occ:
+            w.occupancy, w.barriers = occ
         return w
 
 
@@ -228,7 +230,8 @@ def _occupancy_of(op_names, T: int, H: int, phase: str) -> dict | None:
         have = {o.name: o for o in g.ops}
         if want <= set(have):
             kern = [have[n] for n in op_names]
-            return _occ(g, kern, footprint(g, kern))
+            fp = footprint(g, kern)
+            return _occ(g, kern, fp), (fp["barriers"], g.threads)
     return None
 
 

@@ -13,6 +13,7 @@ if it can be re-measured by `kra calibrate` on a new card **without** optimising
 | HBM read / write / copy, L2, LDS bandwidth | `peaks.hbm_*`, `peaks.l2_read`, `peaks.lds_read` | L0 microbenchmark | no |
 | VALU / SFU rates | `peaks.valu_fma_f32`, `peaks.sfu_exp2` | L0 microbenchmark | no |
 | dispatch cost | `launch.launch_stream.best_us` | L0 microbenchmark | no |
+| dependent MMAC latency, block barrier latency | `latency.mmac_bf16_dependent`, `latency.barrier.lds_barrier_*` | L0 microbenchmark (`k_mmac_latency`, `barrier`); generic per-step floor of `serial:chain` and `sync:barrier` (M2e) | no |
 | CU count, clock, LDS/CU, registers | `device.*` | driver query | no |
 
 ## Structural constants (per card, measured, but by a KDA-shaped microbenchmark)
@@ -24,7 +25,9 @@ if it can be re-measured by `kra calibrate` on a new card **without** optimising
 | `structural.recurrence_step_us` | 1.241 / 1.015 (1 CTA/CU) | one dependent KDA chunk step, measured | **high -- KDA-specific.** Another recurrent operator needs its own step latency; a card without it gets a bound that says the serial chain is excluded, never a guessed number |
 
 gfx938's machine file has no `structural` block at all.  The consequence is visible in its reports: no
-MMAC tile efficiency (the peak itself is used) and no serial chain in the bound, stated as a note.
+MMAC tile efficiency (the peak itself is used), and the serial chain falls back to the generic floor of
+one dependent MMAC + one barrier per step from gfx938's own latencies (looser than a calibrated step),
+stated as a note.
 
 ## Operator constants (per operator, from the algorithm)
 

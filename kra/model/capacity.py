@@ -165,9 +165,15 @@ def footprint(graph: CapGraph, kernel: list, vgpr_max: int = VGPR_MAX_DEFAULT,
         _, pn, t = max(cand)
         spill.add((pn, t))
         lds_pk, reg_pk, moved = place(spill)
+    on_chip = [t for t, p, _ in live if (kernel[p].name, t) not in spill]
+    # One barrier per value the block hands over through LDS (or spills to global and reads back):
+    # staged operands, LDS-resident handoffs, spilled handoffs.  Register-resident handoffs are
+    # lane-private and need none.
+    syncs = moved + len(spill) + sum(1 for o in kernel if o.core_lds > 0) \
+        + sum(1 for t in on_chip if graph.tile_tensor(t).on_chip()[0] > 0)
     return {"lds_bytes": lds_pk, "vgpr": reg_pk / graph.threads / 4.0 + graph.reg_base_vgpr,
-            "handoffs_on_chip": [t for t, p, _ in live if (kernel[p].name, t) not in spill],
-            "handoffs_spilled": sorted(spill), "operands_moved_to_lds": moved}
+            "handoffs_on_chip": on_chip, "handoffs_spilled": sorted(spill),
+            "operands_moved_to_lds": moved, "barriers": syncs}
 
 
 def feasible(fp: dict, lds_per_cu: float, vgpr_max: int) -> tuple:
@@ -286,6 +292,7 @@ def search(graph: CapGraph, mach, peak_key: str, peak: float, limit: int = 0) ->
             for k, f in zip(g, fps):
                 w = kernel_work(graph, k, produced, f["handoffs_spilled"])
                 w.occupancy = occupancy(graph, k, f)
+                w.barriers = (f["barriers"], graph.threads)
                 parts.append(("+".join(o.name for o in k), w))
             row["occupancy"] = [dict(kernel=n, **(mach.concurrency(w.occupancy) if mach.use_occupancy else {}),
                                      **w.occupancy) for n, w in parts]

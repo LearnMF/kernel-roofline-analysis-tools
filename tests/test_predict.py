@@ -108,13 +108,21 @@ def test_kda_ir_matches_optrace():
     assert worst < 1e-6
 
 
-def test_chain_needs_machine_step_latency():
+def test_chain_falls_back_to_the_generic_floor_then_drops_out():
+    """Without a calibrated step the chain uses the measured dependent-MMAC + barrier floor, which is
+    looser; without those latencies either it is declared absent rather than guessed."""
     import json
     m = json.loads(BW1000.read_text())
     m.pop("structural")
     r = predict(TheoryMachine(m), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")
     assert r["bottleneck"] != "serial"
-    assert any("serial chain is NOT" in n for n in r["notes"])
+    assert any("generic floor" in n for n in r["notes"])
+    full = predict(TheoryMachine(json.loads(BW1000.read_text())), "kda", {"T": 16384, "H": 12},
+                   "bf16", "fwd+bwd")
+    assert full["T_theory_us"] >= r["T_theory_us"]
+    m.pop("latency")
+    r2 = predict(TheoryMachine(m), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")
+    assert any("serial chain is NOT" in n for n in r2["notes"])
 
 
 # ------------------------------------------------------------------ M2b: capacity split search
@@ -322,3 +330,52 @@ def test_a_kernel_whose_grid_is_smaller_than_the_device_pays_for_the_idle_cus():
     narrow = _terms(m, w(8), "mmac_bf16", m.peaks["mmac_bf16"])
     assert narrow["compute:mmac_bf16"] > 9 * wide["compute:mmac_bf16"]
     assert narrow["other:valu_lane"] > 9 * wide["other:valu_lane"]
+
+
+# ------------------------------------------------------- M2e: dependency-chain and barrier latency
+def test_barrier_latency_is_taken_at_the_nearest_calibrated_block_size():
+    m = _m936()
+    assert m.barrier_s(256) <= m.barrier_s(1024)
+    assert m.barrier_s(10 ** 6) == m.barrier_s(1024)        # clamped, not extrapolated
+    import json
+    bare = TheoryMachine(json.loads(BW1000.read_text()) | {"latency": {}})
+    assert bare.barrier_s(256) is None and bare.dep_step_s(256) is None
+
+
+def test_the_generic_step_floor_is_below_the_calibrated_step():
+    m = _m936()
+    floor = m.dep_step_s(256)
+    cal = m.step_s("kda_step_with_o", 1)
+    assert 0 < floor < cal                                   # so max() keeps the calibrated one
+
+
+def test_a_card_without_structural_still_bounds_the_serial_chain():
+    from kra.model.predict import TheoryMachine as TM
+    m = TM.load("machines/gfx938-bw1102.json")
+    assert not m.structural
+    r = predict(m, "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")
+    assert any("generic floor" in n for n in r["notes"])
+    assert r["kernels"][0]["terms_us"].get("serial:chain", 0) > 0
+
+
+def test_barriers_are_charged_per_tile_batch_and_only_when_derived():
+    from kra.ops import Work
+    from kra.model.predict import _terms
+    m = _m936()
+    occ = {"ctas": 80 * 4, "threads": 256, "lds_bytes": 8192, "vgpr": 64}
+    w = lambda n: Work(flops=1e10, bytes_rd=1e7, bytes_wr=0.0, occupancy=occ,
+                       barriers=(n, 256) if n else ())
+    none, few, many = (_terms(m, w(n), "mmac_bf16", m.peaks["mmac_bf16"]) for n in (0, 2, 8))
+    assert "sync:barrier" not in none
+    assert many["sync:barrier"] > few["sync:barrier"] > 0
+    assert abs(many["sync:barrier"] / few["sync:barrier"] - 4.0) < 1e-6
+
+
+def test_fusing_more_handoffs_through_lds_costs_more_barriers():
+    from kra.model.capacity import footprint
+    from kra.ops.kda import capacity_graph
+    g = capacity_graph({"T": 16384, "H": 12}, formulation={"state": "recompute"})
+    ops = {o.name: o for o in g.ops}
+    one = footprint(g, [ops["wy_bwd_a"]])
+    two = footprint(g, [ops["wy_bwd_a"], ops["wy_bwd_b"]])
+    assert two["barriers"] > one["barriers"]

@@ -127,6 +127,29 @@ class TheoryMachine:
                 "in_flight_bytes_per_cu": waves * warp * free * 4.0,
                 "free_dwords_per_lane": free, "notes": why}
 
+    def barrier_s(self, threads: int) -> float | None:
+        """Measured latency of one block-wide barrier at the nearest calibrated block size, or None."""
+        cand = {}
+        for k, v in (self.raw.get("latency", {}).get("barrier") or {}).items():
+            if k.startswith("lds_barrier") and isinstance(v, dict) and "ns" in v:
+                cand[int(k.rsplit("_", 1)[1])] = float(v["ns"]) * 1e-9
+        if not cand:
+            return None
+        ks = sorted(cand)
+        return cand[next((k for k in ks if k >= threads), ks[-1])]
+
+    def dep_step_s(self, threads: int) -> float | None:
+        """Floor on one dependent step of a scan, from measured latencies only: the step's product
+        depends on the previous step's, so at least one dependent MMAC latency is exposed, and the
+        state crossing LDS between steps costs at least one barrier.  One of each is the *weakest*
+        statement the dataflow allows, so it is a lower bound on any step; a machine-and-operator
+        specific `recurrence_step_us` (when calibrated) is larger and wins the max."""
+        m = self.latency_s.get("mmac_bf16_dependent")
+        b = self.barrier_s(threads)
+        if m is None and b is None:
+            return None
+        return (m or 0.0) + (b or 0.0)
+
     def step_s(self, key: str, ctas: int) -> float | None:
         """Latency of one dependent recurrence step, or None if the machine file lacks it."""
         tab = self.structural.get("recurrence_step_us", {}).get(key)
@@ -197,17 +220,37 @@ def _terms(mach: TheoryMachine, w: Work, peak_key: str, peak: float) -> dict:
     for res, amount in w.other.items():
         if res in mach.peaks:
             t["other:" + res] = amount / (mach.peaks[res] * cu_frac)
+    if w.barriers and con.get("ctas_per_cu"):
+        # Every value a kernel passes between its ops through LDS (or spills and reads back) costs the
+        # whole block a barrier before the consumer may read it, once per tile of work.  The waves of
+        # one CTA cannot overlap their own barrier; other CTAs resident on the same CU can, so the
+        # exposed time is the per-CU tile batches, not every tile.
+        n, bthr = w.barriers
+        lat = mach.barrier_s(int(bthr))
+        if lat and mach.cus:
+            tiles_per_cu = max(1.0, -(-int(w.occupancy["ctas"]) // mach.cus))
+            t["sync:barrier"] = tiles_per_cu / max(1.0, con["ctas_per_cu"]) * n * lat
     if w.serial:
-        ch, missing = 0.0, []
+        thr = int((w.occupancy or {}).get("threads") or mach.device.get("warp_size", 64) or 64)
+        floor = mach.dep_step_s(thr)
+        ch, missing, generic = 0.0, [], []
         for steps, key, ctas in w.serial:
             s = mach.step_s(key, ctas)
-            if s is None:
+            if s is None and floor is None:
                 missing.append(key)
-            else:
-                ch += steps * s
+                continue
+            if s is None:
+                generic.append(key)
+            ch += steps * max(s or 0.0, floor or 0.0)
         if missing:
-            w.notes.append("machine %s has no recurrence_step_us for %s: the serial chain is NOT in "
-                           "this bound" % (mach.id, ",".join(sorted(set(missing)))))
+            w.notes.append("machine %s has no recurrence_step_us for %s and no measured dependent-MMAC "
+                           "or barrier latency: the serial chain is NOT in this bound"
+                           % (mach.id, ",".join(sorted(set(missing)))))
+        if generic:
+            w.notes.append("machine %s has no recurrence_step_us for %s: the serial chain uses the "
+                           "generic floor of one dependent MMAC + one barrier per step (%.0f ns), which "
+                           "is looser than a calibrated step" % (mach.id, ",".join(sorted(set(generic))),
+                                                                 (floor or 0.0) * 1e9))
         if ch:
             t["serial:chain"] = ch
     t["fixed:launch"] = w.kernels * mach.launch_us * 1e-6

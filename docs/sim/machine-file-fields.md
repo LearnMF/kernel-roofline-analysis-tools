@@ -87,8 +87,8 @@ CTA 曲线是这一轮占用率建模的关键输入，两张卡都有：
 |---|---|
 | `gmem_hbm_ws.ns` | `latency:hbm`（Little's law：每 CU 必读字节 × 延迟 ÷ 在途窗口） |
 | `gmem_l2_ws` / `gmem_small_ws` / `lds` | **predict 当前未用**；`kra/model/bounds.py` 的事后归因路径在用 |
-| `mmac_bf16_dependent` | 同上。接进 `T_split` 的依赖链项是下一步的候选 |
-| `barrier.{syncthreads,lds_barrier}_{256..1024}` | 同上 |
+| `mmac_bf16_dependent` | `serial:chain` 的通用每步下限（与 `barrier` 相加，和 `recurrence_step_us` 取大），见 m2e |
+| `barrier.{syncthreads,lds_barrier}_{256..1024}` | `lds_barrier_*` 用于 `sync:barrier` 与通用每步下限，按 block 大小向上取档 |
 
 ## `launch`
 
