@@ -314,6 +314,12 @@ def search(graph: CapGraph, mach, peak_key: str, peak: float, limit: int = 0,
             t, krows, _, _ = _bound(mach, parts, peak_key, peak)
             row["T_split_us"] = t * 1e6
             row["bytes"] = sum((w.bytes_rd or 0) + (w.bytes_wr or 0) for _, w in parts)
+            row["flops"] = sum(w.flops for _, w in parts)
+            hbm = [(w.bytes_rd or 0) + (w.bytes_wr or 0) for _, w in parts]
+            row["bytes_levels"] = {
+                "hbm": sum(hbm),
+                "l2": sum(w.bytes_l2 if w.bytes_l2 is not None else h for h, (_, w) in zip(hbm, parts)),
+                "lds": sum(w.bytes_lds or 0 for _, w in parts)}
             row["per_kernel"] = krows
         rows.append(row)
     priced = sorted([r for r in rows if r["feasible"]], key=lambda r: r["T_split_us"])
@@ -337,7 +343,8 @@ def solve(mach, op_name: str, shape: dict, dtype: str, phase: str,
     """Operator-independent split solver: ask the plugin for its capacity graphs, search each, and
     return the best feasible kernel split with its T_split.  Operators whose plugin does not expose
     a capacity graph are reported as such -- no split is invented for them."""
-    from . import memory
+    from . import ceiling, memory
+    from .predict import predict as _predict
     from ..ops import get
 
     op = get(op_name)
@@ -379,6 +386,8 @@ def solve(mach, op_name: str, shape: dict, dtype: str, phase: str,
                          "vgpr_peak": best["vgpr_peak"], "min_residency": best["min_residency"],
                          "spilled": best.get("spilled", []), "occupancy": best.get("occupancy", []),
                          "per_kernel": best["per_kernel"], "top": r["ranked"][:top],
+                         "flops": best["flops"], "bytes_levels": best["bytes_levels"],
+                         "feasible_rows": r["ranked"],
                          "note": r["note"]})
     priced = [f for f in per_form if "T_split_us" in f]
     if not priced:
@@ -386,6 +395,11 @@ def solve(mach, op_name: str, shape: dict, dtype: str, phase: str,
                          "exceeds the on-chip capacity or exceeds the device-memory budget (%s).  The "
                          "operator cannot run on this machine as described." % (op_name, mach.id, budget_src))
     best = min(priced, key=lambda f: f["T_split_us"])
+    t_theory_us = _predict(mach, op_name, shape, dtype, phase)["T_theory_us"]
+    ceil = ceiling.report(mach, op_name, dtype, peak_key, peak, t_theory_us, best,
+                          [r for f in priced for r in f["feasible_rows"]], priced)
+    for f in per_form:
+        f.pop("feasible_rows", None)
     cands = [x for f in priced for x in f["pareto"]]
     front = memory.pareto(cands)
     front_saved = memory.pareto([x for x in cands if x["mem_saved_bytes"] is not None],
@@ -398,6 +412,7 @@ def solve(mach, op_name: str, shape: dict, dtype: str, phase: str,
             "mem_saved_bytes": best["mem_saved_bytes"],
             "mem_min_bytes": min(f["mem_min_bytes"] for f in priced),
             "pareto": front, "pareto_saved": front_saved,
+            "ceiling": ceil, "T_theory_us": t_theory_us, "T_attain_us": ceil["T_attain_us"],
             "shape": dict(shape), "residency_mode": residency_mode, "vgpr_mode": vgpr_mode,
             "lds_per_cu_kb": float(mach.device.get("lds_per_cu", 0)) / 1024,
             "best": best, "formulations": per_form, "notes": notes}
@@ -413,6 +428,10 @@ def markdown(r: dict) -> str:
          "shape `%s`, LDS %.0f KB/CU, residency rule `%s`, vgpr rule `%s`" % (
              ",".join("%s=%s" % kv for kv in r["shape"].items()), r["lds_per_cu_kb"], r["residency_mode"],
              r.get("vgpr_mode", "full")), "",
+         "machine capability **%s**: %s%s" % (
+             r["ceiling"]["capability"]["level"], r["ceiling"]["capability"]["answers"],
+             ("; missing for the next level: " + ", ".join(r["ceiling"]["capability"]["missing_for_next"]))
+             if r["ceiling"]["capability"]["missing_for_next"] else ""), "",
          "device memory: budget %s (%s), %d layer(s) of this operator resident" % (
              _gb(r["mem_budget_bytes"]), r["mem_budget_source"], r.get("layers", 1)), "",
          "| formulation | candidates | feasible | over budget | best T_split | worst feasible | kernels | "
@@ -427,6 +446,30 @@ def markdown(r: dict) -> str:
             f["formulation"], f["candidates"], f["feasible"], f["over_budget"], f["T_split_us"],
             f["T_worst_us"], len(f["kernels"]), _gb(f["mem_peak_bytes"]), _gb(f["mem_saved_bytes"]),
             f["lds_peak_kb"], f["vgpr_peak"], f["min_residency"]))
+    c = r["ceiling"]
+    L += ["", "## attainable ceiling", "",
+          "| step | time | what it adds |", "| --- | ---: | --- |",
+          "| T_theory | %.3f ms | the resource floor of the required work alone |" % (c["T_theory_us"] / 1e3),
+          "| x O_handoff = %.2f | | the kernel split the on-chip capacity forces |" % c["O_handoff"],
+          "| T_split | %.3f ms | best feasible split of the best formulation |" % (c["T_split_us"] / 1e3),
+          "| x O_idle = %s | | %s |" % ("%.3f" % c["O_idle"] if c["O_idle"] else "(not calibrated)",
+                                        "measured stalls this card loses beyond the model" if c["O_idle"]
+                                        else "NOT in this number: see the note below"),
+          "| **T_attain** | **%.3f ms** | %.1f TFLOP/s, %.1f%% of the %s peak |" % (
+              c["T_attain_us"] / 1e3, c["attainable_tflops"], c["mfu_pct_at_attain"], c["peak_key"]),
+          "", "formulations spread %.1f%% in time; `%s` binds, at the **%s** level."
+          % (c["formulation_spread_pct"], c["binding"], c["binding_level"]), "",
+          "### arithmetic intensity, level by level", "",
+          "`ceiling` is the best intensity any feasible split reached at that level: the gap to it is the "
+          "part of the ceiling the on-chip capacity takes away.  The attainable time is the largest roof "
+          "term, so the level at the top of this table is the one that truncates the ceiling.", "",
+          "| level | bandwidth | bytes | intensity | intensity ceiling | ridge | roof-limited time | side |",
+          "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |"]
+    L += ["| %s | %.0f GB/s | %.3f GB | %.1f | %.1f | %.1f | %.0f us | %s |" % (
+        x["level"], x["bw_GBps"], x["bytes"] / 2 ** 30, x["intensity_flop_per_byte"],
+        x["intensity_ceiling_flop_per_byte"], x["ridge_flop_per_byte"], x["T_roof_us"], x["bound"])
+        for x in c["levels"]]
+    L += [""] + ["> " + n for n in c["notes"]]
     mem = b["mem"]
     L += ["", "## device memory of that split", "",
           "the stage peak is one instance of the operator; the save-for-backward set is what every layer of "

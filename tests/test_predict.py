@@ -383,6 +383,7 @@ def test_fusing_more_handoffs_through_lds_costs_more_barriers():
 
 # ------------------------------------------------------------------ M3b: device memory and per-rank shape
 from kra.model.capacity import solve  # noqa: E402
+from kra.model.predict import TheoryMachine as TM  # noqa: E402
 
 def test_memory_peak_is_a_liveness_peak_not_the_sum_of_the_tensors():
     from kra.model import memory
@@ -443,3 +444,52 @@ def test_cp_is_refused_until_the_plugin_declares_it():
         solve(_m936(), "kda", {"T": 16384, "H": 12, "cp": 2}, "bf16", "fwd+bwd")
     msg = str(e.value)
     assert "no cp decomposition" in msg and "will not infer" in msg
+
+
+# ------------------------------------------------------------- M3a: attainable ceiling and its provenance
+def _m936_with_idle(factor: float):
+    import json
+    m = json.loads(open("machines/gfx936-bw1000.json", encoding="utf-8").read())
+    m["attainable"] = {"_provenance": "synthetic, for the test only",
+                       "idle": {"kda": {"value": factor, "_provenance": "test fixture"}}}
+    return TM(m)
+
+
+def test_the_chain_is_ordered_and_each_step_is_attributed():
+    c = solve(_m936(), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")["ceiling"]
+    assert c["T_theory_us"] <= c["T_split_us"] <= c["T_attain_us"]
+    assert c["O_handoff"] > 1.0
+    assert c["O_idle"] is None                                  # not calibrated on this card
+    assert "no attainable.idle" in c["notes"][0]
+    assert c["T_attain_us"] == c["T_split_us"]                  # so the ceiling IS the capacity bound
+
+
+def test_an_idle_calibration_moves_the_ceiling_and_carries_its_provenance():
+    shape = {"T": 16384, "H": 12}
+    base = solve(_m936(), "kda", shape, "bf16", "fwd+bwd")["ceiling"]
+    cal = solve(_m936_with_idle(1.25), "kda", shape, "bf16", "fwd+bwd")["ceiling"]
+    assert cal["O_idle"] == 1.25
+    assert abs(cal["T_attain_us"] - base["T_split_us"] * 1.25) < 1e-6
+    assert cal["T_split_us"] == base["T_split_us"]              # only the last factor moved
+    assert "test fixture" in cal["notes"][0] and "not a general coefficient" in cal["notes"][0]
+    assert cal["mfu_pct_at_attain"] < base["mfu_pct_at_attain"]
+
+
+def test_the_binding_level_is_the_one_with_the_largest_roof_term():
+    c = solve(_m936(), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")["ceiling"]
+    lv = c["levels"]
+    assert [x["level"] for x in lv] == sorted([x["level"] for x in lv],
+                                              key=lambda n: -next(y["T_roof_us"] for y in lv if y["level"] == n))
+    assert c["binding_level"] == lv[0]["level"]
+    for x in lv:                                                # the split never beats the best split
+        assert x["intensity_ceiling_flop_per_byte"] >= x["intensity_flop_per_byte"] - 1e-9
+        assert (x["bound"] == "memory") == (x["intensity_flop_per_byte"] <= x["ridge_flop_per_byte"])
+
+
+def test_the_capability_level_is_reported_and_differs_between_the_cards():
+    a = solve(_m936(), "kda", {"T": 16384, "H": 12}, "bf16", "fwd+bwd")["ceiling"]["capability"]
+    b = solve(TM.load("machines/gfx938-bw1102.json"), "kda", {"T": 16384, "H": 12}, "bf16",
+              "fwd+bwd")["ceiling"]["capability"]
+    assert a["level"] == "L3" and not a["missing_for_next"]
+    assert b["level"] == "L2" and b["missing_for_next"]
+    assert any("recurrence_step_us" in m for m in b["missing_for_next"])
