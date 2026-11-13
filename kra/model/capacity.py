@@ -53,6 +53,7 @@ class CapOp:
     core_lds: float = 0.0           # LDS the op needs for its own products (staged operands, whole tiles)
     core_reg_bytes: float = 0.0     # per-CTA register bytes for its accumulators
     movable: tuple = ()             # operand tiles (bytes) that live in registers, or in LDS when registers run out
+    ctas: int = 0                   # tiles of work the op's parallel structure gives (its grid)
     flops: float = 0.0
     other: dict = field(default_factory=dict)
     serial: list = field(default_factory=list)
@@ -201,6 +202,14 @@ def dataflow(graph: CapGraph) -> tuple:
     return src, users
 
 
+def occupancy(graph: CapGraph, kernel: list, fp: dict) -> dict:
+    """What the machine solver needs to bound this kernel's concurrency: its grid, its threads, and the
+    on-chip footprint one tile holds.  The grid is the parallel structure of the ops in it (they share
+    one, because ops of a different structure cannot be grouped)."""
+    ctas = min((o.ctas for o in kernel if o.ctas), default=0)
+    return {"ctas": ctas, "threads": graph.threads, "lds_bytes": fp["lds_bytes"], "vgpr": fp["vgpr"]}
+
+
 def kernel_work(graph: CapGraph, kernel: list, produced_elsewhere: dict = None, spilled=()) -> Work:
     """HBM traffic of one kernel: every value it reads that another kernel (or the caller) produced is read
     once, every value it produces that another kernel (or the caller) needs is written once.  Values living
@@ -273,8 +282,13 @@ def search(graph: CapGraph, mach, peak_key: str, peak: float, limit: int = 0) ->
                "why_not": "; ".join("%s: %s" % (k, v[1]) for k, v in
                                     zip(["+".join(o.name for o in kk) for kk in g], verdicts) if not v[0])}
         if ok:
-            parts = [("+".join(o.name for o in k), kernel_work(graph, k, produced, f["handoffs_spilled"]))
-                     for k, f in zip(g, fps)]
+            parts = []
+            for k, f in zip(g, fps):
+                w = kernel_work(graph, k, produced, f["handoffs_spilled"])
+                w.occupancy = occupancy(graph, k, f)
+                parts.append(("+".join(o.name for o in k), w))
+            row["occupancy"] = [dict(kernel=n, **(mach.concurrency(w.occupancy) if mach.use_occupancy else {}),
+                                     **w.occupancy) for n, w in parts]
             t, krows, _, _ = _bound(mach, parts, peak_key, peak)
             row["T_split_us"] = t * 1e6
             row["bytes"] = sum((w.bytes_rd or 0) + (w.bytes_wr or 0) for _, w in parts)
@@ -312,7 +326,7 @@ def solve(mach, op_name: str, shape: dict, dtype: str, phase: str,
                          "T_split_us": best["T_split_us"], "T_worst_us": r["ranked"][-1]["T_split_us"],
                          "kernels": best["kernels"], "lds_peak_kb": best["lds_peak_kb"],
                          "vgpr_peak": best["vgpr_peak"], "min_residency": best["min_residency"],
-                         "spilled": best.get("spilled", []),
+                         "spilled": best.get("spilled", []), "occupancy": best.get("occupancy", []),
                          "per_kernel": best["per_kernel"], "top": r["ranked"][:top],
                          "note": r["note"]})
         for k in best["per_kernel"]:
@@ -346,6 +360,17 @@ def markdown(r: dict) -> str:
     L += ["", "## best split: %s, T_split = %.3f ms" % (b["formulation"], b["T_split_us"] / 1e3), "",
           "| kernel | binding | T_us |", "| --- | --- | ---: |"]
     L += ["| %s | %s | %.1f |" % (k["kernel"], k["binding"], k["T_us"]) for k in b["per_kernel"]]
+    occ = [o for o in b.get("occupancy", []) if o.get("waves_per_cu")]
+    if occ:
+        L += ["", "## occupancy of that split", "",
+              "concurrency the kernel's own footprint allows, and what limits it (LDS / registers / wave "
+              "slots / grid).  Per-CU resources are charged at the CUs the kernel can occupy; its reads at "
+              "the bandwidth measured at that CTA count.", "",
+              "| kernel | CTAs | LDS/tile | VGPR | waves/CU | wave slots | limited by | CUs used |",
+              "| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |"]
+        L += ["| %s | %d | %.1f KB | %.0f | %d | %.0f%% | %s | %d |" % (
+            o["kernel"], o["ctas"], o["lds_bytes"] / 1024, o["vgpr"], o["waves_per_cu"],
+            o["wave_slots_pct"], o["occupancy_limit"], o["cus_used"]) for o in occ]
     if b.get("spilled"):
         L += ["", "handoffs that do not fit on chip and round-trip through global memory inside their kernel: "
               + ", ".join("`%s`" % x for x in b["spilled"])]

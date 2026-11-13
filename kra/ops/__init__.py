@@ -62,6 +62,12 @@ class Work:
     bytes_lds: float | None = None
     # Charge vector-memory issue (machine `structural.vmem_cycles_per_kb`) for the HBM bytes.
     vmem_issue: bool = False
+    # How much of the machine's parallelism this kernel can actually occupy, when the operator can
+    # derive it: {"ctas": tiles of work, "threads": threads per tile, "lds_bytes": LDS per tile,
+    # "vgpr": registers per thread}.  The machine solver turns it into the concurrency terms (the
+    # bandwidth attainable at that CTA count, and the memory latency the kernel cannot hide).
+    # None = the operator does not bound its occupancy and those terms are left out.
+    occupancy: dict | None = None
     # Per-resource extra work the operator cannot avoid, e.g. {"sfu_exp2": 1.2e9}.
     other: dict = field(default_factory=dict)
     notes: list = field(default_factory=list)

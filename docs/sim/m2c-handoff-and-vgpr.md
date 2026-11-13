@@ -104,3 +104,6 @@ H=48：gfx936 10.70 ms，gfx938 6.84 ms，拆法和 formulation 相同。M2b 时
 * layout 副本有意不计入 HBM，它们的 LDS 搬运也没有计价；
 * 带 scratch 的逐 lane op（`re_gate`、`tail`）VGPR 仍偏低；`REG_BASE_VGPR` 是启发式假设；
 * 操作数规则取「未暂存输入里最大的两个」，因为 IR 没有给出操作数的配对关系。
+
+> M2d 又补了一项：并发（占用率）已纳入下限，所以「下限里融合永远不要钱」这一条已经不成立，
+> 详见 `m2d-occupancy.md`。

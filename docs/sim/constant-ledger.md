@@ -58,3 +58,20 @@ which tensor), the chunk size, the parallel structure of each op, and the on-chi
 | constant | where | why it is allowed |
 |---|---|---|
 | `eta` and the floor of the M1 留一法 comparison (`docs/sim/m1-bw1000-validation.md`) | validation only | they are fitted *on purpose*, to compare against the tiered coefficients on equal terms; they are not used by `kra predict` |
+
+## M2d 新增（并发项）
+
+机器文件里原本就有、这一轮才被用上的实测量，不是新常数：`peaks.hbm_read_vs_ctas.curve`（流式微基准
+的 CTA 数→带宽曲线）、`device.regs_per_block` / `lds_per_cu` / `max_threads_per_cu` / `cu_count`、
+`latency.gmem_hbm_ws`。
+
+本轮新增的**假设**（非测量、非拟合）：
+
+| 假设 | 值 / 规则 | 适用范围 | 可见性 |
+|---|---|---|---|
+| 单波可寻址寄存器上限 | 256 VGPR | ISA 限制，所有 CDNA | `device.max_vgpr_per_thread` 可覆盖 |
+| 寄存器全占满时的在途字节 | 每 lane 1 dword | 兜底，避免除零 | 命中时写进 `notes` |
+| 写带宽不随 CTA 数缩放 | 保持峰值（少收钱） | 没有写的 CTA 曲线 | 本文件 + M2d 文档 |
+| L2 带宽不按 CU 数缩放 | 保持峰值（少收钱） | 没有 L2 的 CTA 曲线 | 同上 |
+
+并发项整体可以用 `--occupancy off` 关掉做对照；关掉时 M2c 的数值完全复现。

@@ -43,10 +43,14 @@ def main(argv=None) -> int:
                    help="how an on-chip handoff is charged: by tensor shape, or everything to LDS")
     p.add_argument("--vgpr", default="full", choices=("full", "acc"),
                    help="register estimate: accumulators + operands + addressing, or accumulators only")
+    p.add_argument("--occupancy", default="on", choices=("on", "off"),
+                   help="include the concurrency terms (bandwidth attainable at the kernel's CTA count, "
+                        "per-CU resources scaled by the CUs it can occupy, memory latency its registers "
+                        "cannot hide)")
     p.add_argument("--list-ops", action="store_true", help="list operator plugins and exit")
     a = p.parse_args(argv)
 
-    mach = TheoryMachine.load(a.machine, a.peaks)
+    mach = TheoryMachine.load(a.machine, a.peaks, a.occupancy == "on")
     if a.split_search:
         from . import capacity
         rs = capacity.solve(mach, a.op, _shape(a.shape), a.dtype, a.phase, a.residency, vgpr_mode=a.vgpr)

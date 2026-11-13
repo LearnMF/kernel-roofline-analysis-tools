@@ -32,8 +32,9 @@ class TheoryMachine:
     microbenchmark value.  Both are reported so a prediction always says which it used.
     """
 
-    def __init__(self, m: dict, peaks: str = "measured"):
+    def __init__(self, m: dict, peaks: str = "measured", occupancy: bool = True):
         self.raw = m
+        self.use_occupancy = occupancy
         self.which = peaks
         self.id = m.get("id") or m.get("device", {}).get("name", "?")
         self.device = m.get("device", {})
@@ -62,6 +63,69 @@ class TheoryMachine:
             # one lane-op per lane per cycle; packed fp32 pairs are the plugin's business
             self.peaks.setdefault("valu_lane", self.cus * int(self.device.get("warp_size", 64)) * self.clk)
         self.structural = {k: v for k, v in m.get("structural", {}).items() if not k.startswith("_")}
+        self.latency_s = {k: float(v["ns"]) * 1e-9 for k, v in m.get("latency", {}).items()
+                          if isinstance(v, dict) and "ns" in v}
+        # measured attainable bandwidth as a function of how many CTAs are resident (streaming
+        # microbenchmark): the ceiling a kernel with that much parallelism can reach.
+        self.bw_curves = {k: {int(c): float(b) for c, b in v["curve"].items()}
+                          for k, v in m.get("peaks", {}).items()
+                          if isinstance(v, dict) and isinstance(v.get("curve"), dict)}
+
+    def bw_at_ctas(self, key: str, ctas: int) -> float | None:
+        """Attainable bandwidth of `key` with `ctas` CTAs resident, interpolated on the measured
+        curve; None when the machine file has no curve for it."""
+        cur = self.bw_curves.get(key)
+        if not cur:
+            return None
+        xs = sorted(cur)
+        if ctas >= xs[-1]:
+            return cur[xs[-1]] * 1e9
+        if ctas <= xs[0]:
+            return cur[xs[0]] * 1e9 * ctas / xs[0]
+        hi = next(x for x in xs if x >= ctas)
+        lo = max(x for x in xs if x <= ctas)
+        f = 0.0 if hi == lo else (ctas - lo) / (hi - lo)
+        return (cur[lo] + f * (cur[hi] - cur[lo])) * 1e9
+
+    def concurrency(self, occ: dict) -> dict:
+        """What one kernel can keep in flight on this machine, from the hardware limits only.
+
+        Resident waves per CU is the smallest of what LDS, the register file, the CU's wave slots and
+        the grid allow.  Whatever of the register file those waves do not hold live is the deepest
+        prefetch they could run, which is an *upper* bound on the bytes in flight -- so the latency it
+        gives is a lower bound on time.  Register-hungry, low-residency kernels get a smaller one."""
+        dev = self.device
+        warp = int(dev.get("warp_size", 64) or 64)
+        thr = int(occ.get("threads") or warp)
+        per_cta = max(1, thr // warp)
+        regs_per_cu = float(dev.get("regs_per_block") or 0)      # dwords of the CU register file
+        lds_per_cu = float(dev.get("lds_per_cu") or dev.get("lds_per_block") or 0)
+        vgpr = max(1.0, float(occ.get("vgpr") or 1.0))
+        lim, why = {}, []
+        if lds_per_cu and occ.get("lds_bytes"):
+            lim["lds"] = int(lds_per_cu // occ["lds_bytes"]) * per_cta
+        if regs_per_cu:
+            lim["vgpr"] = int(regs_per_cu // (vgpr * warp))
+        if dev.get("max_threads_per_cu"):
+            lim["slots"] = int(float(dev["max_threads_per_cu"]) // warp)
+        if self.cus and occ.get("ctas"):
+            lim["grid"] = max(1, -(-int(occ["ctas"]) // self.cus)) * per_cta
+        if not lim or not regs_per_cu:
+            return {}
+        waves = max(1, min(lim.values()))
+        binding = min(lim, key=lim.get)
+        # Deepest prefetch those waves could run: what the register file leaves them, and never more
+        # than the architectural per-thread register limit a single wave can address.
+        free = min(regs_per_cu / (warp * waves), float(dev.get("max_vgpr_per_thread") or 256)) - vgpr
+        if free < 1.0:
+            free, why = 1.0, ["registers are fully live: one dword per lane assumed in flight"]
+        return {"waves_per_cu": waves, "occupancy_limit": binding, "ctas_per_cu": waves / per_cta,
+                "wave_slots_pct": 100.0 * waves / max(1.0, lim.get("slots", waves)),
+                "cus_used": int(min(int(occ.get("ctas") or 0) or self.cus, self.cus)) if self.cus else 0,
+                "ctas_resident": int(min(int(occ.get("ctas") or 0) or 10 ** 9,
+                                         self.cus * max(1, waves // per_cta))),
+                "in_flight_bytes_per_cu": waves * warp * free * 4.0,
+                "free_dwords_per_lane": free, "notes": why}
 
     def step_s(self, key: str, ctas: int) -> float | None:
         """Latency of one dependent recurrence step, or None if the machine file lacks it."""
@@ -72,8 +136,8 @@ class TheoryMachine:
         return float(tab.get("%dcu" % per_cu, tab[max(tab)])) * 1e-6
 
     @classmethod
-    def load(cls, path: str, peaks: str = "measured") -> "TheoryMachine":
-        return cls(json.loads(open(path, encoding="utf-8").read()), peaks)
+    def load(cls, path: str, peaks: str = "measured", occupancy: bool = True) -> "TheoryMachine":
+        return cls(json.loads(open(path, encoding="utf-8").read()), peaks, occupancy)
 
     def compute_peak(self, dtype: str) -> tuple:
         key = DTYPE_PEAK.get(dtype)
@@ -88,14 +152,28 @@ class TheoryMachine:
 
 def _terms(mach: TheoryMachine, w: Work, peak_key: str, peak: float) -> dict:
     t = {}
+    con = mach.concurrency(w.occupancy) if (w.occupancy and mach.use_occupancy) else {}
+    # A kernel with fewer tiles of work than the device has CUs can only occupy that many CUs, so the
+    # per-CU resources (matrix and vector pipes, LDS, memory issue) are available to it in that
+    # fraction only.  Device-level resources (HBM, L2) are not scaled this way; HBM gets the measured
+    # bandwidth-vs-CTAs curve instead.
+    cu_frac = min(1.0, con["cus_used"] / mach.cus) if con.get("cus_used") and mach.cus else 1.0
     if w.flops:
         eff = float(mach.structural.get(w.compute_eff, 1.0)) if w.compute_eff else 1.0
-        t["compute:" + peak_key] = w.flops / (peak * eff)
+        t["compute:" + peak_key] = w.flops / (peak * eff * cu_frac)
     if w.bytes_min or w.bytes_rd:
         if not mach.bw:
             raise SystemExit("machine %s has no HBM bandwidth peak" % mach.id)
         if w.bytes_rd is not None and "hbm_read" in mach.peaks and "hbm_write" in mach.peaks:
-            t["memory:hbm"] = w.bytes_rd / mach.peaks["hbm_read"] + (w.bytes_wr or 0.0) / mach.peaks["hbm_write"]
+            # A kernel with too few resident CTAs cannot reach the streaming peak even in principle:
+            # charge its reads at the bandwidth measured at that CTA count.  Writes are left at the
+            # peak, because no write-vs-CTA curve was measured -- under-charging keeps the bound below.
+            bw_rd = mach.peaks["hbm_read"]
+            if con.get("ctas_resident"):
+                at = mach.bw_at_ctas("hbm_read_vs_ctas", con["ctas_resident"])
+                if at:
+                    bw_rd = min(bw_rd, at)
+            t["memory:hbm"] = w.bytes_rd / bw_rd + (w.bytes_wr or 0.0) / mach.peaks["hbm_write"]
         else:
             t["memory:hbm"] = w.bytes_min / mach.bw
         # multi-level roofline: the same required-bytes argument one level in.  Every HBM byte
@@ -105,14 +183,20 @@ def _terms(mach: TheoryMachine, w: Work, peak_key: str, peak: float) -> dict:
                "lds": (w.bytes_lds, "lds_read")}
         for name, (b, key) in lvl.items():
             if b and key in mach.peaks:
-                t["memory:" + name] = b / mach.peaks[key]
+                t["memory:" + name] = b / (mach.peaks[key] * (cu_frac if name == "lds" else 1.0))
         vm = mach.structural.get("vmem_cycles_per_kb")
         if w.vmem_issue and vm and mach.cus and w.bytes_rd is not None:
             t["issue:vmem"] = (w.bytes_rd / 1024 * vm["read"] + (w.bytes_wr or 0.0) / 1024 * vm["write"]) \
-                / (mach.cus * mach.clk)
+                / (mach.cus * cu_frac * mach.clk)
+    if con.get("in_flight_bytes_per_cu") and mach.cus and w.bytes_rd and mach.latency_s.get("gmem_hbm_ws"):
+        # Little's law the other way round: the bytes a CU must read, at the rate its own in-flight
+        # window and the measured memory latency allow.  Independent of bandwidth: it is what the
+        # kernel's own parallelism cannot hide.
+        t["latency:hbm"] = (w.bytes_rd / mach.cus) * mach.latency_s["gmem_hbm_ws"] \
+            / con["in_flight_bytes_per_cu"]
     for res, amount in w.other.items():
         if res in mach.peaks:
-            t["other:" + res] = amount / mach.peaks[res]
+            t["other:" + res] = amount / (mach.peaks[res] * cu_frac)
     if w.serial:
         ch, missing = 0.0, []
         for steps, key, ctas in w.serial:

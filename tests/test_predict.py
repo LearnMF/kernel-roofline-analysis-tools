@@ -265,3 +265,60 @@ def test_production_grouping_t_split_matches_the_hand_written_decomposition():
     hand = predict(m, "kda", shape, "bf16", "fwd+bwd")["T_split"]["p54a"]["T_split_us"]
     t = r["ranked"][k - 1]["T_split_us"]
     assert t <= hand and t > 0.95 * hand
+
+
+# ------------------------------------------------------------------ occupancy / concurrency (M2d)
+def test_bandwidth_attainable_at_a_cta_count_is_below_the_streaming_peak():
+    m = _m936()
+    peak = m.peaks["hbm_read"]
+    few, half, all_ = (m.bw_at_ctas("hbm_read_vs_ctas", n) for n in (8, 32, 10 ** 6))
+    assert few < half < all_ <= peak * 1.001
+    assert m.bw_at_ctas("no_such_curve", 8) is None
+
+
+def test_a_register_heavy_kernel_has_a_smaller_in_flight_window():
+    m = _m936()
+    light = m.concurrency({"ctas": 10 ** 5, "threads": 256, "lds_bytes": 4096, "vgpr": 32})
+    heavy = m.concurrency({"ctas": 10 ** 5, "threads": 256, "lds_bytes": 65536, "vgpr": 250})
+    assert light["waves_per_cu"] > heavy["waves_per_cu"]
+    assert light["in_flight_bytes_per_cu"] > heavy["in_flight_bytes_per_cu"]
+    # a kernel whose registers are all live still gets a floor, flagged as an assumption
+    full = m.concurrency({"ctas": 10 ** 5, "threads": 256, "lds_bytes": 65536, "vgpr": 256})
+    assert full["in_flight_bytes_per_cu"] > 0 and full["notes"]
+
+
+def test_occupancy_terms_only_tighten_the_bound():
+    # every concurrency term is a lower bound on time: switching them on can only raise T_split
+    from kra.model.capacity import solve
+    shape = {"T": 16384, "H": 12}
+    on = solve(_m936(), "kda", shape, "bf16", "fwd+bwd")["best"]["T_split_us"]
+    from kra.model.predict import TheoryMachine as TM
+    off = solve(TM.load("machines/gfx936-bw1000.json", occupancy=False), "kda", shape, "bf16",
+                "fwd+bwd")["best"]["T_split_us"]
+    assert on >= off
+
+
+def test_with_occupancy_the_cheapest_split_is_not_the_most_fused_one():
+    # without concurrency terms a lower bound can always fuse for free, so it ranks the fewest kernels
+    # first; charging the CUs and the in-flight window a kernel can occupy puts the optimum inside.
+    from kra.model.capacity import search
+    from kra.ops.kda import capacity_graph
+    r = search(capacity_graph({"T": 16384, "H": 12}, formulation={"state": "recompute"}),
+               _m936(), "mmac_bf16", _m936().peaks["mmac_bf16"])
+    by_n = {}
+    for row in r["ranked"]:
+        by_n[row["n_kernels"]] = min(by_n.get(row["n_kernels"], 1e18), row["T_split_us"])
+    assert by_n[min(by_n)] > min(by_n.values())
+    assert r["ranked"][0]["n_kernels"] > min(by_n)
+
+
+def test_a_kernel_whose_grid_is_smaller_than_the_device_pays_for_the_idle_cus():
+    from kra.ops import Work
+    from kra.model.predict import _terms
+    m = _m936()
+    w = lambda ctas: Work(flops=1e11, bytes_rd=1e7, bytes_wr=0.0, other={"valu_lane": 1e10},
+                          occupancy={"ctas": ctas, "threads": 256, "lds_bytes": 8192, "vgpr": 64})
+    wide = _terms(m, w(10 ** 5), "mmac_bf16", m.peaks["mmac_bf16"])
+    narrow = _terms(m, w(8), "mmac_bf16", m.peaks["mmac_bf16"])
+    assert narrow["compute:mmac_bf16"] > 9 * wide["compute:mmac_bf16"]
+    assert narrow["other:valu_lane"] > 9 * wide["other:valu_lane"]

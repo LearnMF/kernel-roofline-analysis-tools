@@ -73,7 +73,7 @@ class Kda(Op):
                        % ("P2" if save_h else "P1", "keep state" if save_h else "backward recomputes the state",
                           len(w.serial), nt))
         for name, dec in ir.DECOMPOSITIONS.items():
-            parts = [(k.name, self._kernel(k, T, H)) for k in dec
+            parts = [(k.name, self._kernel(k, T, H, phase)) for k in dec
                      if phase == "fwd+bwd" or (k.name in ("fwd_prep", "fwd_h_o")) == (phase == "fwd")]
             if parts:
                 w.splits[name] = parts
@@ -82,7 +82,7 @@ class Kda(Op):
         return w
 
     @staticmethod
-    def _kernel(k, T: int, H: int) -> Work:
+    def _kernel(k, T: int, H: int, phase: str = "fwd+bwd") -> Work:
         rd, wr, rdh, wrh = k.io_bytes(C, H)
         N = float(T * H)
         ops = [ir.OPI[o] for o in k.ops]
@@ -94,6 +94,7 @@ class Kda(Op):
         if k.name == "fwd_h_o" and any(m.tensor == "h" for m in k.writes):
             w.serial = [(T // C, "kda_step_with_o", H * SCAN_CTAS_PER_HEAD)]
         w.bytes_min = w.bytes_rd + w.bytes_wr
+        w.occupancy = _occupancy_of(k.ops, T, H, phase)
         return w
 
 
@@ -201,6 +202,39 @@ def _operands(op) -> tuple:
 REG_BASE_VGPR = 16
 
 
+def _ctas(op, nt: int, H: int) -> int:
+    """Tiles of work the op's parallel structure admits: a chunk / row op has one per (chunk, head), a
+    scan is sequential over chunks so only its heads and separable V slabs are parallel, a reduction over
+    the sequence has one per head.  This is the operator's parallelism, not a launch configuration."""
+    if op.par.startswith("scan"):
+        return H * (SCAN_CTAS_PER_HEAD if op.vsep else 1)
+    if op.par == "reduce_T":
+        return nt * H          # a reduction over the sequence is tree-parallel: partials then a tiny pass
+    return nt * H
+
+
+def _occupancy_of(op_names, T: int, H: int, phase: str) -> dict | None:
+    """Grid and on-chip footprint of a hand-written decomposition's kernel, derived the same way as for
+    a searched grouping, so the two are priced with the same terms.  None when no formulation of the IR
+    contains all of the kernel's ops (then the concurrency terms are left out instead of guessed)."""
+    from ..model.capacity import footprint, occupancy as _occ
+    key = (T, H, phase)
+    if _GRAPH_CACHE.get("key") != key:
+        _GRAPH_CACHE.clear()
+        _GRAPH_CACHE["key"] = key
+        _GRAPH_CACHE["graphs"] = [capacity_graph({"T": T, "H": H}, phase, formulation=f) for f in FORMULATIONS]
+    want = set(op_names)
+    for g in _GRAPH_CACHE["graphs"]:
+        have = {o.name: o for o in g.ops}
+        if want <= set(have):
+            kern = [have[n] for n in op_names]
+            return _occ(g, kern, footprint(g, kern))
+    return None
+
+
+_GRAPH_CACHE: dict = {}
+
+
 def capacity_graph(shape: dict, phase: str = "fwd+bwd", residency_mode: str = "shape",
                    formulation: dict | None = None, vgpr_mode: str = "full") -> CapGraph:
     T, H = int(shape["T"]), int(shape["H"])
@@ -236,7 +270,8 @@ def capacity_graph(shape: dict, phase: str = "fwd+bwd", residency_mode: str = "s
             core_lds=_core_lds(o), core_reg_bytes=_core_regs(o),
             movable=_operands(o) if vgpr_mode == "full" else (), flops=flops,
             other={"valu_lane": VALU_PACKED * lanes, "sfu_exp2": sfu},
-            serial=[(nt, _step_key(o), H * SCAN_CTAS_PER_HEAD)] if o.par.startswith("scan") else []))
+            serial=[(nt, _step_key(o), H * SCAN_CTAS_PER_HEAD)] if o.par.startswith("scan") else [],
+            ctas=_ctas(o, nt, H)))
     return CapGraph(ops=cops, tensors=tensors, threads=THREADS, tiles=nt * H,
                     reg_base_vgpr=REG_BASE_VGPR if vgpr_mode == "full" else 0, compute_eff="mmac_tile_eff",
                     vmem_issue=True,
